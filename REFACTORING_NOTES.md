@@ -122,15 +122,16 @@ The original JSX had inconsistent margins/padding across screens. Our refactored
 - `package.json` - Already configured in Phase 1
 
 ### Original Source
-- `moral-parliament-quiz-v6.jsx` - Preserved for reference
+- Original file preserved in git history (commit dd5499b)
+- Retrieve with: `git show dd5499b:moral-parliament-quiz-v6.jsx`
 
 ---
 
 ## Migration Guide (If Reverting)
 
-To revert to the original single-file version:
-1. The original is preserved as `moral-parliament-quiz-v6.jsx`
-2. Simply import it in `App.jsx` instead of `MoralParliamentQuiz`
+To retrieve the original single-file version:
+1. From git history: `git show dd5499b:moral-parliament-quiz-v6.jsx > original.jsx`
+2. Import in `App.jsx` if needed
 
 To migrate from refactored back to single file:
 1. Copy content from `src/components/MoralParliamentQuiz.jsx`

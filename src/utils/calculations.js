@@ -1,3 +1,35 @@
+/**
+ * Calculation Utilities for Moral Parliament Quiz
+ *
+ * This module contains all calculation logic for determining optimal resource allocation
+ * based on moral credences (confidence levels in different ethical positions).
+ *
+ * ALGORITHM OVERVIEW:
+ *
+ * 1. Worldview Combinations:
+ *    With 3 animal views × 3 future views = 9 total worldview combinations
+ *    Each combination has a probability = (animalCredence/100) × (futureCredence/100)
+ *
+ * 2. Cause Values:
+ *    Each cause starts with base points (100)
+ *    - Global Health: helps current humans (no multipliers applied)
+ *    - Animal Welfare: helps animals (affected by animal multiplier)
+ *    - GCR (Future): helps future humans (affected by future multiplier)
+ *
+ * 3. Max Expected Value (MaxEV):
+ *    For each cause, calculate EV across all worldview combinations:
+ *      EV(cause) = Σ [P(worldview) × value(cause, worldview)]
+ *    Allocate 100% to the cause with highest EV
+ *
+ * 4. Variance Voting (Moral Parliament):
+ *    Each worldview votes for its preferred cause(s)
+ *    Vote weight = P(worldview)
+ *    If multiple causes tied for best in a worldview, vote splits equally
+ *    Final allocation = proportion of total votes each cause received
+ *
+ * All functions are pure (no side effects) and fully testable.
+ */
+
 import { CAUSES, ANIMAL_MULTIPLIERS, FUTURE_MULTIPLIERS } from '../constants/config.js';
 
 /**
