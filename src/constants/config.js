@@ -1,19 +1,28 @@
-// Cause definitions
+// Cause definitions with dimension flags
 export const CAUSES = {
   globalHealth: {
     name: 'Global Health',
     points: 100,
-    helpsCurrentHumans: true,
+    helpsAnimals: false,
+    helpsFutureHumans: false,
+    scaleFactor: 1,
+    isSpeculative: false,
   },
   animalWelfare: {
     name: 'Animal Welfare',
     points: 100,
     helpsAnimals: true,
+    helpsFutureHumans: false,
+    scaleFactor: 10,
+    isSpeculative: false,
   },
   gcr: {
     name: 'GCR (Future)',
     points: 100,
+    helpsAnimals: false,
     helpsFutureHumans: true,
+    scaleFactor: 100,
+    isSpeculative: true,
   },
 };
 
@@ -25,6 +34,21 @@ export const ANIMAL_MULTIPLIERS = {
 };
 
 export const FUTURE_MULTIPLIERS = {
+  equal: 1,
+  '10x': 0.1,
+  '100x': 0.01,
+};
+
+// Scale multipliers - exponents for scaleFactor
+// Applied as: value *= (cause.scaleFactor ** scaleExponent)
+export const SCALE_MULTIPLIERS = {
+  equal: 0, // scale irrelevant: scaleFactor^0 = 1
+  '10x': 0.5, // moderate: sqrt of scale factor
+  '100x': 1, // full: linear scale factor
+};
+
+// Certainty multipliers - discount for speculative interventions
+export const CERTAINTY_MULTIPLIERS = {
   equal: 1,
   '10x': 0.1,
   '100x': 0.01,
@@ -73,6 +97,48 @@ export const FUTURE_QUESTION_OPTIONS = [
   },
 ];
 
+export const SCALE_QUESTION_OPTIONS = [
+  {
+    key: 'equal',
+    label: 'Helping one person matters as much as helping millions',
+    description: "Numbers don't multiply moral value",
+    color: '#81B29A',
+  },
+  {
+    key: '10x',
+    label: 'Helping 10× more beings is significantly better',
+    description: 'Scale matters, but not linearly',
+    color: '#98C1D9',
+  },
+  {
+    key: '100x',
+    label: 'Helping 10× more beings is 10× better',
+    description: 'Full utilitarian aggregation',
+    color: '#E07A5F',
+  },
+];
+
+export const CERTAINTY_QUESTION_OPTIONS = [
+  {
+    key: 'equal',
+    label: 'Speculative and proven interventions matter equally',
+    description: 'Expected value is all that matters',
+    color: '#81B29A',
+  },
+  {
+    key: '10x',
+    label: 'Proven interventions are worth 10× more',
+    description: 'Moderate certainty preference',
+    color: '#98C1D9',
+  },
+  {
+    key: '100x',
+    label: 'Proven interventions are worth 100× more',
+    description: 'Strong evidence focus',
+    color: '#E07A5F',
+  },
+];
+
 // Edit panel configurations for results screen
 export const ANIMAL_PANEL_CONFIG = [
   { key: 'equal', label: 'Equal weight', short: 'Eq', color: '#81B29A' },
@@ -81,6 +147,18 @@ export const ANIMAL_PANEL_CONFIG = [
 ];
 
 export const FUTURE_PANEL_CONFIG = [
+  { key: 'equal', label: 'Equal weight', short: 'Eq', color: '#81B29A' },
+  { key: '10x', label: '10× less', short: '10×', color: '#98C1D9' },
+  { key: '100x', label: '100× less', short: '100×', color: '#E07A5F' },
+];
+
+export const SCALE_PANEL_CONFIG = [
+  { key: 'equal', label: 'Irrelevant', short: 'Eq', color: '#81B29A' },
+  { key: '10x', label: 'Matters', short: '10×', color: '#98C1D9' },
+  { key: '100x', label: 'Dominates', short: '100×', color: '#E07A5F' },
+];
+
+export const CERTAINTY_PANEL_CONFIG = [
   { key: 'equal', label: 'Equal weight', short: 'Eq', color: '#81B29A' },
   { key: '10x', label: '10× less', short: '10×', color: '#98C1D9' },
   { key: '100x', label: '100× less', short: '100×', color: '#E07A5F' },
@@ -197,6 +275,8 @@ export const STEPS = {
   WELCOME: 'welcome',
   ANIMALS: 'animals',
   FUTURE: 'future',
+  SCALE: 'scale',
+  CERTAINTY: 'certainty',
   RESULTS: 'results',
 };
 
