@@ -76,7 +76,7 @@ const MoralParliamentQuiz = () => {
         questionNumber="Question 1 of 2"
         progressPercentage={50}
         heading="How do you value animal welfare relative to human welfare?"
-        instructionsOptions="Choose the view that best represents your position, or use "Custom Mix" to split your credence."
+        instructionsOptions='Choose the view that best represents your position, or use "Custom Mix" to split your credence.'
         instructionsSliders="Distribute your credence (confidence) across these views. Sliders auto-balance to 100%."
         options={ANIMAL_QUESTION_OPTIONS}
         credences={animalCredences}
@@ -98,7 +98,7 @@ const MoralParliamentQuiz = () => {
         questionNumber="Question 2 of 2"
         progressPercentage={100}
         heading="How do you value future human welfare relative to current human welfare?"
-        instructionsOptions="Choose the view that best represents your position, or use "Custom Mix" to split your credence."
+        instructionsOptions='Choose the view that best represents your position, or use "Custom Mix" to split your credence.'
         instructionsSliders="Distribute your credence across these views. Sliders auto-balance to 100%."
         options={FUTURE_QUESTION_OPTIONS}
         credences={futureCredences}
