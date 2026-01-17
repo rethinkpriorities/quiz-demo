@@ -83,6 +83,13 @@ Before marking this complete, need to cover:
       Impact: Removed code duplication, improved readability
       Commit needed: YES - EditPanel.jsx modified
 
+- [x] File: `src/components/ui/CauseBar.jsx:9-11` - When do isIncrease/isDecrease recompute?
+      Resolution: EXPLAINED - Lines recalculate on every render when props change
+      Understanding: Ghost bar is set ONCE on first entry to results (line 59 of MoralParliamentQuiz)
+      UX Notes: Visual overlap issue identified (ghost bar hidden when values increase)
+      Decision: Defer UX changes to UX designer - "bug is a feature" until reviewed
+      Commit needed: NO - explanation only
+
 ---
 
 ## Notes
