@@ -3,6 +3,7 @@ import ProgressBar from './layout/ProgressBar';
 import ModeToggle from './ui/ModeToggle';
 import OptionButton from './ui/OptionButton';
 import CredenceSlider from './ui/CredenceSlider';
+import styles from '../styles/components/QuestionScreen.module.css';
 
 /**
  * Reusable question screen template
@@ -33,39 +34,16 @@ const QuestionScreen = ({
       <ProgressBar percentage={progressPercentage} />
 
       <main className="screen-main">
-        <div style={{ maxWidth: '700px', width: '100%' }}>
-          <div
-            style={{
-              fontSize: 'var(--text-sm)',
-              textTransform: 'uppercase',
-              letterSpacing: 'var(--tracking-wider)',
-              color: categoryColor,
-              marginBottom: 'var(--spacing-8)',
-              fontFamily: 'var(--font-body)'
-            }}
-          >
+        <div className={styles.container}>
+          <div className={styles.categoryLabel} style={{ color: categoryColor }}>
             {categoryLabel}
           </div>
 
-          <h2
-            style={{
-              fontSize: 'var(--text-heading)',
-              fontWeight: 'var(--font-normal)',
-              lineHeight: 'var(--leading-normal)',
-              marginBottom: 'var(--spacing-6)'
-            }}
-          >
+          <h2 className={styles.heading}>
             {heading}
           </h2>
 
-          <p
-            style={{
-              fontSize: 'var(--text-2xl)',
-              opacity: 0.6,
-              marginBottom: 'var(--spacing-12)',
-              fontFamily: 'var(--font-body)'
-            }}
-          >
+          <p className={styles.instructions}>
             {inputMode === 'options' ? instructionsOptions : instructionsSliders}
           </p>
 
@@ -106,13 +84,7 @@ const QuestionScreen = ({
             )}
           </div>
 
-          <div
-            style={{
-              marginTop: 'var(--spacing-20)',
-              display: 'flex',
-              justifyContent: 'space-between'
-            }}
-          >
+          <div className={styles.buttonRow}>
             <button onClick={onBack} className="btn btn-secondary">
               ← Back
             </button>

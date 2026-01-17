@@ -1,4 +1,5 @@
 import Header from './layout/Header';
+import styles from '../styles/components/WelcomeScreen.module.css';
 
 /**
  * Welcome/landing screen
@@ -10,39 +11,16 @@ const WelcomeScreen = ({ onStart }) => {
       <Header subtitle="~3 minutes" />
 
       <main className="screen-main">
-        <div style={{ maxWidth: '800px', textAlign: 'center' }}>
-          <h1
-            style={{
-              fontSize: 'var(--text-hero)',
-              fontWeight: 'var(--font-light)',
-              lineHeight: 'var(--leading-tight)',
-              marginBottom: 'var(--spacing-16)',
-              letterSpacing: 'var(--tracking-tight)'
-            }}
-          >
+        <div className={styles.container}>
+          <h1 className={styles.heading}>
             Where Should Your
             <br />
-            <span
-              style={{
-                fontStyle: 'italic',
-                background: 'var(--gradient-primary)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}
-            >
+            <span className={styles.headingEmphasis}>
               Giving Go?
             </span>
           </h1>
 
-          <p
-            style={{
-              fontSize: 'var(--text-3xl)',
-              lineHeight: 'var(--leading-relaxed)',
-              opacity: 0.8,
-              marginBottom: 'var(--spacing-24)',
-              fontFamily: 'var(--font-body)'
-            }}
-          >
+          <p className={styles.intro}>
             Uncertain about your ethical views? This tool helps you allocate resources
             across different causes based on your moral credences—the probabilities you
             assign to different ethical perspectives.
@@ -52,35 +30,13 @@ const WelcomeScreen = ({ onStart }) => {
             Start Quiz →
           </button>
 
-          <div
-            style={{
-              marginTop: 'var(--spacing-32)',
-              padding: 'var(--spacing-16)',
-              background: 'var(--overlay-subtle)',
-              borderRadius: 'var(--radius-xl)',
-              border: '1px solid var(--border-subtle)'
-            }}
-          >
-            <div
-              style={{
-                fontSize: 'var(--text-lg)',
-                opacity: 0.7,
-                marginBottom: 'var(--spacing-8)',
-                fontFamily: 'var(--font-body)'
-              }}
-            >
+          <div className={styles.infoBox}>
+            <div className={styles.infoBoxLabel}>
               You'll be asked about:
             </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 'var(--spacing-8)',
-                fontFamily: 'var(--font-body)'
-              }}
-            >
-              <div style={{ fontSize: 'var(--text-xl)' }}>🐾 Animal vs. Human welfare</div>
-              <div style={{ fontSize: 'var(--text-xl)' }}>⏳ Current vs. Future generations</div>
+            <div className={styles.infoBoxGrid}>
+              <div className={styles.infoBoxItem}>🐾 Animal vs. Human welfare</div>
+              <div className={styles.infoBoxItem}>⏳ Current vs. Future generations</div>
             </div>
           </div>
         </div>

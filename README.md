@@ -93,12 +93,11 @@ quiz-prototype/
 │   │       └── ProgressBar.jsx     # Progress indicator
 │   │
 │   ├── utils/                      # Pure utility functions
-│   │   ├── calculations.js         # All calculation logic
-│   │   │   ├── calculateCauseValue()
-│   │   │   ├── calculateMaxEV()
-│   │   │   ├── calculateVarianceVoting()
-│   │   │   └── adjustCredences()
-│   │   └── helpers.js              # Helper utilities
+│   │   └── calculations.js         # All calculation logic
+│   │       ├── calculateCauseValue()
+│   │       ├── calculateMaxEV()
+│   │       ├── calculateVarianceVoting()
+│   │       └── adjustCredences()
 │   │
 │   ├── constants/                  # Configuration
 │   │   └── config.js               # All constants and config
@@ -113,6 +112,8 @@ quiz-prototype/
 ├── package.json                    # Dependencies and scripts
 ├── CLAUDE.md                       # Post-refactoring cleanup plan
 ├── COMPONENT_BOUNDARIES.md         # Component analysis documentation
+├── COMPREHENSION_ISSUES.md         # Code comprehension tracking (resolved)
+├── REFACTORING_COMPLETE.md         # Refactoring completion summary
 └── REFACTORING_NOTES.md            # Bug fixes and architecture notes
 ```
 
@@ -254,7 +255,7 @@ See **REFACTORING_NOTES.md** for details on bug fixes and architectural decision
 
 ## 🤝 Contributing
 
-This project was refactored from a single-file prototype (816 lines) into a modular architecture (25 files). The original source is preserved in git history (commit dd5499b).
+This project was refactored from a single-file prototype (816 lines) into a modular architecture (26 files). The original source is preserved in git history (commit dd5499b).
 
 When contributing:
 1. Follow existing component patterns

@@ -1,0 +1,56 @@
+/* Welcome Screen Styles */
+
+.container {
+  max-width: 800px;
+  text-align: center;
+}
+
+.heading {
+  font-size: var(--text-hero);
+  font-weight: var(--font-light);
+  line-height: var(--leading-tight);
+  margin-bottom: var(--spacing-16);
+  letter-spacing: var(--tracking-tight);
+}
+
+.headingEmphasis {
+  font-style: italic;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.intro {
+  font-size: var(--text-3xl);
+  line-height: var(--leading-relaxed);
+  opacity: 0.8;
+  margin-bottom: var(--spacing-24);
+  font-family: var(--font-body);
+}
+
+.infoBox {
+  margin-top: var(--spacing-32);
+  padding: var(--spacing-16);
+  background: var(--overlay-subtle);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+}
+
+.infoBoxLabel {
+  font-size: var(--text-lg);
+  opacity: 0.7;
+  margin-bottom: var(--spacing-8);
+  font-family: var(--font-body);
+}
+
+.infoBoxGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-8);
+  font-family: var(--font-body);
+}
+
+.infoBoxItem {
+  font-size: var(--text-xl);
+}
