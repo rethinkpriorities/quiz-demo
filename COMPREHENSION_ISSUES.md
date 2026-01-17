@@ -47,15 +47,15 @@ This document tracks specific code patterns, files, or lines that need explanati
 
 ### Low Priority (Nice to understand but not critical)
 
-- [ ] File: `src/components/QuestionScreen.jsx` - How styles are applied
-      Why it's confusing: Mix of className, inline styles, CSS modules - want to understand the pattern
-      Resolution needed: explanation - Review the different styling approaches and when to use each
-      Notes: Need to understand React styling best practices
-
-- [ ] File: `src/components/WelcomeScreen.jsx` - Styling approach
-      Why it's confusing: Also has mix of styling methods, want to understand the pattern
-      Resolution needed: explanation - Review styling approach used here
-      Notes: Related to QuestionScreen styling question
+- [x] Files: `src/components/QuestionScreen.jsx` & `WelcomeScreen.jsx` - Styling approaches
+      Resolution: EXPLAINED - Three styling patterns used in React:
+      1. Global CSS classes (className="screen") - reusable layout/utilities from global.css
+      2. Inline styles with CSS vars (style={{ fontSize: 'var(--text-sm)' }}) - one-off + dynamic
+      3. CSS Modules (import styles, className={styles.foo}) - complex reusable components
+      Understanding: Screens use inline+global (pragmatic for one-off layouts)
+                    UI components use CSS modules (worth separation for reused components)
+      Decision: Current mix is fine for MVP, could refactor to modules later if desired
+      Commit needed: NO - explanation only
 
 ---
 
