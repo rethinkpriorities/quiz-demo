@@ -1,307 +1,183 @@
-# Moral Parliament Quiz - Vite Migration & Refactoring Plan
+# Moral Parliament Quiz - Post-Refactoring Cleanup Plan
 
-## Overview
+## ✅ Completed: Initial Refactoring (Phases 1-11)
 
-This plan outlines the migration of the Moral Parliament Quiz from a single JSX file to a properly structured Vite + React application with clear separation of concerns.
+The application has been successfully refactored from a single 816-line JSX file into a modular architecture with 25 well-organized files. All core functionality has been preserved and bugs have been fixed.
 
-**Goals:**
-
-- Serve the application with Vite dev server
-- Separate concerns into logical files
-- Maintain exact current behavior
-- Improve code readability and maintainability
+**Status:** Production-ready and fully functional ✅
 
 ---
 
-## Phase 1: Vite Setup
+## 🎯 Current Cleanup & Refinement Goals
+
+This document outlines remaining cleanup tasks and planned improvements to further enhance the codebase.
+
+---
+
+## Phase 1: Slider UX Refinement
+
+**Priority:** High
+**Status:** Not Started
+
+### Problem
+While the sticky slider bug has been fixed, the slider recalculation behavior during drag could be smoother and more intuitive.
+
+### Current Behavior
+When dragging one slider, the other sliders immediately recalculate on every movement to maintain the 100% total. This works correctly but could feel more polished.
+
+### Potential Improvements to Explore
+
+#### Option A: Debounced Recalculation
+- Debounce the auto-balance logic during drag
+- Only recalculate when user pauses or releases
+- **Pros:** Smoother drag experience
+- **Cons:** May feel less responsive
+
+#### Option B: Different Distribution Algorithm
+- Experiment with alternative proportional distribution
+- Consider user expectations during drag
+- **Pros:** More intuitive behavior
+- **Cons:** Requires testing to find optimal approach
+
+#### Option C: Visual Feedback Enhancement
+- Add subtle animations to other sliders when they adjust
+- Show temporary preview of where sliders will land
+- **Pros:** Better user understanding
+- **Cons:** More complex implementation
+
+### Tasks
+- [ ] Research slider UX best practices
+- [ ] Test current behavior with users (if possible)
+- [ ] Prototype alternative approaches
+- [ ] Choose and implement best solution
+- [ ] Test thoroughly in both question screens and results panels
+- [ ] Update documentation if behavior changes
+
+---
+
+## Phase 2: Code Quality Polish
+
+**Priority:** Medium
+**Status:** Not Started
 
 ### Tasks
 
-- [ ] Initialize Vite project with React template
-- [ ] Install dependencies (React, Vite, lucide-react)
-- [ ] Configure Vite for development
-- [ ] Create index.html entry point
-- [ ] Set up package.json scripts
-- [ ] Test that Vite dev server runs successfully
+#### Remove Any Remaining Inline Styles
+- [ ] Audit all components for inline styles
+- [ ] Move remaining inline styles to CSS modules where appropriate
+- [ ] Keep dynamic styles (colors from props) inline
+
+#### Consistency Review
+- [ ] Ensure consistent prop naming across components
+- [ ] Verify consistent error handling (if any)
+- [ ] Check for any duplicated logic
+
+#### Performance Optimization
+- [ ] Consider React.memo for frequently re-rendering components
+- [ ] Evaluate if useMemo/useCallback would help in MoralParliamentQuiz
+- [ ] Profile rendering performance (if needed)
 
 ---
 
-## Phase 2: File Structure Design
+## Phase 3: Accessibility Improvements
 
-### Proposed Structure
-
-```
-src/
-├── main.jsx                    # Entry point
-├── App.jsx                     # Main app wrapper
-├── components/
-│   ├── MoralParliamentQuiz.jsx # Main quiz orchestrator
-│   ├── WelcomeScreen.jsx       # Welcome page
-│   ├── QuestionScreen.jsx      # Reusable question template
-│   ├── ResultsScreen.jsx       # Results display
-│   ├── ui/
-│   │   ├── OptionButton.jsx    # Option selection button
-│   │   ├── CredenceSlider.jsx  # Full-size slider for questions
-│   │   ├── CompactSlider.jsx   # Compact slider for results
-│   │   ├── ModeToggle.jsx      # Options/Sliders mode switcher
-│   │   ├── CauseBar.jsx        # Cause allocation bar chart
-│   │   └── EditPanel.jsx       # Credence editing panel
-│   └── layout/
-│       ├── Header.jsx          # Reusable header component
-│       └── ProgressBar.jsx     # Progress indicator
-├── utils/
-│   ├── calculations.js         # All calculation logic
-│   │   ├── calculateCauseValue
-│   │   ├── calculateMaxEV
-│   │   ├── calculateVarianceVoting
-│   │   └── adjustCredences
-│   └── helpers.js              # Helper functions
-│       ├── selectSingleOption
-│       └── getSelectedOption
-├── constants/
-│   └── config.js               # Constants (CAUSES, MULTIPLIERS, options data)
-└── styles/
-    ├── global.css              # Global styles and resets
-    ├── variables.css           # CSS custom properties (colors, fonts)
-    └── components/             # Component-specific styles (if needed)
-```
+**Priority:** Medium
+**Status:** Not Started
 
 ### Tasks
-
-- [ ] Create directory structure
-- [ ] Plan component boundaries
-- [ ] Identify shared styles and extract to CSS variables
+- [ ] Add ARIA labels to interactive elements
+- [ ] Ensure keyboard navigation works for all interactions
+- [ ] Test slider keyboard controls (arrow keys)
+- [ ] Add focus indicators for keyboard users
+- [ ] Test with screen reader (VoiceOver on Mac)
+- [ ] Add skip navigation link
+- [ ] Ensure color contrast meets WCAG AA standards
+- [ ] Add aria-live regions for dynamic content updates
 
 ---
 
-## Phase 3: Extract Constants & Configuration
+## Phase 4: Documentation Refinement
+
+**Priority:** Low
+**Status:** Not Started
 
 ### Tasks
-
-- [ ] Create `src/constants/config.js`
-- [ ] Extract `CAUSES` object
-- [ ] Extract `ANIMAL_MULTIPLIERS` and `FUTURE_MULTIPLIERS`
-- [ ] Extract question options configurations (animal & future)
-- [ ] Extract color palette constants
-- [ ] Extract font family constants
+- [ ] Add inline code examples to README
+- [ ] Create CONTRIBUTING.md if planning to open source
+- [ ] Add JSDoc comments to any remaining uncommented functions
+- [ ] Consider adding architecture diagram
+- [ ] Add screenshots to README
 
 ---
 
-## Phase 4: Extract Utility Functions
+## Phase 5: Optional Enhancements
 
-### Tasks
+**Priority:** Low
+**Status:** Not Started
 
-- [ ] Create `src/utils/calculations.js`
-  - [ ] Move `calculateCauseValue` function
-  - [ ] Move `calculateMaxEV` function
-  - [ ] Move `calculateVarianceVoting` function
-  - [ ] Move `adjustCredences` function (auto-balancing logic)
-- [ ] Create `src/utils/helpers.js`
-  - [ ] Move `selectSingleOption` function
-  - [ ] Move `getSelectedOption` function
-- [ ] Add JSDoc comments to all utility functions
-- [ ] Ensure all functions are pure (no side effects)
+These are nice-to-have improvements that go beyond cleanup:
 
----
+### Testing Infrastructure
+- [ ] Set up Vitest for unit testing
+- [ ] Write tests for calculation functions
+- [ ] Set up React Testing Library
+- [ ] Write component tests for UI elements
+- [ ] Add test coverage reporting
 
-## Phase 5: Extract Styling
+### Developer Experience
+- [ ] Add ESLint configuration
+- [ ] Add Prettier for code formatting
+- [ ] Add pre-commit hooks with husky
+- [ ] Consider adding TypeScript (major undertaking)
 
-### Tasks
+### Visual Polish
+- [ ] Add subtle animations with framer-motion
+- [ ] Polish transitions between screens
+- [ ] Add loading states (if ever needed)
+- [ ] Consider dark mode support
 
-- [ ] Create `src/styles/variables.css`
-  - [ ] Define color palette CSS variables
-  - [ ] Define typography variables (fonts, sizes, weights)
-  - [ ] Define spacing scale
-  - [ ] Define border radius values
-  - [ ] Define transition/animation values
-- [ ] Create `src/styles/global.css`
-  - [ ] Add CSS reset/normalize
-  - [ ] Add global background gradient
-  - [ ] Add font imports (Cormorant Garamond, Source Sans Pro)
-  - [ ] Add global typography styles
-- [ ] Identify inline styles that can be extracted to CSS classes
-- [ ] Create CSS modules for complex components if needed
+### Features (Beyond Cleanup)
+- [ ] Add ability to save/share results
+- [ ] Add more cause categories
+- [ ] Add more moral dimensions to evaluate
+- [ ] Export results as PDF or image
+- [ ] Add explanations for each calculation method
 
 ---
 
-## Phase 6: Extract UI Components
+## Success Criteria for Cleanup Phase
 
-### Small Components First
-
-- [ ] Create `src/components/ui/OptionButton.jsx`
-  - [ ] Extract component with props interface
-  - [ ] Extract inline styles to CSS module or styled component
-  - [ ] Test component in isolation
-- [ ] Create `src/components/ui/CredenceSlider.jsx`
-  - [ ] Extract component
-  - [ ] Handle slider styling
-- [ ] Create `src/components/ui/CompactSlider.jsx`
-  - [ ] Extract component
-  - [ ] Handle compact styling
-- [ ] Create `src/components/ui/ModeToggle.jsx`
-  - [ ] Extract component
-  - [ ] Handle mode switching logic
-- [ ] Create `src/components/ui/CauseBar.jsx`
-  - [ ] Extract component
-  - [ ] Handle bar chart rendering
-- [ ] Create `src/components/ui/EditPanel.jsx`
-  - [ ] Extract component
-  - [ ] Handle panel expand/collapse
-
-### Layout Components
-
-- [ ] Create `src/components/layout/Header.jsx`
-  - [ ] Extract header with props for different states
-- [ ] Create `src/components/layout/ProgressBar.jsx`
-  - [ ] Extract progress bar with percentage prop
-
----
-
-## Phase 7: Extract Screen Components
-
-### Tasks
-
-- [ ] Create `src/components/WelcomeScreen.jsx`
-  - [ ] Extract welcome screen JSX
-  - [ ] Import and use Header component
-  - [ ] Handle "Start Quiz" button click
-  - [ ] Apply extracted styles
-- [ ] Create `src/components/QuestionScreen.jsx`
-  - [ ] Create reusable question template
-  - [ ] Accept props: question data, credences, handlers, mode, etc.
-  - [ ] Import UI components (OptionButton, CredenceSlider, ModeToggle)
-  - [ ] Import layout components (Header, ProgressBar)
-- [ ] Create `src/components/ResultsScreen.jsx`
-  - [ ] Extract results screen JSX
-  - [ ] Import CauseBar, EditPanel, CompactSlider
-  - [ ] Handle calculation display
-  - [ ] Handle credence editing
-
----
-
-## Phase 8: Refactor Main Quiz Component
-
-### Tasks
-
-- [ ] Create `src/components/MoralParliamentQuiz.jsx`
-- [ ] Keep state management (useState hooks)
-- [ ] Keep step navigation logic
-- [ ] Import all screen components
-- [ ] Import utility functions for calculations
-- [ ] Import constants from config
-- [ ] Render appropriate screen based on `currentStep`
-- [ ] Pass down props to child components
-- [ ] Verify no logic is duplicated
-
----
-
-## Phase 9: Create Entry Points
-
-### Tasks
-
-- [ ] Create `src/App.jsx`
-  - [ ] Import MoralParliamentQuiz component
-  - [ ] Import global styles
-  - [ ] Render MoralParliamentQuiz
-- [ ] Create `src/main.jsx`
-  - [ ] Import React and ReactDOM
-  - [ ] Import App component
-  - [ ] Render app to DOM
-- [ ] Create `index.html`
-  - [ ] Set up HTML boilerplate
-  - [ ] Link to main.jsx
-  - [ ] Set page title and meta tags
-
----
-
-## Phase 10: Testing & Verification
-
-### Functional Testing
-
-- [ ] Test welcome screen loads
-- [ ] Test navigation: Welcome → Animals → Future → Results
-- [ ] Test back navigation at each step
-- [ ] Test option button selection (sets credence to 100%)
-- [ ] Test mode toggle (Options ↔ Custom Mix)
-- [ ] Test slider auto-balancing in question screens
-- [ ] Test slider auto-balancing in results edit panels
-- [ ] Test calculation results match original
-- [ ] Test credence editing in results screen
-- [ ] Test edit panel expand/collapse
-- [ ] Test "Reset" buttons (individual and "Reset All")
-- [ ] Test visual change indicators when credences are modified
-- [ ] Verify all icons render (lucide-react)
-
-### Visual Testing
-
-- [ ] Compare visual output against original
-- [ ] Test responsive layout
-- [ ] Verify color gradients and transitions
-- [ ] Verify typography (fonts, sizes, weights)
-- [ ] Check button hover states
-- [ ] Check slider styling and fill gradients
-
-### Code Quality
-
-- [ ] Remove all console.logs
-- [ ] Ensure no unused imports
-- [ ] Verify all components have clear prop interfaces
-- [ ] Add PropTypes or TypeScript types (optional enhancement)
-- [ ] Ensure consistent code formatting
-- [ ] Run any linting tools
-
----
-
-## Phase 11: Documentation & Cleanup
-
-### Tasks
-
-- [ ] Add README.md with:
-  - [ ] Project description
-  - [ ] How to install dependencies
-  - [ ] How to run dev server
-  - [ ] How to build for production
-  - [ ] Project structure explanation
-- [ ] Add code comments where logic is complex
-- [ ] Document calculation algorithms
-- [ ] Remove old `moral-parliament-quiz-v6.jsx` file
-- [ ] Clean up any temporary files
-
----
-
-## Phase 12: Optional Enhancements (Post-refactor)
-
-These can be considered after core refactoring is complete:
-
-- [ ] Consider TypeScript migration for type safety
-- [ ] Add unit tests for calculation functions
-- [ ] Add component tests with Testing Library
-- [ ] Consider CSS-in-JS solution (styled-components, emotion) vs CSS modules
-- [ ] Add accessibility improvements (ARIA labels, keyboard navigation)
-- [ ] Add animations with framer-motion or similar
-- [ ] Consider state management library if app grows (Zustand, Redux)
-- [ ] Add error boundaries
-- [ ] Add loading states (if data fetching added later)
-
----
-
-## Success Criteria
-
-✅ Application runs on Vite dev server
-✅ All functionality works identically to original
-✅ Code is organized into logical, single-responsibility files
-✅ Styling is extracted and maintainable
-✅ Calculations are isolated and testable
-✅ Components are reusable and composable
-✅ Code is more readable and easier to understand
-✅ No breaking changes to user experience
+- [ ] Slider UX feels smooth and intuitive
+- [ ] No inline styles except for dynamic values
+- [ ] All interactive elements are keyboard accessible
+- [ ] Code passes linting with zero warnings
+- [ ] Documentation is clear and comprehensive
+- [ ] Performance is optimal (no unnecessary re-renders)
 
 ---
 
 ## Notes
 
-- **Priority**: Maintain exact behavior - no feature changes during refactor
-- **Style approach**: Start with CSS modules or CSS variables, can migrate to CSS-in-JS later if needed
-- **Component size**: Keep components small and focused (< 150 lines ideally)
-- **Testing strategy**: Manual testing during development, consider automated tests after refactor
-- **Performance**: Should be equivalent or better than original (Vite's HMR is fast)
+### Priority Ordering
+1. **Slider UX Refinement** - Most impactful UX improvement
+2. **Code Quality** - Maintainability improvements
+3. **Accessibility** - Important for inclusive design
+4. **Documentation** - Help future contributors
+5. **Optional Enhancements** - Nice-to-haves
+
+### Approach
+- Take one phase at a time
+- Test thoroughly after each change
+- Update documentation as you go
+- Keep the principle: don't fix what isn't broken
+
+### Timeline
+No fixed timeline - work on these as needed or as time permits. The application is already production-ready.
+
+---
+
+## References
+
+- **REFACTORING_NOTES.md** - Details on what was fixed during refactor
+- **COMPONENT_BOUNDARIES.md** - Component architecture analysis
+- **README.md** - Full project documentation

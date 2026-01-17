@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import CompactSlider from './CompactSlider';
+import { adjustCredences } from '../../utils/calculations';
 import styles from '../../styles/components/EditPanel.module.css';
 
 /**
@@ -51,38 +52,7 @@ const EditPanel = ({
               key={config.key}
               label={config.label}
               value={credences[config.key]}
-              onChange={(val) => {
-                // Auto-balance credences
-                const changedKey = config.key;
-                const newValue = Math.max(0, Math.min(100, val));
-                const otherKeys = Object.keys(credences).filter(k => k !== changedKey);
-                const currentOtherSum = otherKeys.reduce((sum, k) => sum + credences[k], 0);
-                const targetOtherSum = 100 - newValue;
-
-                const result = { [changedKey]: newValue };
-
-                if (currentOtherSum === 0) {
-                  const each = Math.floor(targetOtherSum / otherKeys.length);
-                  let remainder = targetOtherSum - (each * otherKeys.length);
-                  otherKeys.forEach((k, i) => {
-                    result[k] = each + (i < remainder ? 1 : 0);
-                  });
-                } else {
-                  let allocated = 0;
-                  otherKeys.forEach((k, i) => {
-                    if (i === otherKeys.length - 1) {
-                      result[k] = Math.max(0, targetOtherSum - allocated);
-                    } else {
-                      const proportion = credences[k] / currentOtherSum;
-                      const value = Math.round(targetOtherSum * proportion);
-                      result[k] = Math.max(0, value);
-                      allocated += result[k];
-                    }
-                  });
-                }
-
-                setCredences(result);
-              }}
+              onChange={(val) => setCredences(adjustCredences(config.key, val, credences))}
               color={config.color}
             />
           ))}

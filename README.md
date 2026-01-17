@@ -111,10 +111,9 @@ quiz-prototype/
 ├── index.html                      # HTML entry point
 ├── vite.config.js                  # Vite configuration
 ├── package.json                    # Dependencies and scripts
-├── CLAUDE.md                       # Implementation plan (phases)
+├── CLAUDE.md                       # Post-refactoring cleanup plan
 ├── COMPONENT_BOUNDARIES.md         # Component analysis documentation
-├── REFACTORING_NOTES.md            # Bug fixes and architecture notes
-└── TESTING_CHECKLIST.md            # Manual testing checklist
+└── REFACTORING_NOTES.md            # Bug fixes and architecture notes
 ```
 
 ---
@@ -192,13 +191,15 @@ Global utility classes in `src/styles/global.css` provide common patterns like f
 
 The dev server runs at `http://localhost:5173/` with hot module replacement.
 
-See **TESTING_CHECKLIST.md** for a comprehensive manual testing guide covering:
+### Manual Testing Areas
+Test the following flows:
 - All user flows (welcome → questions → results)
 - Option selection and slider modes
-- Auto-balancing behavior
-- Real-time recalculation
-- Reset functionality
-- Visual and responsive design
+- Auto-balancing behavior (sliders always sum to 100%)
+- Real-time recalculation in results screen
+- Reset functionality (individual and "Reset All")
+- Visual polish and responsive design
+- Browser console should show zero errors
 
 ---
 
