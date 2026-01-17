@@ -21,56 +21,9 @@ This document tracks specific code patterns, files, or lines that need explanati
 
 ---
 
-## Collected Issues
+## All Issues Resolved ✓
 
-### High Priority (Blocking comprehension)
-
-- [ ] File: `src/components/ui/EditPanel.jsx:54-85` - Inline auto-balancing logic
-      Why it's confusing: 30+ line function inline in JSX onChange handler
-      Why it exists: Duplicated from adjustCredences utility during refactoring
-      Resolution needed: cleanup - import and use adjustCredences from utils/calculations.js
-      Notes: We already have this exact logic in utils/calculations.js:110
-
-- [ ] File: `src/components/ui/CauseBar.jsx:9-11` - When do isIncrease/isDecrease recompute?
-      Why it's confusing: Want to understand React render cycle and when these values update
-      User observed: "unusual behavior in the browser that seemed like it was almost what was intended"
-      Resolution needed: both - explain React rendering + investigate potential bug
-      Notes: Lines 9-11 compute on every render. May have logic issue with change detection.
-
-### Medium Priority (Makes code harder to read)
-
-- [ ] File: `src/components/ui/OptionButton.jsx:21-26, 32, 43` - Hardcoded values in inline styles
-      Why it's confusing: Mix of dynamic (color prop) and hardcoded values ('135deg', '22', '11', '#f4f4f4')
-      Why it exists: Need dynamic color from props, but included magic numbers
-      Resolution needed: cleanup - Move hardcoded values to CSS variables
-      Notes: '22' and '11' are hex opacity values, '135deg' is gradient angle, '#f4f4f4' is fallback color
-
-### Low Priority (Nice to understand but not critical)
-
-- [x] Files: `src/components/QuestionScreen.jsx` & `WelcomeScreen.jsx` - Styling approaches
-      Resolution: EXPLAINED - Three styling patterns used in React:
-      1. Global CSS classes (className="screen") - reusable layout/utilities from global.css
-      2. Inline styles with CSS vars (style={{ fontSize: 'var(--text-sm)' }}) - one-off + dynamic
-      3. CSS Modules (import styles, className={styles.foo}) - complex reusable components
-      Understanding: Screens use inline+global (pragmatic for one-off layouts)
-                    UI components use CSS modules (worth separation for reused components)
-      Decision: Current mix is fine for MVP, could refactor to modules later if desired
-      Commit needed: NO - explanation only
-
----
-
-## React Patterns to Review
-
-Before marking this complete, need to cover:
-
-- [ ] `useState` and `useEffect` - Comprehensive review
-      Topics to cover:
-      - How useState works, when state updates, batching
-      - How useEffect works, dependencies array, cleanup
-      - Analogies to Redux/Flux or other state management you used 6 years ago
-      - Common pitfalls and mental models
-      - How they're used in this codebase (MoralParliamentQuiz.jsx)
-      Notes: Final item before completion
+All comprehension issues have been addressed. See "Resolved Issues" section below for details.
 
 ---
 
@@ -100,6 +53,20 @@ Before marking this complete, need to cover:
       Files modified: OptionButton.jsx, OptionButton.module.css
       Commit needed: YES - 2 files modified
 
+- [x] React Patterns: `useState` and `useEffect` - Comprehensive review
+      Resolution: EXPLAINED - Covered all topics comprehensively
+      Topics covered:
+        - useState syntax, patterns, and 8 examples from MoralParliamentQuiz.jsx
+        - Computed values vs state (lines 36-49 recalculate on every render)
+        - State update mechanics (async, batching, object/array immutability)
+        - Comparison to Redux/Flux from 6 years ago (simpler, more direct)
+        - useEffect syntax, dependency array, cleanup functions
+        - Common useEffect patterns (data fetching, subscriptions, external sync)
+        - Why this app doesn't need useEffect (purely reactive)
+        - Mental models and common pitfalls
+      Understanding: All React fundamentals for this codebase now clear
+      Commit needed: NO - explanation only
+
 ---
 
 ## Notes
@@ -112,4 +79,4 @@ Before marking this complete, need to cover:
 
 ---
 
-**Status:** Collecting issues (not yet addressing them)
+**Status:** ✅ COMPLETE - All comprehension issues resolved
