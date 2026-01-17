@@ -7,14 +7,14 @@
  * ALGORITHM OVERVIEW:
  *
  * 1. Worldview Combinations:
- *    With 3 animal views × 3 future views = 9 total worldview combinations
- *    Each combination has a probability = (animalCredence/100) × (futureCredence/100)
+ *    With 3 options × 4 questions = 81 total worldview combinations
+ *    Each combination has a probability = product of individual credences
  *
  * 2. Cause Values:
  *    Each cause starts with base points (100)
- *    - Global Health: helps current humans (no multipliers applied)
- *    - Animal Welfare: helps animals (affected by animal multiplier)
- *    - GCR (Future): helps future humans (affected by future multiplier)
+ *    - Global Health: baseline (no multipliers applied)
+ *    - Animal Welfare: affected by animal and scale multipliers
+ *    - GCR (Future): affected by future, scale, and certainty multipliers
  *
  * 3. Max Expected Value (MaxEV):
  *    For each cause, calculate EV across all worldview combinations:
@@ -30,19 +30,45 @@
  * All functions are pure (no side effects) and fully testable.
  */
 
-import { CAUSES, ANIMAL_MULTIPLIERS, FUTURE_MULTIPLIERS } from '../constants/config.js';
+import {
+  CAUSES,
+  ANIMAL_MULTIPLIERS,
+  FUTURE_MULTIPLIERS,
+  SCALE_MULTIPLIERS,
+  CERTAINTY_MULTIPLIERS,
+} from '../constants/config.js';
 
 /**
- * Calculate the value of a cause given animal and future multipliers
- * @param {Object} cause - Cause object with points and helper flags
- * @param {number} animalMultiplier - Multiplier for animal welfare (1, 0.1, or 0.01)
- * @param {number} futureMultiplier - Multiplier for future humans (1, 0.1, or 0.01)
+ * Calculate the value of a cause given all four credence dimensions
+ * @param {Object} cause - Cause object from CAUSES
+ * @param {number} animalMult - Multiplier from ANIMAL_MULTIPLIERS
+ * @param {number} futureMult - Multiplier from FUTURE_MULTIPLIERS
+ * @param {number} scaleExp - Exponent from SCALE_MULTIPLIERS (0, 0.5, or 1)
+ * @param {number} certaintyMult - Multiplier from CERTAINTY_MULTIPLIERS
  * @returns {number} The calculated value for the cause
  */
-export const calculateCauseValue = (cause, animalMultiplier, futureMultiplier) => {
+export const calculateCauseValue = (cause, animalMult, futureMult, scaleExp, certaintyMult) => {
   let value = cause.points;
-  if (cause.helpsAnimals) value *= animalMultiplier;
-  if (cause.helpsFutureHumans) value *= futureMultiplier;
+
+  // Apply animal discount (if cause helps animals)
+  if (cause.helpsAnimals) {
+    value *= animalMult;
+  }
+
+  // Apply future discount (if cause helps future humans)
+  if (cause.helpsFutureHumans) {
+    value *= futureMult;
+  }
+
+  // Apply scale boost (all causes, based on their scaleFactor)
+  // scaleFactor^exponent: when exp=0, all get 1; when exp=1, full scaleFactor
+  value *= Math.pow(cause.scaleFactor, scaleExp);
+
+  // Apply certainty discount (if cause is speculative)
+  if (cause.isSpeculative) {
+    value *= certaintyMult;
+  }
+
   return value;
 };
 
@@ -51,22 +77,39 @@ export const calculateCauseValue = (cause, animalMultiplier, futureMultiplier) =
  * Determines which cause has highest EV and allocates 100% to it
  * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
  * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
+ * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
+ * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
  * @returns {Object} Allocation percentages and EVs for each cause
  */
-export const calculateMaxEV = (animalCreds, futureCreds) => {
+export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
   const causeEVs = {};
 
   // Calculate expected value for each cause across all worldview combinations
   Object.entries(CAUSES).forEach(([causeKey, cause]) => {
     let ev = 0;
 
-    Object.entries(animalCreds).forEach(([animalView, animalProb]) => {
-      Object.entries(futureCreds).forEach(([futureView, futureProb]) => {
-        const animalMult = ANIMAL_MULTIPLIERS[animalView];
-        const futureMult = FUTURE_MULTIPLIERS[futureView];
-        const worldviewProb = (animalProb / 100) * (futureProb / 100);
-        const causeValue = calculateCauseValue(cause, animalMult, futureMult);
-        ev += worldviewProb * causeValue;
+    Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
+      Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
+        Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
+          Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+            const animalMult = ANIMAL_MULTIPLIERS[animalKey];
+            const futureMult = FUTURE_MULTIPLIERS[futureKey];
+            const scaleExp = SCALE_MULTIPLIERS[scaleKey];
+            const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+
+            const worldviewProb =
+              (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
+
+            const causeValue = calculateCauseValue(
+              cause,
+              animalMult,
+              futureMult,
+              scaleExp,
+              certaintyMult
+            );
+            ev += worldviewProb * causeValue;
+          });
+        });
       });
     });
 
@@ -89,34 +132,50 @@ export const calculateMaxEV = (animalCreds, futureCreds) => {
  * Each worldview votes for its preferred cause(s), votes weighted by credence
  * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
  * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
+ * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
+ * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateVarianceVoting = (animalCreds, futureCreds) => {
+export const calculateVarianceVoting = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
   const votes = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
 
   // Each worldview combination casts votes
-  Object.entries(animalCreds).forEach(([animalView, animalProb]) => {
-    Object.entries(futureCreds).forEach(([futureView, futureProb]) => {
-      const worldviewWeight = (animalProb / 100) * (futureProb / 100);
-      const animalMult = ANIMAL_MULTIPLIERS[animalView];
-      const futureMult = FUTURE_MULTIPLIERS[futureView];
+  Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
+    Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
+      Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
+        Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+          const worldviewWeight =
+            (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
 
-      // Calculate values for all causes in this worldview
-      const values = {};
-      Object.entries(CAUSES).forEach(([causeKey, cause]) => {
-        values[causeKey] = calculateCauseValue(cause, animalMult, futureMult);
-      });
+          const animalMult = ANIMAL_MULTIPLIERS[animalKey];
+          const futureMult = FUTURE_MULTIPLIERS[futureKey];
+          const scaleExp = SCALE_MULTIPLIERS[scaleKey];
+          const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
 
-      // Find max value and identify tied causes
-      const maxValue = Math.max(...Object.values(values));
-      const tiedCauses = Object.keys(values).filter(
-        (causeKey) => Math.abs(values[causeKey] - maxValue) < 0.0001
-      );
+          // Calculate values for all causes in this worldview
+          const values = {};
+          Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+            values[causeKey] = calculateCauseValue(
+              cause,
+              animalMult,
+              futureMult,
+              scaleExp,
+              certaintyMult
+            );
+          });
 
-      // Split vote equally among tied causes
-      const votePerCause = worldviewWeight / tiedCauses.length;
-      tiedCauses.forEach((causeKey) => {
-        votes[causeKey] += votePerCause;
+          // Find max value and identify tied causes
+          const maxValue = Math.max(...Object.values(values));
+          const tiedCauses = Object.keys(values).filter(
+            (causeKey) => Math.abs(values[causeKey] - maxValue) < 0.0001
+          );
+
+          // Split vote equally among tied causes
+          const votePerCause = worldviewWeight / tiedCauses.length;
+          tiedCauses.forEach((causeKey) => {
+            votes[causeKey] += votePerCause;
+          });
+        });
       });
     });
   });
