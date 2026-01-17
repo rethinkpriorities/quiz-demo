@@ -23,7 +23,7 @@ const ResultsScreen = ({
   originalParliament,
   hasChanged,
   onResetAll,
-  onBack
+  onBack,
 }) => {
   return (
     <div className={styles.resultsContainer}>
@@ -32,9 +32,7 @@ const ResultsScreen = ({
         <div className={styles.header}>
           <h1 className={styles.title}>
             Recommended Allocations
-            {hasChanged && (
-              <span className={styles.modifiedIndicator}>(modified)</span>
-            )}
+            {hasChanged && <span className={styles.modifiedIndicator}>(modified)</span>}
           </h1>
         </div>
 
@@ -72,8 +70,7 @@ const ResultsScreen = ({
             />
             <div className={styles.cardFooter}>
               EVs: GH {maxEVResults.evs.globalHealth.toFixed(0)} · AW{' '}
-              {maxEVResults.evs.animalWelfare.toFixed(0)} · GCR{' '}
-              {maxEVResults.evs.gcr.toFixed(0)}
+              {maxEVResults.evs.animalWelfare.toFixed(0)} · GCR {maxEVResults.evs.gcr.toFixed(0)}
             </div>
           </div>
 
@@ -107,9 +104,7 @@ const ResultsScreen = ({
               color="var(--color-gcr)"
               hasChanged={hasChanged}
             />
-            <div className={styles.cardFooter}>
-              9 worldviews vote for preferred cause
-            </div>
+            <div className={styles.cardFooter}>9 worldviews vote for preferred cause</div>
           </div>
         </div>
 

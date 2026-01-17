@@ -32,7 +32,7 @@
   text-align: right;
 }
 
-.credenceSlider input[type="range"] {
+.credenceSlider input[type='range'] {
   width: 100%;
   height: 8px;
   border-radius: var(--radius-sm);
@@ -61,7 +61,7 @@
   font-weight: var(--font-semibold);
 }
 
-.compactSlider input[type="range"] {
+.compactSlider input[type='range'] {
   width: 100%;
   height: 6px;
   border-radius: 3px;

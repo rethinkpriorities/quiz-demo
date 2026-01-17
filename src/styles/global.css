@@ -40,7 +40,12 @@ body {
 
 /* ===== GLOBAL TYPOGRAPHY ===== */
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: var(--font-normal);
   line-height: var(--leading-tight);
@@ -58,7 +63,7 @@ button {
   padding: 0;
 }
 
-input[type="range"] {
+input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   outline: none;
@@ -66,16 +71,16 @@ input[type="range"] {
 }
 
 /* Range slider track styles */
-input[type="range"]::-webkit-slider-track {
+input[type='range']::-webkit-slider-track {
   border-radius: var(--radius-sm);
 }
 
-input[type="range"]::-moz-range-track {
+input[type='range']::-moz-range-track {
   border-radius: var(--radius-sm);
 }
 
 /* Range slider thumb styles */
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 20px;
@@ -86,7 +91,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: 2px solid currentColor;
 }
 
-input[type="range"]::-moz-range-thumb {
+input[type='range']::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;

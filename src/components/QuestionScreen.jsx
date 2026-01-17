@@ -24,7 +24,7 @@ const QuestionScreen = ({
   setInputMode,
   onBack,
   onContinue,
-  adjustCredences
+  adjustCredences,
 }) => {
   const total = Object.values(credences).reduce((sum, val) => sum + val, 0);
 
@@ -39,9 +39,7 @@ const QuestionScreen = ({
             {categoryLabel}
           </div>
 
-          <h2 className={styles.heading}>
-            {heading}
-          </h2>
+          <h2 className={styles.heading}>{heading}</h2>
 
           <p className={styles.instructions}>
             {inputMode === 'options' ? instructionsOptions : instructionsSliders}
@@ -52,7 +50,7 @@ const QuestionScreen = ({
           <div className="card">
             {inputMode === 'options' ? (
               <>
-                {options.map(opt => (
+                {options.map((opt) => (
                   <OptionButton
                     key={opt.key}
                     label={opt.label}
@@ -67,7 +65,7 @@ const QuestionScreen = ({
               </>
             ) : (
               <>
-                {options.map(opt => (
+                {options.map((opt) => (
                   <CredenceSlider
                     key={opt.key}
                     label={opt.label}
@@ -77,9 +75,7 @@ const QuestionScreen = ({
                     color={opt.color}
                   />
                 ))}
-                <div className="total">
-                  Total: {total}% ✓
-                </div>
+                <div className="total">Total: {total}% ✓</div>
               </>
             )}
           </div>

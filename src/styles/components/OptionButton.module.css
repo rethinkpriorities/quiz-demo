@@ -20,7 +20,11 @@
 .optionButton.selected {
   border: 2px solid var(--option-color);
   /* Uses CSS custom property set via inline style */
-  background: linear-gradient(135deg, color-mix(in srgb, var(--option-color) 13%, transparent), color-mix(in srgb, var(--option-color) 7%, transparent));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--option-color) 13%, transparent),
+    color-mix(in srgb, var(--option-color) 7%, transparent)
+  );
 }
 
 .optionButton:hover {

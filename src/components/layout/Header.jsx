@@ -6,9 +6,7 @@ const Header = ({ subtitle }) => {
   return (
     <header className="header">
       <div className="header-title">Moral Parliament</div>
-      {subtitle && (
-        <div className="header-subtitle">{subtitle}</div>
-      )}
+      {subtitle && <div className="header-subtitle">{subtitle}</div>}
     </header>
   );
 };

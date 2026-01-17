@@ -8,7 +8,7 @@ import styles from '../../styles/components/CauseBar.module.css';
 const CauseBar = ({ name, percentage, color, originalPercentage = null, hasChanged = false }) => {
   const showChange = hasChanged && originalPercentage !== null && percentage !== originalPercentage;
   const isIncrease = showChange && percentage > originalPercentage;
-  const isDecrease = showChange && percentage < originalPercentage;
+  const _isDecrease = showChange && percentage < originalPercentage; // Unused: deferred to UX designer
 
   return (
     <div className={styles.causeBar}>
@@ -29,7 +29,7 @@ const CauseBar = ({ name, percentage, color, originalPercentage = null, hasChang
             className={styles.barOriginal}
             style={{
               width: `${originalPercentage}%`,
-              background: color
+              background: color,
             }}
           />
         )}
@@ -37,14 +37,10 @@ const CauseBar = ({ name, percentage, color, originalPercentage = null, hasChang
           className={styles.barFill}
           style={{
             width: `${percentage}%`,
-            background: color
+            background: color,
           }}
         >
-          {percentage > 15 && (
-            <span className={styles.barLabel}>
-              {percentage.toFixed(0)}%
-            </span>
-          )}
+          {percentage > 15 && <span className={styles.barLabel}>{percentage.toFixed(0)}%</span>}
         </div>
       </div>
     </div>

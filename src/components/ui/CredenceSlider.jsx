@@ -23,7 +23,7 @@ const CredenceSlider = ({ label, description, value, onChange, color }) => {
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value))}
         style={{
-          background: `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgba(255,255,255,0.15) ${value}%, rgba(255,255,255,0.15) 100%)`
+          background: `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgba(255,255,255,0.15) ${value}%, rgba(255,255,255,0.15) 100%)`,
         }}
       />
     </div>

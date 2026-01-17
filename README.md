@@ -54,6 +54,24 @@ npm run dev
 # Open http://localhost:5173 in your browser
 ```
 
+### Code Quality
+
+```bash
+# Run ESLint to check for issues
+npm run lint
+
+# Auto-fix ESLint issues
+npm run lint:fix
+
+# Format code with Prettier
+npm run format
+
+# Check if code is formatted
+npm run format:check
+```
+
+Pre-commit hooks automatically run linting and formatting on staged files.
+
 ### Production Build
 
 ```bash
@@ -167,6 +185,9 @@ See `src/utils/calculations.js` for implementation details.
 - **lucide-react 0.462.0** - Icons
 - **CSS Modules** - Component-scoped styling
 - **CSS Custom Properties** - Design system (colors, spacing, typography)
+- **ESLint** - Code linting with React best practices
+- **Prettier** - Code formatting
+- **Husky + lint-staged** - Pre-commit hooks for code quality
 
 ### Fonts
 - **Cormorant Garamond** - Headings (elegant serif)
@@ -234,6 +255,9 @@ To add a new question:
 - **Component Separation**: Each component has single responsibility
 - **CSS Modules**: Scoped styles prevent conflicts
 - **JSDoc Comments**: Utility functions documented with types
+- **ESLint**: Enforces React best practices and catches common mistakes
+- **Prettier**: Consistent code formatting across the project
+- **Pre-commit Hooks**: Automatic linting and formatting before commits
 
 ---
 

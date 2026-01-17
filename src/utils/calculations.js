@@ -74,15 +74,13 @@ export const calculateMaxEV = (animalCreds, futureCreds) => {
   });
 
   // Find cause with maximum EV
-  const maxEVCause = Object.keys(causeEVs).reduce((a, b) =>
-    causeEVs[a] > causeEVs[b] ? a : b
-  );
+  const maxEVCause = Object.keys(causeEVs).reduce((a, b) => (causeEVs[a] > causeEVs[b] ? a : b));
 
   return {
     globalHealth: maxEVCause === 'globalHealth' ? 100 : 0,
     animalWelfare: maxEVCause === 'animalWelfare' ? 100 : 0,
     gcr: maxEVCause === 'gcr' ? 100 : 0,
-    evs: causeEVs
+    evs: causeEVs,
   };
 };
 
@@ -111,13 +109,13 @@ export const calculateVarianceVoting = (animalCreds, futureCreds) => {
 
       // Find max value and identify tied causes
       const maxValue = Math.max(...Object.values(values));
-      const tiedCauses = Object.keys(values).filter(causeKey =>
-        Math.abs(values[causeKey] - maxValue) < 0.0001
+      const tiedCauses = Object.keys(values).filter(
+        (causeKey) => Math.abs(values[causeKey] - maxValue) < 0.0001
       );
 
       // Split vote equally among tied causes
       const votePerCause = worldviewWeight / tiedCauses.length;
-      tiedCauses.forEach(causeKey => {
+      tiedCauses.forEach((causeKey) => {
         votes[causeKey] += votePerCause;
       });
     });
@@ -127,7 +125,7 @@ export const calculateVarianceVoting = (animalCreds, futureCreds) => {
   return {
     globalHealth: votes.globalHealth * 100,
     animalWelfare: votes.animalWelfare * 100,
-    gcr: votes.gcr * 100
+    gcr: votes.gcr * 100,
   };
 };
 
@@ -143,7 +141,7 @@ export const adjustCredences = (changedKey, newValue, credences) => {
   // Clamp new value between 0 and 100
   newValue = Math.max(0, Math.min(100, newValue));
 
-  const otherKeys = Object.keys(credences).filter(k => k !== changedKey);
+  const otherKeys = Object.keys(credences).filter((k) => k !== changedKey);
   const currentOtherSum = otherKeys.reduce((sum, k) => sum + credences[k], 0);
   const targetOtherSum = 100 - newValue;
 
@@ -152,7 +150,7 @@ export const adjustCredences = (changedKey, newValue, credences) => {
   // If other sliders are all at 0, distribute evenly
   if (currentOtherSum === 0) {
     const each = Math.floor(targetOtherSum / otherKeys.length);
-    let remainder = targetOtherSum - (each * otherKeys.length);
+    let remainder = targetOtherSum - each * otherKeys.length;
     otherKeys.forEach((k, i) => {
       result[k] = each + (i < remainder ? 1 : 0);
     });

@@ -3,31 +3,31 @@ export const CAUSES = {
   globalHealth: {
     name: 'Global Health',
     points: 100,
-    helpsCurrentHumans: true
+    helpsCurrentHumans: true,
   },
   animalWelfare: {
     name: 'Animal Welfare',
     points: 100,
-    helpsAnimals: true
+    helpsAnimals: true,
   },
   gcr: {
     name: 'GCR (Future)',
     points: 100,
-    helpsFutureHumans: true
-  }
+    helpsFutureHumans: true,
+  },
 };
 
 // Multiplier values for different worldviews
 export const ANIMAL_MULTIPLIERS = {
   equal: 1,
   '10x': 0.1,
-  '100x': 0.01
+  '100x': 0.01,
 };
 
 export const FUTURE_MULTIPLIERS = {
   equal: 1,
   '10x': 0.1,
-  '100x': 0.01
+  '100x': 0.01,
 };
 
 // Question options configuration
@@ -36,20 +36,20 @@ export const ANIMAL_QUESTION_OPTIONS = [
     key: 'equal',
     label: 'Animals and humans matter equally',
     description: 'Equal weight to equivalent experiences',
-    color: '#81B29A'
+    color: '#81B29A',
   },
   {
     key: '10x',
     label: 'Animals matter 10× less than humans',
     description: 'Moderate speciesist view',
-    color: '#98C1D9'
+    color: '#98C1D9',
   },
   {
     key: '100x',
     label: 'Animals matter 100× less than humans',
     description: 'Strong speciesist view',
-    color: '#E07A5F'
-  }
+    color: '#E07A5F',
+  },
 ];
 
 export const FUTURE_QUESTION_OPTIONS = [
@@ -57,33 +57,33 @@ export const FUTURE_QUESTION_OPTIONS = [
     key: 'equal',
     label: 'Future and current humans matter equally',
     description: 'No time discounting',
-    color: '#81B29A'
+    color: '#81B29A',
   },
   {
     key: '10x',
     label: 'Future humans matter 10× less',
     description: 'Moderate time preference',
-    color: '#98C1D9'
+    color: '#98C1D9',
   },
   {
     key: '100x',
     label: 'Future humans matter 100× less',
     description: 'Strong present focus',
-    color: '#E07A5F'
-  }
+    color: '#E07A5F',
+  },
 ];
 
 // Edit panel configurations for results screen
 export const ANIMAL_PANEL_CONFIG = [
   { key: 'equal', label: 'Equal weight', short: 'Eq', color: '#81B29A' },
   { key: '10x', label: '10× less', short: '10×', color: '#98C1D9' },
-  { key: '100x', label: '100× less', short: '100×', color: '#E07A5F' }
+  { key: '100x', label: '100× less', short: '100×', color: '#E07A5F' },
 ];
 
 export const FUTURE_PANEL_CONFIG = [
   { key: 'equal', label: 'Equal weight', short: 'Eq', color: '#81B29A' },
   { key: '10x', label: '10× less', short: '10×', color: '#98C1D9' },
-  { key: '100x', label: '100× less', short: '100×', color: '#E07A5F' }
+  { key: '100x', label: '100× less', short: '100×', color: '#E07A5F' },
 ];
 
 // Color palette
@@ -151,13 +151,13 @@ export const COLORS = {
 
   // Other
   white: '#fff',
-  buttonBorder: '#4b5563'
+  buttonBorder: '#4b5563',
 };
 
 // Typography
 export const FONTS = {
   heading: '"Cormorant Garamond", Georgia, serif',
-  body: '"Source Sans Pro", sans-serif'
+  body: '"Source Sans Pro", sans-serif',
 };
 
 // Font sizes (using clamp for responsive sizing where appropriate)
@@ -173,7 +173,7 @@ export const FONT_SIZES = {
   '4xl': '1.25rem',
   '5xl': '2.25rem',
   hero: 'clamp(2.5rem, 6vw, 4.5rem)',
-  heading: 'clamp(1.5rem, 3vw, 2.25rem)'
+  heading: 'clamp(1.5rem, 3vw, 2.25rem)',
 };
 
 // Font weights
@@ -182,14 +182,14 @@ export const FONT_WEIGHTS = {
   normal: 400,
   medium: 500,
   semibold: 600,
-  bold: 700
+  bold: 700,
 };
 
 // Default credence values
 export const DEFAULT_CREDENCES = {
   equal: 33,
   '10x': 33,
-  '100x': 34
+  '100x': 34,
 };
 
 // Step identifiers
@@ -197,11 +197,11 @@ export const STEPS = {
   WELCOME: 'welcome',
   ANIMALS: 'animals',
   FUTURE: 'future',
-  RESULTS: 'results'
+  RESULTS: 'results',
 };
 
 // Input modes
 export const INPUT_MODES = {
   OPTIONS: 'options',
-  SLIDERS: 'sliders'
+  SLIDERS: 'sliders',
 };

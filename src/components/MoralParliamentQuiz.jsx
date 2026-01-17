@@ -8,7 +8,7 @@ import {
   FUTURE_QUESTION_OPTIONS,
   DEFAULT_CREDENCES,
   STEPS,
-  INPUT_MODES
+  INPUT_MODES,
 } from '../constants/config';
 
 /**

@@ -16,9 +16,10 @@ const EditPanel = ({
   originalCredences,
   configs,
   isExpanded,
-  onToggle
+  onToggle,
 }) => {
-  const panelChanged = originalCredences && JSON.stringify(credences) !== JSON.stringify(originalCredences);
+  const panelChanged =
+    originalCredences && JSON.stringify(credences) !== JSON.stringify(originalCredences);
 
   const handleReset = (e) => {
     e.stopPropagation();
@@ -31,12 +32,10 @@ const EditPanel = ({
         <div className={styles.buttonContent}>
           <span className={styles.icon}>{icon}</span>
           <span className={styles.title}>{title}</span>
-          {panelChanged && (
-            <span className={styles.modifiedBadge}>modified</span>
-          )}
+          {panelChanged && <span className={styles.modifiedBadge}>modified</span>}
           {!isExpanded && (
             <span className={styles.preview}>
-              {configs.map(c => `${c.short}:${credences[c.key]}%`).join(' ')}
+              {configs.map((c) => `${c.short}:${credences[c.key]}%`).join(' ')}
             </span>
           )}
         </div>
@@ -47,7 +46,7 @@ const EditPanel = ({
 
       {isExpanded && (
         <div className={styles.content}>
-          {configs.map(config => (
+          {configs.map((config) => (
             <CompactSlider
               key={config.key}
               label={config.label}
@@ -57,9 +56,7 @@ const EditPanel = ({
             />
           ))}
           <div className={styles.footer}>
-            <span className={styles.footerNote}>
-              Sliders auto-balance to 100%
-            </span>
+            <span className={styles.footerNote}>Sliders auto-balance to 100%</span>
             {panelChanged && (
               <button onClick={handleReset} className={styles.resetButton}>
                 <RotateCcw size={10} /> Reset

@@ -20,7 +20,7 @@ const CompactSlider = ({ label, value, onChange, color }) => {
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value))}
         style={{
-          background: `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) 100%)`
+          background: `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) 100%)`,
         }}
       />
     </div>
