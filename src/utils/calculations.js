@@ -189,6 +189,152 @@ export const calculateVarianceVoting = (animalCreds, futureCreds, scaleCreds, ce
 };
 
 /**
+ * Calculate merged favorites allocation
+ * Each worldview allocates its probability share to its favorite cause
+ * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
+ * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
+ * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
+ * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @returns {Object} Allocation percentages for each cause
+ */
+export const calculateMergedFavorites = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
+  const allocation = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
+
+  // Each worldview combination allocates its share
+  Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
+    Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
+      Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
+        Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+          // This worldview gets (probability * 100) percent of the budget
+          const worldviewShare =
+            (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
+
+          const animalMult = ANIMAL_MULTIPLIERS[animalKey];
+          const futureMult = FUTURE_MULTIPLIERS[futureKey];
+          const scaleExp = SCALE_MULTIPLIERS[scaleKey];
+          const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+
+          // Calculate values for all causes in this worldview
+          const values = {};
+          Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+            values[causeKey] = calculateCauseValue(
+              cause,
+              animalMult,
+              futureMult,
+              scaleExp,
+              certaintyMult
+            );
+          });
+
+          // Find favorite cause(s) for this worldview
+          const maxValue = Math.max(...Object.values(values));
+          const favoriteCauses = Object.keys(values).filter(
+            (causeKey) => Math.abs(values[causeKey] - maxValue) < 0.0001
+          );
+
+          // Allocate worldview's share equally among favorites
+          const allocPerCause = (worldviewShare * 100) / favoriteCauses.length;
+          favoriteCauses.forEach((causeKey) => {
+            allocation[causeKey] += allocPerCause;
+          });
+        });
+      });
+    });
+  });
+
+  return {
+    globalHealth: allocation.globalHealth,
+    animalWelfare: allocation.animalWelfare,
+    gcr: allocation.gcr,
+  };
+};
+
+/**
+ * Calculate maximin allocation
+ * Find allocation that maximizes the minimum utility any worldview receives
+ * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
+ * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
+ * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
+ * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @returns {Object} Allocation percentages for each cause
+ */
+export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
+  // Generate candidate allocations (discrete options)
+  const candidateAllocations = [
+    { globalHealth: 100, animalWelfare: 0, gcr: 0 },
+    { globalHealth: 0, animalWelfare: 100, gcr: 0 },
+    { globalHealth: 0, animalWelfare: 0, gcr: 100 },
+    { globalHealth: 50, animalWelfare: 50, gcr: 0 },
+    { globalHealth: 50, animalWelfare: 0, gcr: 50 },
+    { globalHealth: 0, animalWelfare: 50, gcr: 50 },
+    { globalHealth: 34, animalWelfare: 33, gcr: 33 },
+    { globalHealth: 60, animalWelfare: 20, gcr: 20 },
+    { globalHealth: 20, animalWelfare: 60, gcr: 20 },
+    { globalHealth: 20, animalWelfare: 20, gcr: 60 },
+    { globalHealth: 70, animalWelfare: 15, gcr: 15 },
+    { globalHealth: 15, animalWelfare: 70, gcr: 15 },
+    { globalHealth: 15, animalWelfare: 15, gcr: 70 },
+    { globalHealth: 80, animalWelfare: 10, gcr: 10 },
+    { globalHealth: 10, animalWelfare: 80, gcr: 10 },
+    { globalHealth: 10, animalWelfare: 10, gcr: 80 },
+  ];
+
+  let bestAllocation = candidateAllocations[0];
+  let bestMinUtility = -Infinity;
+
+  for (const allocation of candidateAllocations) {
+    let minUtility = Infinity;
+
+    // Check minimum utility across all worldviews
+    Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
+      Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
+        Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
+          Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+            const probability =
+              (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
+
+            // Skip very unlikely worldviews
+            if (probability < 0.001) return;
+
+            const animalMult = ANIMAL_MULTIPLIERS[animalKey];
+            const futureMult = FUTURE_MULTIPLIERS[futureKey];
+            const scaleExp = SCALE_MULTIPLIERS[scaleKey];
+            const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+
+            // Calculate utility this worldview gets from the allocation
+            let utility = 0;
+            Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+              const causeValue = calculateCauseValue(
+                cause,
+                animalMult,
+                futureMult,
+                scaleExp,
+                certaintyMult
+              );
+              utility += causeValue * (allocation[causeKey] / 100);
+            });
+
+            minUtility = Math.min(minUtility, utility);
+          });
+        });
+      });
+    });
+
+    // Is this allocation better (higher minimum)?
+    if (minUtility > bestMinUtility) {
+      bestMinUtility = minUtility;
+      bestAllocation = { ...allocation };
+    }
+  }
+
+  return {
+    globalHealth: bestAllocation.globalHealth,
+    animalWelfare: bestAllocation.animalWelfare,
+    gcr: bestAllocation.gcr,
+  };
+};
+
+/**
  * Auto-balance credences to maintain 100% total
  * When one slider changes, proportionally adjusts others to keep sum at 100%
  * @param {string} changedKey - The key of the credence that was changed
