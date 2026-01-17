@@ -1,0 +1,100 @@
+/* Edit Panel Component Styles */
+
+.editPanel {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium);
+  background: var(--overlay-dark-alt);
+  overflow: hidden;
+  transition: var(--transition-fast);
+}
+
+.editPanel.expanded {
+  border: 1px solid var(--border-success);
+  background: var(--overlay-panel);
+}
+
+.toggleButton {
+  width: 100%;
+  padding: var(--spacing-4) var(--spacing-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.toggleButton:hover {
+  opacity: 0.9;
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.icon {
+  font-size: var(--text-2xl);
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+}
+
+.modifiedBadge {
+  font-size: var(--text-xs);
+  background: var(--badge-orange);
+  color: var(--color-warning);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-circle);
+}
+
+.preview {
+  font-size: var(--text-xs);
+  color: var(--text-gray);
+  margin-left: var(--spacing-2);
+}
+
+.chevron {
+  color: var(--text-gray);
+}
+
+.content {
+  padding: var(--spacing-4) var(--spacing-6) var(--spacing-6);
+  border-top: 1px solid var(--border-medium);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-2);
+}
+
+.footerNote {
+  font-size: var(--text-sm);
+  color: var(--text-gray);
+  font-style: italic;
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--text-xs);
+  color: var(--text-gray-light);
+  border: 1px solid var(--border-medium);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-circle);
+  background: transparent;
+  cursor: pointer;
+}
+
+.resetButton:hover {
+  color: var(--text-white);
+  border-color: var(--border-bright);
+}

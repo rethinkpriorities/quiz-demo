@@ -1,0 +1,65 @@
+/* Option Button Component Styles */
+
+.optionButton {
+  width: 100%;
+  padding: var(--spacing-10) var(--spacing-12);
+  margin-bottom: var(--spacing-6);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.optionButton.default {
+  background: var(--overlay-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.optionButton.selected {
+  border: 2px solid currentColor;
+}
+
+.optionButton:hover {
+  transform: translateY(-1px);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.textContent {
+  flex: 1;
+}
+
+.label {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--spacing-2);
+}
+
+.label.selected {
+  font-weight: var(--font-semibold);
+}
+
+.description {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+
+.checkmark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-white);
+  font-size: 14px;
+  font-weight: var(--font-bold);
+  flex-shrink: 0;
+}

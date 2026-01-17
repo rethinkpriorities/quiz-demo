@@ -1,0 +1,45 @@
+/* Mode Toggle Component Styles */
+
+.modeToggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-12);
+  gap: var(--spacing-4);
+}
+
+.button {
+  padding: var(--spacing-4) var(--spacing-8);
+  font-size: var(--text-base);
+  font-family: var(--font-body);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-2xl);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.button.options {
+  border: 1px solid var(--border-bright);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.button.options.active {
+  border: 1px solid var(--color-green);
+  background: var(--badge-green-2);
+  color: var(--color-green);
+}
+
+.button.sliders {
+  border: 1px solid var(--border-bright);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.button.sliders.active {
+  border: 1px solid var(--color-coral);
+  background: rgba(224, 122, 95, 0.2);
+  color: var(--color-coral);
+}

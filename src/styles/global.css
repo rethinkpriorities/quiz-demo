@@ -1,0 +1,326 @@
+/* Import CSS variables */
+@import './variables.css';
+
+/* ===== FONT IMPORTS ===== */
+
+/* Cormorant Garamond - Headings */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
+
+/* Source Sans Pro - Body text */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
+
+/* ===== CSS RESET / NORMALIZE ===== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  background: var(--gradient-bg);
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ===== GLOBAL TYPOGRAPHY ===== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-tight);
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Range slider track styles */
+input[type="range"]::-webkit-slider-track {
+  border-radius: var(--radius-sm);
+}
+
+input[type="range"]::-moz-range-track {
+  border-radius: var(--radius-sm);
+}
+
+/* Range slider thumb styles */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: 2px solid currentColor;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: 2px solid currentColor;
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-8);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: var(--spacing-4);
+}
+
+.gap-md {
+  gap: var(--spacing-6);
+}
+
+.gap-lg {
+  gap: var(--spacing-8);
+}
+
+/* ===== SCREEN LAYOUTS ===== */
+
+.screen {
+  min-height: 100vh;
+  background: var(--gradient-bg);
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-16) var(--spacing-32);
+}
+
+/* ===== HEADER STYLES ===== */
+
+.header {
+  padding: var(--spacing-16) var(--spacing-32);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.header-subtitle {
+  font-size: var(--text-base);
+  opacity: 0.5;
+}
+
+/* ===== PROGRESS BAR ===== */
+
+.progress-container {
+  padding: 0 var(--spacing-32);
+  margin-bottom: var(--spacing-16);
+}
+
+.progress-track {
+  height: 4px;
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-width);
+}
+
+/* ===== BUTTONS ===== */
+
+.btn {
+  padding: var(--spacing-10) var(--spacing-16);
+  font-size: var(--text-2xl);
+  font-family: var(--font-body);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  letter-spacing: var(--tracking-wide);
+  transition: var(--transition-base);
+  border: none;
+}
+
+.btn-primary {
+  background: var(--gradient-button);
+  color: var(--text-white);
+  box-shadow: var(--shadow-button);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(224, 122, 95, 0.5);
+}
+
+.btn-secondary {
+  background: var(--overlay-light);
+  color: var(--text-white);
+  border: 1px solid var(--border-bright);
+}
+
+.btn-secondary:hover {
+  background: var(--overlay-subtle);
+}
+
+.btn-sm {
+  padding: var(--spacing-4) var(--spacing-12);
+  font-size: var(--text-base);
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--text-xs);
+  color: var(--text-gray-light);
+  border: 1px solid var(--border-medium);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-circle);
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ===== CARDS & PANELS ===== */
+
+.card {
+  background: var(--overlay-subtle);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  padding: var(--spacing-16);
+}
+
+.card-compact {
+  background: var(--overlay-medium);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-medium);
+  padding: var(--spacing-6);
+}
+
+/* ===== BADGES ===== */
+
+.badge {
+  font-size: var(--text-xs);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-circle);
+  font-weight: var(--font-medium);
+}
+
+.badge-modified {
+  background: var(--badge-orange);
+  color: var(--color-warning);
+}
+
+.badge-success {
+  background: var(--badge-green);
+  color: var(--color-green);
+}
+
+/* ===== ANIMATIONS ===== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .header,
+  .screen-main,
+  .progress-container {
+    padding-left: var(--spacing-16);
+    padding-right: var(--spacing-16);
+  }
+
+  .container {
+    padding: 0 var(--spacing-16);
+  }
+
+  .btn {
+    padding: var(--spacing-8) var(--spacing-12);
+    font-size: var(--text-lg);
+  }
+}

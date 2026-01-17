@@ -1,0 +1,62 @@
+/* Cause Bar Component Styles */
+
+.causeBar {
+  margin-bottom: var(--spacing-3);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-1);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+}
+
+.name {
+  color: var(--text-gray-light);
+}
+
+.percentage {
+  font-weight: var(--font-medium);
+}
+
+.changeIndicator {
+  margin-left: var(--spacing-2);
+}
+
+.changeIndicator.up {
+  color: var(--color-success-light);
+}
+
+.changeIndicator.down {
+  color: var(--color-danger);
+}
+
+.barTrack {
+  height: 20px;
+  background: var(--bg-dark);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+.barOriginal {
+  position: absolute;
+  height: 100%;
+  opacity: 0.25;
+}
+
+.barFill {
+  height: 100%;
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+}
+
+.barLabel {
+  color: var(--text-white);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+}
