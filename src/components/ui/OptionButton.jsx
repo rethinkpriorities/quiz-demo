@@ -18,19 +18,11 @@ const OptionButton = ({ label, description, optionKey, credences, setCredences, 
     <button
       onClick={handleClick}
       className={`${styles.optionButton} ${isSelected ? styles.selected : styles.default}`}
-      style={{
-        background: isSelected
-          ? `linear-gradient(135deg, ${color}22, ${color}11)`
-          : undefined,
-        borderColor: isSelected ? color : undefined
-      }}
+      style={{ '--option-color': color }}
     >
       <div className={styles.content}>
         <div className={styles.textContent}>
-          <div
-            className={`${styles.label} ${isSelected ? styles.selected : ''}`}
-            style={{ color: isSelected ? color : '#f4f4f4' }}
-          >
+          <div className={`${styles.label} ${isSelected ? styles.selected : ''}`}>
             {label}
           </div>
           <div className={styles.description}>
@@ -38,10 +30,7 @@ const OptionButton = ({ label, description, optionKey, credences, setCredences, 
           </div>
         </div>
         {isSelected && (
-          <div
-            className={styles.checkmark}
-            style={{ background: color }}
-          >
+          <div className={styles.checkmark}>
             ✓
           </div>
         )}

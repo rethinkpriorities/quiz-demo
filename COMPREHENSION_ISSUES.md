@@ -90,6 +90,16 @@ Before marking this complete, need to cover:
       Decision: Defer UX changes to UX designer - "bug is a feature" until reviewed
       Commit needed: NO - explanation only
 
+- [x] File: `src/components/ui/OptionButton.jsx:21-26, 32, 43` - Hardcoded values in inline styles
+      Resolution: CLEANUP - Moved all hardcoded values to CSS, use CSS custom property for dynamic color
+      What was learned: CSS custom properties (--option-color) can be set via inline style in JSX
+      Changes made:
+        - JSX now: style={{ '--option-color': color }} (one line, clean)
+        - CSS handles: gradient angle (135deg), opacity (13%, 7%), fallback color (--text-primary)
+        - Removed: All template literals and magic numbers from JSX
+      Files modified: OptionButton.jsx, OptionButton.module.css
+      Commit needed: YES - 2 files modified
+
 ---
 
 ## Notes

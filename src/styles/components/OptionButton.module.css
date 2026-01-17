@@ -18,7 +18,9 @@
 }
 
 .optionButton.selected {
-  border: 2px solid currentColor;
+  border: 2px solid var(--option-color);
+  /* Uses CSS custom property set via inline style */
+  background: linear-gradient(135deg, color-mix(in srgb, var(--option-color) 13%, transparent), color-mix(in srgb, var(--option-color) 7%, transparent));
 }
 
 .optionButton:hover {
@@ -39,10 +41,12 @@
   font-size: var(--text-2xl);
   font-weight: var(--font-medium);
   margin-bottom: var(--spacing-2);
+  color: var(--text-primary); /* Default fallback */
 }
 
 .label.selected {
   font-weight: var(--font-semibold);
+  color: var(--option-color); /* Use dynamic color when selected */
 }
 
 .description {
@@ -62,4 +66,5 @@
   font-size: 14px;
   font-weight: var(--font-bold);
   flex-shrink: 0;
+  background: var(--option-color); /* Use dynamic color */
 }
