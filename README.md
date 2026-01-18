@@ -11,15 +11,19 @@ An interactive tool to help you allocate resources across different causes based
 Uncertain about your ethical views? This quiz helps you navigate moral uncertainty by:
 
 - Asking about your credences (confidence levels) on key ethical questions
-- Calculating optimal resource allocation using two methods:
+- Calculating optimal resource allocation using four methods:
   - **Max Expected Value**: 100% to the cause with highest expected value
   - **Variance Voting**: Weighted votes from different worldviews (moral parliament approach)
+  - **Merged Favorites**: Each worldview allocates its budget share to its favorite cause
+  - **Maximin**: Maximizes the minimum utility any worldview receives (egalitarian approach)
 - Allowing real-time adjustment and exploration of how different credences affect allocations
 
 ### Questions Asked
 
 1. **Animal vs. Human Welfare**: How do you value animal welfare relative to human welfare?
 2. **Current vs. Future Generations**: How do you value future human welfare relative to current human welfare?
+3. **Scale Sensitivity**: How much does the scale of an intervention matter?
+4. **Certainty vs. Speculation**: How do you discount speculative interventions?
 
 ### Causes Evaluated
 
@@ -115,7 +119,10 @@ quiz-prototype/
 │   │       ├── calculateCauseValue()
 │   │       ├── calculateMaxEV()
 │   │       ├── calculateVarianceVoting()
-│   │       └── adjustCredences()
+│   │       ├── calculateMergedFavorites()
+│   │       ├── calculateMaximin()
+│   │       ├── adjustCredences()
+│   │       └── roundCredences()
 │   │
 │   ├── constants/                  # Configuration
 │   │   └── config.js               # All constants and config
@@ -141,40 +148,74 @@ quiz-prototype/
 
 ### Calculation Methods
 
+With 4 questions and 3 options each, there are 81 possible worldview combinations (3^4).
+
 #### 1. Max Expected Value (MaxEV)
-Calculates the expected value for each cause across all possible worldview combinations, then allocates 100% to the cause with the highest expected value.
+Calculates the expected value for each cause across all 81 worldview combinations, then allocates 100% to the cause with the highest expected value.
 
 For each cause:
 ```
-EV = Σ (P(animal_view) × P(future_view) × value(cause, animal_mult, future_mult))
+EV = Σ (P(animal_view) × P(future_view) × P(scale_view) × P(certainty_view) ×
+      value(cause, animal_mult, future_mult, scale_exp, certainty_mult))
 ```
 
-Where multipliers are:
-- Equal weight: 1.0
-- 10× less: 0.1
-- 100× less: 0.01
+Where multipliers/exponents are:
+- Animal/Future equal weight: 1.0, 10× less: 0.1, 100× less: 0.01
+- Scale equal: 0 (no effect), 10×: 0.5 (sqrt), 100×: 1.0 (full scale)
+- Certainty equal: 1.0, 10× discount: 0.1, 100× discount: 0.01
 
 #### 2. Variance Voting (Moral Parliament)
 Each worldview combination votes for its preferred cause(s), weighted by credence. If multiple causes are tied for a worldview, the vote splits equally.
 
 ```
-For each worldview (9 total):
+For each worldview (81 total):
   - Find cause(s) with max value in this worldview
   - Assign vote_weight / num_tied_causes to each tied cause
 ```
 
 Final percentages represent the proportion of votes each cause received.
 
+#### 3. Merged Favorites
+Each worldview allocates its probability share of the budget to its favorite cause(s). Similar to variance voting but uses budget shares instead of votes.
+
+```
+For each worldview:
+  - Worldview gets (probability × 100) percent of budget
+  - Allocate entirely to favorite cause(s)
+  - If tied, split allocation equally
+```
+
+#### 4. Maximin
+Finds the allocation that maximizes the minimum utility any worldview receives. An egalitarian approach that ensures no worldview is left too unhappy.
+
+```
+- Test 16 candidate allocations (100% to one, 50/50 splits, etc.)
+- For each allocation, find minimum utility across all worldviews
+- Choose allocation with highest minimum
+```
+
 ### Auto-Balancing Sliders
 
-When you adjust one slider, the others automatically rebalance to maintain a 100% total:
+The sliders feature sophisticated UX with ratio preservation and smooth animations:
 
-1. Set changed slider to new value (clamped 0-100)
-2. Calculate target sum for other sliders (100 - new_value)
-3. Distribute proportionally based on current ratios
-4. Handle edge case: if others are all 0, distribute evenly
+**During Drag:**
+1. Slider being dragged moves with unlimited precision (`step="any"`)
+2. On drag start, a snapshot of all credences is captured
+3. Other sliders maintain their exact original ratio throughout the drag
+4. All calculations use decimal values for smooth, continuous adjustment
+5. Display percentages are rounded to integers for clean presentation
 
-See `src/utils/calculations.js` for implementation details.
+**On Release:**
+1. Final values are rounded to integers
+2. Non-dragged sliders animate smoothly to final positions (0.4s ease-out)
+3. All values guaranteed to sum to exactly 100%
+
+**Proportional Distribution:**
+- Changed slider gets new value (clamped 0-100)
+- Other sliders adjust proportionally based on original ratios from snapshot
+- If others are all 0, remaining value distributes evenly
+
+See `src/utils/calculations.js` for implementation details (`adjustCredences()` and `roundCredences()`).
 
 ---
 
@@ -230,24 +271,26 @@ Test the following flows:
 ### State Management
 
 All state lives in `MoralParliamentQuiz.jsx`:
-- `currentStep` - Current screen (welcome/animals/future/results)
-- `animalCredences` & `futureCredences` - Current credence values
-- `originalAnimalCredences` & `originalFutureCredences` - Snapshots for reset
+- `currentStep` - Current screen (welcome/animals/future/scale/certainty/results)
+- `animalCredences`, `futureCredences`, `scaleCredences`, `certaintyCredences` - Current credence values
+- `originalAnimalCredences`, `originalFutureCredences`, `originalScaleCredences`, `originalCertaintyCredences` - Snapshots for reset
 - `expandedPanel` - Which edit panel is open
-- `animalInputMode` & `futureInputMode` - Options vs. sliders mode
+- `animalInputMode`, `futureInputMode`, `scaleInputMode`, `certaintyInputMode` - Options vs. sliders mode
 
 State flows down as props to child components (unidirectional data flow).
 
 ### Adding New Questions
 
-To add a new question:
+To add a new question (we expanded from 2 to 4 questions):
 
-1. Add question options to `src/constants/config.js`
+1. Add question options and multipliers to `src/constants/config.js`
 2. Add new step to `STEPS` constant
-3. Add state for credences in `MoralParliamentQuiz.jsx`
-4. Add `QuestionScreen` instance with new props
-5. Update navigation logic
-6. Update calculations to incorporate new dimension
+3. Add state for credences and input mode in `MoralParliamentQuiz.jsx`
+4. Add original credences state for reset functionality
+5. Add `QuestionScreen` instance with new props and navigation
+6. Update all calculation methods to incorporate new dimension (iterate over new credence object)
+7. Add `EditPanel` to results screen for live editing
+8. Update progress percentages and worldview count display
 
 ### Code Quality
 
@@ -265,7 +308,7 @@ To add a new question:
 
 ### Planned Improvements
 
-- [ ] Refine slider recalculation UX during drag operations
+- [x] Refine slider recalculation UX during drag operations (completed with ratio preservation and smooth animations)
 - [ ] Add TypeScript for type safety
 - [ ] Add unit tests for calculation functions
 - [ ] Add component tests with React Testing Library
