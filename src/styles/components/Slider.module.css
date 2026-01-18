@@ -37,6 +37,11 @@
   height: 8px;
   border-radius: var(--radius-sm);
   outline: none;
+  transition: background 0.4s ease-out;
+}
+
+.credenceSlider input[type='range'][data-dragging='true'] {
+  transition: none;
 }
 
 /* Compact Slider (for results page) */
@@ -66,6 +71,11 @@
   height: 6px;
   border-radius: 3px;
   outline: none;
+  transition: background 0.4s ease-out;
+}
+
+.compactSlider input[type='range'][data-dragging='true'] {
+  transition: none;
 }
 
 /* Total indicator */

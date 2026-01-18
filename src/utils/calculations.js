@@ -340,35 +340,43 @@ export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certainty
  * @param {string} changedKey - The key of the credence that was changed
  * @param {number} newValue - The new value for the changed credence (0-100)
  * @param {Object} credences - Current credence values { equal, 10x, 100x }
+ * @param {Object} baseCredences - Optional: original credences when drag started (for maintaining ratios)
  * @returns {Object} New credence object with all values summing to 100
  */
-export const adjustCredences = (changedKey, newValue, credences) => {
+export const adjustCredences = (changedKey, newValue, credences, baseCredences = null) => {
   // Clamp new value between 0 and 100
   newValue = Math.max(0, Math.min(100, newValue));
 
+  // Use baseCredences for ratio calculation if provided (during drag), otherwise use current
+  // This preserves the ORIGINAL ratios between other sliders throughout the entire drag
+  const referenceCredences = baseCredences || credences;
+
   const otherKeys = Object.keys(credences).filter((k) => k !== changedKey);
-  const currentOtherSum = otherKeys.reduce((sum, k) => sum + credences[k], 0);
+  const referenceOtherSum = otherKeys.reduce((sum, k) => sum + referenceCredences[k], 0);
   const targetOtherSum = 100 - newValue;
 
   const result = { [changedKey]: newValue };
 
-  // If other sliders are all at 0, distribute evenly
-  if (currentOtherSum === 0) {
+  // If other sliders are all at 0 in reference, distribute evenly
+  if (referenceOtherSum === 0) {
     const each = Math.floor(targetOtherSum / otherKeys.length);
     let remainder = targetOtherSum - each * otherKeys.length;
     otherKeys.forEach((k, i) => {
       result[k] = each + (i < remainder ? 1 : 0);
     });
   } else {
-    // Proportionally adjust other sliders
+    // Proportionally adjust other sliders based on ORIGINAL ratios
     let allocated = 0;
     otherKeys.forEach((k, i) => {
       if (i === otherKeys.length - 1) {
         // Last slider gets remainder to ensure exactly 100%
         result[k] = Math.max(0, targetOtherSum - allocated);
       } else {
-        const proportion = credences[k] / currentOtherSum;
-        const value = Math.round(targetOtherSum * proportion);
+        // KEY CHANGE: Use referenceCredences to calculate proportion
+        // This preserves the starting ratio between B and C throughout the drag
+        // NO ROUNDING during drag - keeps decimal precision for smooth animation
+        const proportion = referenceCredences[k] / referenceOtherSum;
+        const value = targetOtherSum * proportion;
         result[k] = Math.max(0, value);
         allocated += result[k];
       }
@@ -376,4 +384,26 @@ export const adjustCredences = (changedKey, newValue, credences) => {
   }
 
   return result;
+};
+
+/**
+ * Round all credence values to integers and ensure they sum to 100
+ * @param {Object} credences - Credence values that may have decimal places
+ * @returns {Object} Rounded credences that sum to exactly 100
+ */
+export const roundCredences = (credences) => {
+  const keys = Object.keys(credences);
+  const rounded = {};
+  let total = 0;
+
+  // Round all but the last
+  keys.slice(0, -1).forEach((k) => {
+    rounded[k] = Math.round(credences[k]);
+    total += rounded[k];
+  });
+
+  // Last key gets the remainder to ensure exactly 100
+  rounded[keys[keys.length - 1]] = 100 - total;
+
+  return rounded;
 };

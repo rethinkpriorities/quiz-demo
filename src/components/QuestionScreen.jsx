@@ -3,6 +3,7 @@ import ProgressBar from './layout/ProgressBar';
 import ModeToggle from './ui/ModeToggle';
 import OptionButton from './ui/OptionButton';
 import CredenceSlider from './ui/CredenceSlider';
+import { roundCredences } from '../utils/calculations';
 import styles from '../styles/components/QuestionScreen.module.css';
 
 /**
@@ -26,7 +27,7 @@ const QuestionScreen = ({
   onContinue,
   adjustCredences,
 }) => {
-  const total = Object.values(credences).reduce((sum, val) => sum + val, 0);
+  // const total = Math.round(Object.values(credences).reduce((sum, val) => sum + val, 0));
 
   return (
     <div className="screen">
@@ -71,11 +72,15 @@ const QuestionScreen = ({
                     label={opt.label}
                     description={opt.description}
                     value={credences[opt.key]}
-                    onChange={(val) => setCredences(adjustCredences(opt.key, val, credences))}
+                    onChange={(val, baseCredences, shouldRound) => {
+                      const adjusted = adjustCredences(opt.key, val, credences, baseCredences);
+                      setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
+                    }}
                     color={opt.color}
+                    credences={credences}
                   />
                 ))}
-                <div className="total">Total: {total}% ✓</div>
+                {/* <div className="total">Total: {total}% ✓</div> */}
               </>
             )}
           </div>

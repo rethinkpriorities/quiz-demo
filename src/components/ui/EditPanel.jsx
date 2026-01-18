@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import CompactSlider from './CompactSlider';
-import { adjustCredences } from '../../utils/calculations';
+import { adjustCredences, roundCredences } from '../../utils/calculations';
 import styles from '../../styles/components/EditPanel.module.css';
 
 /**
@@ -51,8 +51,12 @@ const EditPanel = ({
               key={config.key}
               label={config.label}
               value={credences[config.key]}
-              onChange={(val) => setCredences(adjustCredences(config.key, val, credences))}
+              onChange={(val, baseCredences, shouldRound) => {
+                const adjusted = adjustCredences(config.key, val, credences, baseCredences);
+                setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
+              }}
               color={config.color}
+              credences={credences}
             />
           ))}
           <div className={styles.footer}>
