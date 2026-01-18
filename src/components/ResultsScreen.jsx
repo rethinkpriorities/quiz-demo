@@ -2,10 +2,15 @@ import { RotateCcw } from 'lucide-react';
 import CauseBar from './ui/CauseBar';
 import EditPanel from './ui/EditPanel';
 import styles from '../styles/components/Results.module.css';
-import { ANIMAL_PANEL_CONFIG, FUTURE_PANEL_CONFIG } from '../constants/config';
+import {
+  ANIMAL_PANEL_CONFIG,
+  FUTURE_PANEL_CONFIG,
+  SCALE_PANEL_CONFIG,
+  CERTAINTY_PANEL_CONFIG,
+} from '../constants/config';
 
 /**
- * Results screen showing Max EV and Variance Voting allocations
+ * Results screen showing all 4 allocation methods
  * Allows editing credences and seeing live recalculation
  */
 const ResultsScreen = ({
@@ -13,14 +18,24 @@ const ResultsScreen = ({
   setAnimalCredences,
   futureCredences,
   setFutureCredences,
+  scaleCredences,
+  setScaleCredences,
+  certaintyCredences,
+  setCertaintyCredences,
   originalAnimalCredences,
   originalFutureCredences,
+  originalScaleCredences,
+  originalCertaintyCredences,
   expandedPanel,
   setExpandedPanel,
   maxEVResults,
   parliamentResults,
+  mergedFavoritesResults,
+  maximinResults,
   originalMaxEV,
   originalParliament,
+  originalMergedFavorites,
+  originalMaximin,
   hasChanged,
   onResetAll,
   onBack,
@@ -104,7 +119,73 @@ const ResultsScreen = ({
               color="var(--color-gcr)"
               hasChanged={hasChanged}
             />
-            <div className={styles.cardFooter}>9 worldviews vote for preferred cause</div>
+            <div className={styles.cardFooter}>81 worldviews vote for preferred cause</div>
+          </div>
+
+          {/* Merged Favorites */}
+          <div className={styles.resultCard}>
+            <div className={styles.cardHeader}>
+              <div className={`${styles.cardIcon} ${styles.merged}`}>🤝</div>
+              <div>
+                <h3 className={styles.cardTitle}>Merged Favorites</h3>
+                <p className={styles.cardSubtitle}>Budget shares to favorites</p>
+              </div>
+            </div>
+            <CauseBar
+              name="Global Health"
+              percentage={mergedFavoritesResults.globalHealth}
+              originalPercentage={originalMergedFavorites?.globalHealth}
+              color="var(--color-global-health)"
+              hasChanged={hasChanged}
+            />
+            <CauseBar
+              name="Animal Welfare"
+              percentage={mergedFavoritesResults.animalWelfare}
+              originalPercentage={originalMergedFavorites?.animalWelfare}
+              color="var(--color-animal-welfare)"
+              hasChanged={hasChanged}
+            />
+            <CauseBar
+              name="GCR (Future)"
+              percentage={mergedFavoritesResults.gcr}
+              originalPercentage={originalMergedFavorites?.gcr}
+              color="var(--color-gcr)"
+              hasChanged={hasChanged}
+            />
+            <div className={styles.cardFooter}>Each worldview allocates its budget share</div>
+          </div>
+
+          {/* Maximin */}
+          <div className={styles.resultCard}>
+            <div className={styles.cardHeader}>
+              <div className={`${styles.cardIcon} ${styles.maximin}`}>⚖️</div>
+              <div>
+                <h3 className={styles.cardTitle}>Maximin (Egalitarian)</h3>
+                <p className={styles.cardSubtitle}>Fairest to all worldviews</p>
+              </div>
+            </div>
+            <CauseBar
+              name="Global Health"
+              percentage={maximinResults.globalHealth}
+              originalPercentage={originalMaximin?.globalHealth}
+              color="var(--color-global-health)"
+              hasChanged={hasChanged}
+            />
+            <CauseBar
+              name="Animal Welfare"
+              percentage={maximinResults.animalWelfare}
+              originalPercentage={originalMaximin?.animalWelfare}
+              color="var(--color-animal-welfare)"
+              hasChanged={hasChanged}
+            />
+            <CauseBar
+              name="GCR (Future)"
+              percentage={maximinResults.gcr}
+              originalPercentage={originalMaximin?.gcr}
+              color="var(--color-gcr)"
+              hasChanged={hasChanged}
+            />
+            <div className={styles.cardFooter}>Maximizes minimum worldview utility</div>
           </div>
         </div>
 
@@ -138,6 +219,26 @@ const ResultsScreen = ({
               configs={FUTURE_PANEL_CONFIG}
               isExpanded={expandedPanel === 'future'}
               onToggle={() => setExpandedPanel(expandedPanel === 'future' ? null : 'future')}
+            />
+            <EditPanel
+              title="Scale Sensitivity"
+              icon="📊"
+              credences={scaleCredences}
+              setCredences={setScaleCredences}
+              originalCredences={originalScaleCredences}
+              configs={SCALE_PANEL_CONFIG}
+              isExpanded={expandedPanel === 'scale'}
+              onToggle={() => setExpandedPanel(expandedPanel === 'scale' ? null : 'scale')}
+            />
+            <EditPanel
+              title="Evidence Preference"
+              icon="🔬"
+              credences={certaintyCredences}
+              setCredences={setCertaintyCredences}
+              originalCredences={originalCertaintyCredences}
+              configs={CERTAINTY_PANEL_CONFIG}
+              isExpanded={expandedPanel === 'certainty'}
+              onToggle={() => setExpandedPanel(expandedPanel === 'certainty' ? null : 'certainty')}
             />
           </div>
         </div>
