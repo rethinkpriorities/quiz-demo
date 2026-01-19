@@ -86,6 +86,31 @@ npm run build
 npm run preview
 ```
 
+### Prototyping
+
+Create snapshots to compare different versions:
+
+```bash
+# Create a named snapshot
+npm run snapshot a "Baseline version with original UI"
+
+# Commit and push
+git add prototypes/ && git commit -m "Add prototype a"
+git push && git push --tags
+```
+
+View prototypes:
+- **Latest**: https://rethinkpriorities.github.io/quiz-demo/
+- **All prototypes**: https://rethinkpriorities.github.io/quiz-demo/prototypes/
+
+To modify a previous prototype:
+```bash
+git checkout prototype-a-v1      # Go to tagged commit
+git checkout -b prototype-a-fix  # Create branch for changes
+# ... make changes ...
+npm run snapshot a               # Rebuilds, tags as v2
+```
+
 ---
 
 ## 📁 Project Structure
@@ -135,6 +160,10 @@ quiz-prototype/
 ├── index.html                      # HTML entry point
 ├── vite.config.js                  # Vite configuration
 ├── package.json                    # Dependencies and scripts
+├── scripts/
+│   └── snapshot.sh                 # Prototype snapshot script
+├── prototypes/                     # Committed prototype builds
+│   └── index.html                  # Prototype listing page
 ├── CLAUDE.md                       # Post-refactoring cleanup plan
 ├── COMPONENT_BOUNDARIES.md         # Component analysis documentation
 ├── COMPREHENSION_ISSUES.md         # Code comprehension tracking (resolved)
