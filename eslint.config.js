@@ -67,6 +67,6 @@ export default [
   prettierConfig,
   // Ignore build output and dependencies
   {
-    ignores: ['dist/', 'node_modules/'],
+    ignores: ['dist/', 'node_modules/', 'prototypes/'],
   },
 ];

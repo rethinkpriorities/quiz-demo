@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototype Versions</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 { margin-bottom: 0.5rem; }
+    .subtitle { color: #666; margin-bottom: 2rem; }
+    .prototype-list { list-style: none; padding: 0; }
+    .prototype-item {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .prototype-item h2 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.25rem;
+    }
+    .prototype-item p {
+      margin: 0 0 1rem 0;
+      color: #666;
+    }
+    .prototype-item a {
+      display: inline-block;
+      background: #0066cc;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+    .prototype-item a:hover { background: #0055aa; }
+    .version {
+      font-size: 0.8rem;
+      color: #888;
+      font-style: italic;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: #0066cc;
+    }
+  </style>
+</head>
+<body>
+  <a href="../" class="back-link">&larr; Back to latest version</a>
+  <h1>Prototype Versions</h1>
+  <p class="subtitle">Compare different versions of the quiz</p>
+
+  <ul class="prototype-list">
+    <!-- Add new prototypes here -->
+    <li class="prototype-item">
+      <h2>Prototype jan-19</h2>
+      <p>Baseline 4 question 4 model with slider behavior</p>
+      <p><span class="version" data-proto="jan-19">Created: 2026-01-19 09:53 (prototype-jan-19-v1)</span></p>
+      <a href="./jan-19/">View Prototype</a>
+    </li>
+
+  </ul>
+
+  <p style="color: #999; font-size: 0.875rem; margin-top: 2rem;">
+    To add a prototype: <code>npm run snapshot [name]</code>
+  </p>
+</body>
+</html>

@@ -10,6 +10,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+
+# But DO commit prototype snapshots
+!prototypes/
 *.local
 
 # Editor directories and files
