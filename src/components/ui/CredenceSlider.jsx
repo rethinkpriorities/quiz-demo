@@ -49,6 +49,7 @@ const CredenceSlider = ({
 
   const handleDragEnd = (e) => {
     if (isLocked) return;
+    if (!isDragging) return; // Only process if we were actually dragging
     setIsDragging(false);
     // On drag end, trigger one final change with rounding
     const finalValue = parseFloat(e.target.value);

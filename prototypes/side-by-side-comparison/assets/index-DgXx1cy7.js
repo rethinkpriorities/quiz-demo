@@ -54,11 +54,11 @@ function df() {
     g = Symbol.for('react.suspense'),
     j = Symbol.for('react.memo'),
     O = Symbol.for('react.lazy'),
-    M = Symbol.iterator;
+    I = Symbol.iterator;
   function R(f) {
     return f === null || typeof f != 'object'
       ? null
-      : ((f = (M && f[M]) || f['@@iterator']), typeof f == 'function' ? f : null);
+      : ((f = (I && f[I]) || f['@@iterator']), typeof f == 'function' ? f : null);
   }
   var B = {
       isMounted: function () {
@@ -225,7 +225,7 @@ function df() {
   var ie = { current: null },
     T = { transition: null },
     $ = { ReactCurrentDispatcher: ie, ReactCurrentBatchConfig: T, ReactCurrentOwner: W };
-  function I() {
+  function M() {
     throw Error('act(...) is not supported in production builds of React.');
   }
   return (
@@ -269,7 +269,7 @@ function df() {
     (b.StrictMode = k),
     (b.Suspense = g),
     (b.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = $),
-    (b.act = I),
+    (b.act = M),
     (b.cloneElement = function (f, S, J) {
       if (f == null)
         throw Error(
@@ -343,7 +343,7 @@ function df() {
         T.transition = S;
       }
     }),
-    (b.unstable_act = I),
+    (b.unstable_act = M),
     (b.useCallback = function (f, S) {
       return ie.current.useCallback(f, S);
     }),
@@ -415,15 +415,15 @@ function ff() {
     E = { key: !0, ref: !0, __self: !0, __source: !0 };
   function L(P, g, j) {
     var O,
-      M = {},
+      I = {},
       R = null,
       B = null;
     (j !== void 0 && (R = '' + j),
       g.key !== void 0 && (R = '' + g.key),
       g.ref !== void 0 && (B = g.ref));
-    for (O in g) k.call(g, O) && !E.hasOwnProperty(O) && (M[O] = g[O]);
-    if (P && P.defaultProps) for (O in ((g = P.defaultProps), g)) M[O] === void 0 && (M[O] = g[O]);
-    return { $$typeof: d, type: P, key: R, ref: B, props: M, _owner: w.current };
+    for (O in g) k.call(g, O) && !E.hasOwnProperty(O) && (I[O] = g[O]);
+    if (P && P.defaultProps) for (O in ((g = P.defaultProps), g)) I[O] === void 0 && (I[O] = g[O]);
+    return { $$typeof: d, type: P, key: R, ref: B, props: I, _owner: w.current };
   }
   return ((Lr.Fragment = s), (Lr.jsx = L), (Lr.jsxs = L), Lr);
 }
@@ -453,12 +453,12 @@ function mf() {
       ((Xa = 1),
       (function (v) {
         function d(T, $) {
-          var I = T.length;
+          var M = T.length;
           T.push($);
-          e: for (; 0 < I; ) {
-            var f = (I - 1) >>> 1,
+          e: for (; 0 < M; ) {
+            var f = (M - 1) >>> 1,
               S = T[f];
-            if (0 < w(S, $)) ((T[f] = $), (T[I] = S), (I = f));
+            if (0 < w(S, $)) ((T[f] = $), (T[M] = S), (M = f));
             else break e;
           }
         }
@@ -468,27 +468,27 @@ function mf() {
         function k(T) {
           if (T.length === 0) return null;
           var $ = T[0],
-            I = T.pop();
-          if (I !== $) {
-            T[0] = I;
+            M = T.pop();
+          if (M !== $) {
+            T[0] = M;
             e: for (var f = 0, S = T.length, J = S >>> 1; f < J; ) {
               var te = 2 * (f + 1) - 1,
                 re = T[te],
                 le = te + 1,
                 me = T[le];
-              if (0 > w(re, I))
+              if (0 > w(re, M))
                 le < S && 0 > w(me, re)
-                  ? ((T[f] = me), (T[le] = I), (f = le))
-                  : ((T[f] = re), (T[te] = I), (f = te));
-              else if (le < S && 0 > w(me, I)) ((T[f] = me), (T[le] = I), (f = le));
+                  ? ((T[f] = me), (T[le] = M), (f = le))
+                  : ((T[f] = re), (T[te] = M), (f = te));
+              else if (le < S && 0 > w(me, M)) ((T[f] = me), (T[le] = M), (f = le));
               else break e;
             }
           }
           return $;
         }
         function w(T, $) {
-          var I = T.sortIndex - $.sortIndex;
-          return I !== 0 ? I : T.id - $.id;
+          var M = T.sortIndex - $.sortIndex;
+          return M !== 0 ? M : T.id - $.id;
         }
         if (typeof performance == 'object' && typeof performance.now == 'function') {
           var E = performance;
@@ -505,7 +505,7 @@ function mf() {
         var g = [],
           j = [],
           O = 1,
-          M = null,
+          I = null,
           R = 3,
           B = !1,
           ee = !1,
@@ -535,27 +535,27 @@ function mf() {
         }
         function _e(T, $) {
           ((ee = !1), q && ((q = !1), pe(ue), (ue = -1)), (B = !0));
-          var I = R;
+          var M = R;
           try {
-            for (ve($), M = s(g); M !== null && (!(M.expirationTime > $) || (T && !Ae())); ) {
-              var f = M.callback;
+            for (ve($), I = s(g); I !== null && (!(I.expirationTime > $) || (T && !Ae())); ) {
+              var f = I.callback;
               if (typeof f == 'function') {
-                ((M.callback = null), (R = M.priorityLevel));
-                var S = f(M.expirationTime <= $);
+                ((I.callback = null), (R = I.priorityLevel));
+                var S = f(I.expirationTime <= $);
                 (($ = v.unstable_now()),
-                  typeof S == 'function' ? (M.callback = S) : M === s(g) && k(g),
+                  typeof S == 'function' ? (I.callback = S) : I === s(g) && k(g),
                   ve($));
               } else k(g);
-              M = s(g);
+              I = s(g);
             }
-            if (M !== null) var J = !0;
+            if (I !== null) var J = !0;
             else {
               var te = s(j);
               (te !== null && ie(fe, te.startTime - $), (J = !1));
             }
             return J;
           } finally {
-            ((M = null), (R = I), (B = !1));
+            ((I = null), (R = M), (B = !1));
           }
         }
         var W = !1,
@@ -637,12 +637,12 @@ function mf() {
               default:
                 $ = R;
             }
-            var I = R;
+            var M = R;
             R = $;
             try {
               return T();
             } finally {
-              R = I;
+              R = M;
             }
           }),
           (v.unstable_pauseExecution = function () {}),
@@ -658,20 +658,20 @@ function mf() {
               default:
                 T = 3;
             }
-            var I = R;
+            var M = R;
             R = T;
             try {
               return $();
             } finally {
-              R = I;
+              R = M;
             }
           }),
-          (v.unstable_scheduleCallback = function (T, $, I) {
+          (v.unstable_scheduleCallback = function (T, $, M) {
             var f = v.unstable_now();
             switch (
-              (typeof I == 'object' && I !== null
-                ? ((I = I.delay), (I = typeof I == 'number' && 0 < I ? f + I : f))
-                : (I = f),
+              (typeof M == 'object' && M !== null
+                ? ((M = M.delay), (M = typeof M == 'number' && 0 < M ? f + M : f))
+                : (M = f),
               T)
             ) {
               case 1:
@@ -690,21 +690,21 @@ function mf() {
                 S = 5e3;
             }
             return (
-              (S = I + S),
+              (S = M + S),
               (T = {
                 id: O++,
                 callback: $,
                 priorityLevel: T,
-                startTime: I,
+                startTime: M,
                 expirationTime: S,
                 sortIndex: -1,
               }),
-              I > f
-                ? ((T.sortIndex = I),
+              M > f
+                ? ((T.sortIndex = M),
                   d(j, T),
                   s(g) === null &&
                     T === s(j) &&
-                    (q ? (pe(ue), (ue = -1)) : (q = !0), ie(fe, I - f)))
+                    (q ? (pe(ue), (ue = -1)) : (q = !0), ie(fe, M - f)))
                 : ((T.sortIndex = S), d(g, T), ee || B || ((ee = !0), K(_e))),
               T
             );
@@ -713,12 +713,12 @@ function mf() {
           (v.unstable_wrapCallback = function (T) {
             var $ = R;
             return function () {
-              var I = R;
+              var M = R;
               R = $;
               try {
                 return T.apply(this, arguments);
               } finally {
-                R = I;
+                R = M;
               }
             };
           }));
@@ -776,9 +776,9 @@ function vf() {
     j =
       /^[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$/,
     O = {},
-    M = {};
+    I = {};
   function R(e) {
-    return g.call(M, e) ? !0 : g.call(O, e) ? !1 : j.test(e) ? (M[e] = !0) : ((O[e] = !0), !1);
+    return g.call(I, e) ? !0 : g.call(O, e) ? !1 : j.test(e) ? (I[e] = !0) : ((O[e] = !0), !1);
   }
   function B(e, t, n, r) {
     if (n !== null && n.type === 0) return !1;
@@ -927,7 +927,7 @@ function vf() {
       ? null
       : ((e = (T && e[T]) || e['@@iterator']), typeof e == 'function' ? e : null);
   }
-  var I = Object.assign,
+  var M = Object.assign,
     f;
   function S(e) {
     if (f === void 0)
@@ -1219,7 +1219,7 @@ function vf() {
   }
   function Yl(e, t) {
     var n = t.checked;
-    return I({}, t, {
+    return M({}, t, {
       defaultChecked: void 0,
       defaultValue: void 0,
       value: void 0,
@@ -1298,7 +1298,7 @@ function vf() {
   }
   function Zl(e, t) {
     if (t.dangerouslySetInnerHTML != null) throw Error(s(91));
-    return I({}, t, {
+    return M({}, t, {
       value: void 0,
       defaultValue: void 0,
       children: '' + e._wrapperState.initialValue,
@@ -1448,7 +1448,7 @@ function vf() {
         (n === 'float' && (n = 'cssFloat'), r ? e.setProperty(n, l) : (e[n] = l));
       }
   }
-  var hc = I(
+  var hc = M(
     { menuitem: !0 },
     {
       area: !0,
@@ -2250,7 +2250,7 @@ function vf() {
       );
     }
     return (
-      I(t.prototype, {
+      M(t.prototype, {
         preventDefault: function () {
           this.defaultPrevented = !0;
           var n = this.nativeEvent;
@@ -2285,12 +2285,12 @@ function vf() {
       isTrusted: 0,
     },
     yo = lt(kn),
-    rr = I({}, kn, { view: 0, detail: 0 }),
+    rr = M({}, kn, { view: 0, detail: 0 }),
     Fc = lt(rr),
     go,
     _o,
     lr,
-    Yr = I({}, rr, {
+    Yr = M({}, rr, {
       screenX: 0,
       screenY: 0,
       clientX: 0,
@@ -2326,19 +2326,19 @@ function vf() {
       },
     }),
     Mu = lt(Yr),
-    Bc = I({}, Yr, { dataTransfer: 0 }),
+    Bc = M({}, Yr, { dataTransfer: 0 }),
     Ac = lt(Bc),
-    Uc = I({}, rr, { relatedTarget: 0 }),
+    Uc = M({}, rr, { relatedTarget: 0 }),
     wo = lt(Uc),
-    $c = I({}, kn, { animationName: 0, elapsedTime: 0, pseudoElement: 0 }),
+    $c = M({}, kn, { animationName: 0, elapsedTime: 0, pseudoElement: 0 }),
     Vc = lt($c),
-    Hc = I({}, kn, {
+    Hc = M({}, kn, {
       clipboardData: function (e) {
         return 'clipboardData' in e ? e.clipboardData : window.clipboardData;
       },
     }),
     Qc = lt(Hc),
-    Wc = I({}, kn, { data: 0 }),
+    Wc = M({}, kn, { data: 0 }),
     Du = lt(Wc),
     Gc = {
       Esc: 'Escape',
@@ -2400,7 +2400,7 @@ function vf() {
   function So() {
     return Kc;
   }
-  var Xc = I({}, rr, {
+  var Xc = M({}, rr, {
       key: function (e) {
         if (e.key) {
           var t = Gc[e.key] || e.key;
@@ -2436,7 +2436,7 @@ function vf() {
       },
     }),
     Zc = lt(Xc),
-    Jc = I({}, Yr, {
+    Jc = M({}, Yr, {
       pointerId: 0,
       width: 0,
       height: 0,
@@ -2449,7 +2449,7 @@ function vf() {
       isPrimary: 0,
     }),
     Fu = lt(Jc),
-    bc = I({}, rr, {
+    bc = M({}, rr, {
       touches: 0,
       targetTouches: 0,
       changedTouches: 0,
@@ -2460,9 +2460,9 @@ function vf() {
       getModifierState: So,
     }),
     ed = lt(bc),
-    td = I({}, kn, { propertyName: 0, elapsedTime: 0, pseudoElement: 0 }),
+    td = M({}, kn, { propertyName: 0, elapsedTime: 0, pseudoElement: 0 }),
     nd = lt(td),
-    rd = I({}, Yr, {
+    rd = M({}, Yr, {
       deltaX: function (e) {
         return 'deltaX' in e ? e.deltaX : 'wheelDeltaX' in e ? -e.wheelDeltaX : 0;
       },
@@ -3419,7 +3419,7 @@ function vf() {
     if (((t = t.childContextTypes), typeof r.getChildContext != 'function')) return n;
     r = r.getChildContext();
     for (var l in r) if (!(l in t)) throw Error(s(108, me(e) || 'Unknown', l));
-    return I({}, n, r);
+    return M({}, n, r);
   }
   function ll(e) {
     return (
@@ -4145,7 +4145,7 @@ function vf() {
                   ((F = A.payload), (_ = typeof F == 'function' ? F.call(z, C, _) : F), _ == null)
                 )
                   break e;
-                C = I({}, C, _);
+                C = M({}, C, _);
                 break e;
               case 2:
                 Yt = !0;
@@ -4805,7 +4805,7 @@ function vf() {
     };
   function wt(e, t) {
     if (e && e.defaultProps) {
-      ((t = I({}, t)), (e = e.defaultProps));
+      ((t = M({}, t)), (e = e.defaultProps));
       for (var n in e) t[n] === void 0 && (t[n] = e[n]);
       return t;
     }
@@ -4814,7 +4814,7 @@ function vf() {
   function ci(e, t, n, r) {
     ((t = e.memoizedState),
       (n = n(r, t)),
-      (n = n == null ? t : I({}, t, n)),
+      (n = n == null ? t : M({}, t, n)),
       (e.memoizedState = n),
       e.lanes === 0 && (e.updateQueue.baseState = n));
   }
@@ -5589,7 +5589,7 @@ Error generating stack: ` +
             ((l = Yl(e, l)), (r = Yl(e, r)), (o = []));
             break;
           case 'select':
-            ((l = I({}, l, { value: void 0 })), (r = I({}, r, { value: void 0 })), (o = []));
+            ((l = M({}, l, { value: void 0 })), (r = M({}, r, { value: void 0 })), (o = []));
             break;
           case 'textarea':
             ((l = Zl(e, l)), (r = Zl(e, r)), (o = []));
@@ -5846,7 +5846,7 @@ Error generating stack: ` +
                   break;
                 case 'select':
                   ((e._wrapperState = { wasMultiple: !!r.multiple }),
-                    (l = I({}, r, { value: void 0 })),
+                    (l = M({}, r, { value: void 0 })),
                     ye('invalid', e));
                   break;
                 case 'textarea':
@@ -8800,7 +8800,7 @@ function Nf(v, d) {
     w = Xi(s);
   for (const { options: P, probability: g } of Ql(v)) {
     const j = Wl(P, s, k);
-    for (const [O, M] of Object.entries(j)) w[O] += g * M;
+    for (const [O, I] of Object.entries(j)) w[O] += g * I;
   }
   const E = Object.keys(w).reduce((P, g) => (w[P] > w[g] ? P : g)),
     L = { evs: w };
@@ -8815,7 +8815,7 @@ function jf(v, d) {
     const g = Wl(L, s, k),
       j = oc(g),
       O = P / j.length;
-    for (const M of j) w[M] += O;
+    for (const I of j) w[I] += O;
   }
   const E = {};
   for (const L of Object.keys(s)) E[L] = w[L] * 100;
@@ -8842,8 +8842,8 @@ function Lf(v, d) {
     P = -1 / 0;
   for (const g of E) {
     let j = 1 / 0;
-    for (const { options: O, probability: M } of Ql(v)) {
-      if (M < 0.001) continue;
+    for (const { options: O, probability: I } of Ql(v)) {
+      if (I < 0.001) continue;
       const R = Wl(O, s, k);
       let B = 0;
       for (const ee of w) B += R[ee] * (g[ee] / 100);
@@ -8859,8 +8859,8 @@ function Tf(v) {
     k = (g) => {
       const j = {};
       return (
-        v.forEach((O, M) => {
-          j[O] = g[M];
+        v.forEach((O, I) => {
+          j[O] = g[I];
         }),
         j
       );
@@ -8888,8 +8888,8 @@ function Tf(v) {
       for (let j = 0; j < s; j++) {
         const O = new Array(s).fill(0);
         O[j] = g[0];
-        let M = 1;
-        for (let R = 0; R < s; R++) R !== j && M < g.length && (O[R] = g[M++]);
+        let I = 1;
+        for (let R = 0; R < s; R++) R !== j && I < g.length && (O[R] = g[I++]);
         d.push(k(O));
       }
   return d;
@@ -8902,25 +8902,25 @@ function ic(v, d, s, k = null, w = null) {
     g = Object.keys(s).filter((R) => R !== v && R !== w),
     j = g.reduce((R, B) => R + P[B], 0),
     O = 100 - d - E,
-    M = { [v]: d };
-  if ((w && (M[w] = s[w]), j === 0)) {
+    I = { [v]: d };
+  if ((w && (I[w] = s[w]), j === 0)) {
     const R = Math.floor(O / g.length);
     let B = O - R * g.length;
     g.forEach((ee, q) => {
-      M[ee] = R + (q < B ? 1 : 0);
+      I[ee] = R + (q < B ? 1 : 0);
     });
   } else {
     let R = 0;
     g.forEach((B, ee) => {
-      if (ee === g.length - 1) M[B] = Math.max(0, O - R);
+      if (ee === g.length - 1) I[B] = Math.max(0, O - R);
       else {
         const q = P[B] / j,
           Y = O * q;
-        ((M[B] = Math.max(0, Y)), (R += M[B]));
+        ((I[B] = Math.max(0, Y)), (R += I[B]));
       }
     });
   }
-  return M;
+  return I;
 }
 function uc(v) {
   const d = Object.keys(v),
@@ -9016,7 +9016,7 @@ function Mf({ children: v }) {
     O = X.useCallback(() => {
       s({ type: nt.RESET_TO_ORIGINAL });
     }, []),
-    M = X.useCallback(() => {
+    I = X.useCallback(() => {
       s({ type: nt.RESET_QUIZ });
     }, []),
     R = X.useCallback((Q) => {
@@ -9060,8 +9060,8 @@ function Mf({ children: v }) {
           ? null
           : Object.fromEntries(
               at.map(($) => {
-                var I;
-                return [$.id, ((I = d.questions[$.id]) == null ? void 0 : I[K]) || qi];
+                var M;
+                return [$.id, ((M = d.questions[$.id]) == null ? void 0 : M[K]) || qi];
               })
             );
       },
@@ -9124,7 +9124,7 @@ function Mf({ children: v }) {
         setExpandedPanel: g,
         saveOriginals: j,
         resetToOriginal: O,
-        resetQuiz: M,
+        resetQuiz: I,
         setDebugConfig: R,
         getQuestionIndex: B,
         getPrevStep: ee,
@@ -9154,7 +9154,7 @@ function Mf({ children: v }) {
         g,
         j,
         O,
-        M,
+        I,
         R,
         B,
         ee,
@@ -9541,7 +9541,7 @@ const Vf = '_container_11wow_3',
   }) => {
     var _e;
     const [j, O] = X.useState(null),
-      [M, R] = X.useState(!1),
+      [I, R] = X.useState(!1),
       B = P === L,
       ee = P && P !== L,
       q = ee ? E[P] : 0,
@@ -9551,7 +9551,7 @@ const Vf = '_container_11wow_3',
         B || (R(!0), O({ ...E }));
       },
       ve = (W) => {
-        if (B) return;
+        if (B || !I) return;
         R(!1);
         const Z = parseFloat(W.target.value);
         (k(Z, j, !0, P), O(null));
@@ -9598,7 +9598,7 @@ const Vf = '_container_11wow_3',
                   onMouseLeave: ve,
                   onTouchStart: de,
                   onTouchEnd: ve,
-                  'data-dragging': M,
+                  'data-dragging': I,
                   disabled: B,
                   style: {
                     background: ee
@@ -9639,7 +9639,7 @@ const Vf = '_container_11wow_3',
       setCredences: g,
       inputMode: j,
       setInputMode: O,
-      lockedKey: M,
+      lockedKey: I,
       setLockedKey: R,
     } = L;
     return p.jsxs('div', {
@@ -9699,7 +9699,7 @@ const Vf = '_container_11wow_3',
                               color: B.color,
                               credences: P,
                               sliderKey: B.key,
-                              lockedKey: M,
+                              lockedKey: I,
                               setLockedKey: R,
                             },
                             B.key
@@ -9814,18 +9814,18 @@ const Vf = '_container_11wow_3',
   }) => {
     var fe;
     const [g, j] = X.useState(null),
-      [O, M] = X.useState(!1),
+      [O, I] = X.useState(!1),
       R = L === E,
       B = L && L !== E,
       ee = B ? w[L] : 0,
       q = B ? 100 - ee : 100,
       Y = B ? `calc(${q}% + ${(50 - q) * 0.16}px)` : null,
       pe = () => {
-        R || (M(!0), j({ ...w }));
+        R || (I(!0), j({ ...w }));
       },
       de = (_e) => {
-        if (R) return;
-        M(!1);
+        if (R || !O) return;
+        I(!1);
         const W = parseFloat(_e.target.value);
         (s(W, g, !0, L), j(null));
       },
@@ -9925,7 +9925,7 @@ const Vf = '_container_11wow_3',
     setLockedKey: j,
   }) => {
     const O = w && JSON.stringify(s) !== JSON.stringify(w),
-      M = (R) => {
+      I = (R) => {
         (R.stopPropagation(), k({ ...w }));
       };
     return p.jsxs('div', {
@@ -9987,7 +9987,7 @@ const Vf = '_container_11wow_3',
                   p.jsx('span', { className: st.footerNote, children: Le.editPanel.sliderNote }),
                   O &&
                     p.jsxs('button', {
-                      onClick: M,
+                      onClick: I,
                       className: st.resetButton,
                       children: [p.jsx(pc, { size: 10 }), ' ', Le.editPanel.resetButton],
                     }),
@@ -10079,7 +10079,7 @@ const Vf = '_container_11wow_3',
         resetQuiz: j,
         goBack: O,
       } = Gl(),
-      { maxEV: M, parliament: R, mergedFavorites: B, maximin: ee } = E,
+      { maxEV: I, parliament: R, mergedFavorites: B, maximin: ee } = E,
       q = Object.entries(d),
       Y = (W) =>
         W.options.map((Z) => ({
@@ -10144,7 +10144,7 @@ const Vf = '_container_11wow_3',
         p.jsxs('div', {
           className: se.resultsGrid,
           children: [
-            de('maxEV', M, M.evs, L == null ? void 0 : L.maxEV),
+            de('maxEV', I, I.evs, L == null ? void 0 : L.maxEV),
             de('mergedFavorites', B, null, L == null ? void 0 : L.mergedFavorites),
           ],
         });
@@ -10284,23 +10284,23 @@ const Vf = '_container_11wow_3',
         dimensions: JSON.parse(JSON.stringify(lh)),
       }),
       E = (g, j, O) => {
-        w((M) => ({
-          ...M,
+        w((I) => ({
+          ...I,
           causes: {
-            ...M.causes,
+            ...I.causes,
             [g]: {
-              ...M.causes[g],
+              ...I.causes[g],
               [j]: j === 'name' || j === 'color' || typeof O == 'boolean' ? O : Number(O),
             },
           },
         }));
       },
       L = (g, j, O) => {
-        w((M) => ({
-          ...M,
+        w((I) => ({
+          ...I,
           dimensions: {
-            ...M.dimensions,
-            [g]: { ...M.dimensions[g], options: { ...M.dimensions[g].options, [j]: Number(O) } },
+            ...I.dimensions,
+            [g]: { ...I.dimensions[g], options: { ...I.dimensions[g].options, [j]: Number(O) } },
           },
         }));
       },
@@ -10436,7 +10436,7 @@ const Vf = '_container_11wow_3',
                                 }),
                                 p.jsx('div', {
                                   className: Qe.multiplierRow,
-                                  children: Object.entries(j.options).map(([O, M]) =>
+                                  children: Object.entries(j.options).map(([O, I]) =>
                                     p.jsxs(
                                       'label',
                                       {
@@ -10446,7 +10446,7 @@ const Vf = '_container_11wow_3',
                                           p.jsx('input', {
                                             type: 'number',
                                             step: j.applyAs === 'exponent' ? '0.1' : '0.01',
-                                            value: M,
+                                            value: I,
                                             onChange: (R) => L(g, O, R.target.value),
                                           }),
                                         ],
