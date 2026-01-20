@@ -1,5 +1,6 @@
 import { Sliders } from 'lucide-react';
 import styles from '../../styles/components/ModeToggle.module.css';
+import copy from '../../../config/copy.json';
 
 /**
  * Toggle between "Pick One" (options) and "Custom Mix" (sliders) input modes
@@ -12,14 +13,14 @@ const ModeToggle = ({ mode, setMode }) => {
         onClick={() => setMode('options')}
         className={`${styles.button} ${styles.options} ${mode === 'options' ? styles.active : ''}`}
       >
-        Pick One
+        {copy.questionScreen.modeToggle.pickOne}
       </button>
       <button
         onClick={() => setMode('sliders')}
         className={`${styles.button} ${styles.sliders} ${mode === 'sliders' ? styles.active : ''}`}
       >
         <Sliders size={14} />
-        Custom Mix
+        {copy.questionScreen.modeToggle.customMix}
       </button>
     </div>
   );

@@ -1,6 +1,7 @@
 import Header from './layout/Header';
 import { useQuiz } from '../context/useQuiz';
 import styles from '../styles/components/WelcomeScreen.module.css';
+import copy from '../../config/copy.json';
 
 /**
  * Welcome/landing screen
@@ -11,28 +12,24 @@ const WelcomeScreen = () => {
 
   return (
     <div className="screen">
-      <Header subtitle="~3 minutes" />
+      <Header subtitle={copy.welcome.timeEstimate} />
 
       <main className="screen-main">
         <div className={styles.container}>
           <h1 className={styles.heading}>
-            Where Should Your
+            {copy.welcome.headingLine1}
             <br />
-            <span className={styles.headingEmphasis}>Giving Go?</span>
+            <span className={styles.headingEmphasis}>{copy.welcome.headingLine2}</span>
           </h1>
 
-          <p className={styles.intro}>
-            Uncertain about your ethical views? This tool helps you allocate resources across
-            different causes based on your moral credences—the probabilities you assign to different
-            ethical perspectives.
-          </p>
+          <p className={styles.intro}>{copy.welcome.intro}</p>
 
           <button onClick={startQuiz} className="btn btn-primary">
-            Start Quiz →
+            {copy.welcome.startButton}
           </button>
 
           <div className={styles.infoBox}>
-            <div className={styles.infoBoxLabel}>You'll be asked about:</div>
+            <div className={styles.infoBoxLabel}>{copy.welcome.previewLabel}</div>
             <div className={styles.infoBoxGrid}>
               {questionsConfig.map((question) => (
                 <div key={question.id} className={styles.infoBoxItem}>

@@ -7,6 +7,7 @@ import { useQuiz } from '../context/useQuiz';
 import { adjustCredences, roundCredences } from '../utils/calculations';
 import { CATEGORY_LABEL_COLOR } from '../constants/config';
 import styles from '../styles/components/QuestionScreen.module.css';
+import copy from '../../config/copy.json';
 
 /**
  * Question screen that renders the current question from context
@@ -90,10 +91,10 @@ const QuestionScreen = () => {
 
           <div className={styles.buttonRow}>
             <button onClick={goBack} className="btn btn-secondary">
-              ← Back
+              {copy.navigation.back}
             </button>
             <button onClick={goForward} className="btn btn-primary">
-              Continue →
+              {copy.navigation.continue}
             </button>
           </div>
         </div>

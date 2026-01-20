@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import CompactSlider from './CompactSlider';
 import { adjustCredences, roundCredences } from '../../utils/calculations';
 import styles from '../../styles/components/EditPanel.module.css';
+import copy from '../../../config/copy.json';
 
 /**
  * Collapsible panel for editing credences in results screen
@@ -34,7 +35,9 @@ const EditPanel = ({
         <div className={styles.buttonContent}>
           <span className={styles.icon}>{icon}</span>
           <span className={styles.title}>{title}</span>
-          {panelChanged && <span className={styles.modifiedBadge}>modified</span>}
+          {panelChanged && (
+            <span className={styles.modifiedBadge}>{copy.editPanel.modifiedBadge}</span>
+          )}
           {!isExpanded && (
             <span className={styles.preview}>
               {configs.map((c) => `${c.short}:${credences[c.key]}%`).join(' ')}
@@ -71,10 +74,10 @@ const EditPanel = ({
             />
           ))}
           <div className={styles.footer}>
-            <span className={styles.footerNote}>Sliders auto-balance to 100%</span>
+            <span className={styles.footerNote}>{copy.editPanel.sliderNote}</span>
             {panelChanged && (
               <button onClick={handleReset} className={styles.resetButton}>
-                <RotateCcw size={10} /> Reset
+                <RotateCcw size={10} /> {copy.editPanel.resetButton}
               </button>
             )}
           </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Lock } from 'lucide-react';
 import styles from '../../styles/components/Slider.module.css';
 import features from '../../../config/features.json';
+import copy from '../../../config/copy.json';
 
 /**
  * Full-size slider for quiz questions with auto-balancing
@@ -111,7 +112,7 @@ const CredenceSlider = ({
           <button
             className={`${styles.lockButton} ${isLocked ? styles.locked : ''}`}
             onClick={handleLockClick}
-            title={isLocked ? 'Unlock slider' : 'Lock slider'}
+            title={isLocked ? copy.sliders.unlockTooltip : copy.sliders.lockTooltip}
             type="button"
           >
             <Lock size={16} />

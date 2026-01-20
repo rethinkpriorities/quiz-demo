@@ -1,0 +1,71 @@
+{
+  "branding": {
+    "title": "Moral Parliament"
+  },
+  "welcome": {
+    "timeEstimate": "~3 minutes",
+    "headingLine1": "Where Should Your",
+    "headingLine2": "Giving Go?",
+    "intro": "Uncertain about your ethical views? This tool helps you allocate resources across different causes based on your moral credences—the probabilities you assign to different ethical perspectives.",
+    "startButton": "Start Quiz →",
+    "previewLabel": "You'll be asked about:"
+  },
+  "navigation": {
+    "back": "← Back",
+    "continue": "Continue →",
+    "backToQuiz": "← Back to Quiz",
+    "startOver": "Start Over"
+  },
+  "questionScreen": {
+    "modeToggle": {
+      "pickOne": "Pick One",
+      "customMix": "Custom Mix"
+    }
+  },
+  "results": {
+    "heading": "Recommended Allocations",
+    "modifiedIndicator": "(modified)",
+    "adjustCredencesHeading": "🎛️ Adjust Your Credences",
+    "resetAllButton": "Reset All",
+    "resetConfirmation": "Are you sure? This will clear all your answers and return to the beginning.",
+    "methods": {
+      "maxEV": {
+        "icon": "🎯",
+        "title": "Max Expected Value",
+        "subtitle": "100% to highest EV",
+        "footerLabel": "EVs:",
+        "footerText": null
+      },
+      "parliament": {
+        "icon": "🏛️",
+        "title": "Variance Voting",
+        "subtitle": "Weighted worldview votes",
+        "footerLabel": null,
+        "footerText": "Each worldview votes for preferred cause"
+      },
+      "mergedFavorites": {
+        "icon": "🤝",
+        "title": "Merged Favorites",
+        "subtitle": "Budget shares to favorites",
+        "footerLabel": null,
+        "footerText": "Each worldview allocates its budget share"
+      },
+      "maximin": {
+        "icon": "⚖️",
+        "title": "Maximin (Egalitarian)",
+        "subtitle": "Fairest to all worldviews",
+        "footerLabel": null,
+        "footerText": "Maximizes minimum worldview utility"
+      }
+    }
+  },
+  "editPanel": {
+    "modifiedBadge": "modified",
+    "sliderNote": "Sliders auto-balance to 100%",
+    "resetButton": "Reset"
+  },
+  "sliders": {
+    "lockTooltip": "Lock slider",
+    "unlockTooltip": "Unlock slider"
+  }
+}

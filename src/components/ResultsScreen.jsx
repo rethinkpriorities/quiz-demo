@@ -4,6 +4,7 @@ import EditPanel from './ui/EditPanel';
 import { useQuiz } from '../context/useQuiz';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
+import copy from '../../config/copy.json';
 
 /**
  * Results screen showing all 4 allocation methods
@@ -28,9 +29,7 @@ const ResultsScreen = () => {
   const causeEntries = Object.entries(causesConfig);
 
   const handleResetClick = () => {
-    if (
-      window.confirm('Are you sure? This will clear all your answers and return to the beginning.')
-    ) {
+    if (window.confirm(copy.results.resetConfirmation)) {
       resetQuiz();
     }
   };
@@ -63,8 +62,10 @@ const ResultsScreen = () => {
         {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>
-            Recommended Allocations
-            {hasChanged && <span className={styles.modifiedIndicator}>(modified)</span>}
+            {copy.results.heading}
+            {hasChanged && (
+              <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
+            )}
           </h1>
         </div>
 
@@ -73,15 +74,17 @@ const ResultsScreen = () => {
           {/* Max EV */}
           <div className={styles.resultCard}>
             <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.maxEV}`}>🎯</div>
+              <div className={`${styles.cardIcon} ${styles.maxEV}`}>
+                {copy.results.methods.maxEV.icon}
+              </div>
               <div>
-                <h3 className={styles.cardTitle}>Max Expected Value</h3>
-                <p className={styles.cardSubtitle}>100% to highest EV</p>
+                <h3 className={styles.cardTitle}>{copy.results.methods.maxEV.title}</h3>
+                <p className={styles.cardSubtitle}>{copy.results.methods.maxEV.subtitle}</p>
               </div>
             </div>
             {renderCauseBars(maxEV, originalCalculationResults?.maxEV)}
             <div className={styles.cardFooter}>
-              EVs:{' '}
+              {copy.results.methods.maxEV.footerLabel}{' '}
               {causeEntries
                 .map(([key, cause]) => `${cause.name.slice(0, 2)} ${maxEV.evs[key].toFixed(0)}`)
                 .join(' · ')}
@@ -91,50 +94,60 @@ const ResultsScreen = () => {
           {/* Variance Voting */}
           <div className={styles.resultCard}>
             <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.parliament}`}>🏛️</div>
+              <div className={`${styles.cardIcon} ${styles.parliament}`}>
+                {copy.results.methods.parliament.icon}
+              </div>
               <div>
-                <h3 className={styles.cardTitle}>Variance Voting</h3>
-                <p className={styles.cardSubtitle}>Weighted worldview votes</p>
+                <h3 className={styles.cardTitle}>{copy.results.methods.parliament.title}</h3>
+                <p className={styles.cardSubtitle}>{copy.results.methods.parliament.subtitle}</p>
               </div>
             </div>
             {renderCauseBars(parliament, originalCalculationResults?.parliament)}
-            <div className={styles.cardFooter}>Each worldview votes for preferred cause</div>
+            <div className={styles.cardFooter}>{copy.results.methods.parliament.footerText}</div>
           </div>
 
           {/* Merged Favorites */}
           <div className={styles.resultCard}>
             <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.merged}`}>🤝</div>
+              <div className={`${styles.cardIcon} ${styles.merged}`}>
+                {copy.results.methods.mergedFavorites.icon}
+              </div>
               <div>
-                <h3 className={styles.cardTitle}>Merged Favorites</h3>
-                <p className={styles.cardSubtitle}>Budget shares to favorites</p>
+                <h3 className={styles.cardTitle}>{copy.results.methods.mergedFavorites.title}</h3>
+                <p className={styles.cardSubtitle}>
+                  {copy.results.methods.mergedFavorites.subtitle}
+                </p>
               </div>
             </div>
             {renderCauseBars(mergedFavorites, originalCalculationResults?.mergedFavorites)}
-            <div className={styles.cardFooter}>Each worldview allocates its budget share</div>
+            <div className={styles.cardFooter}>
+              {copy.results.methods.mergedFavorites.footerText}
+            </div>
           </div>
 
           {/* Maximin */}
           <div className={styles.resultCard}>
             <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.maximin}`}>⚖️</div>
+              <div className={`${styles.cardIcon} ${styles.maximin}`}>
+                {copy.results.methods.maximin.icon}
+              </div>
               <div>
-                <h3 className={styles.cardTitle}>Maximin (Egalitarian)</h3>
-                <p className={styles.cardSubtitle}>Fairest to all worldviews</p>
+                <h3 className={styles.cardTitle}>{copy.results.methods.maximin.title}</h3>
+                <p className={styles.cardSubtitle}>{copy.results.methods.maximin.subtitle}</p>
               </div>
             </div>
             {renderCauseBars(maximin, originalCalculationResults?.maximin)}
-            <div className={styles.cardFooter}>Maximizes minimum worldview utility</div>
+            <div className={styles.cardFooter}>{copy.results.methods.maximin.footerText}</div>
           </div>
         </div>
 
         {/* Edit controls */}
         <div className={styles.adjustPanel}>
           <div className={styles.adjustHeader}>
-            <span className={styles.adjustTitle}>🎛️ Adjust Your Credences</span>
+            <span className={styles.adjustTitle}>{copy.results.adjustCredencesHeading}</span>
             {hasChanged && (
               <button onClick={resetToOriginal} className={styles.resetAllButton}>
-                <RotateCcw size={10} /> Reset All
+                <RotateCcw size={10} /> {copy.results.resetAllButton}
               </button>
             )}
           </div>
@@ -167,11 +180,11 @@ const ResultsScreen = () => {
         {/* Back button */}
         <div className={styles.backButtonContainer}>
           <button onClick={goBack} className={styles.backButton}>
-            ← Back to Quiz
+            {copy.navigation.backToQuiz}
           </button>
           {features.ui?.resetButton && (
             <button onClick={handleResetClick} className={styles.resetButton}>
-              Start Over
+              {copy.navigation.startOver}
             </button>
           )}
         </div>
