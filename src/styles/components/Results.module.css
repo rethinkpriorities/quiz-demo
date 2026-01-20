@@ -38,6 +38,97 @@
   margin-bottom: var(--spacing-6);
 }
 
+/* Comparison mode layout */
+.comparisonContainer {
+  display: flex;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+  align-items: stretch;
+}
+
+.originalResults,
+.newResults {
+  flex: 1;
+  min-width: 0;
+}
+
+.originalResults {
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.newResults {
+  animation: slideInRight 0.4s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.comparisonDivider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-2);
+  gap: var(--spacing-2);
+}
+
+.dividerLine {
+  width: 1px;
+  flex: 1;
+  background: var(--border-medium);
+  min-height: 40px;
+}
+
+.dividerArrow {
+  color: var(--text-gray);
+  font-size: var(--text-lg);
+  padding: var(--spacing-2) 0;
+}
+
+/* Compact styles for comparison mode */
+.compactGrid {
+  grid-template-columns: 1fr;
+  gap: var(--spacing-4);
+  margin-bottom: 0;
+}
+
+.compactCard {
+  padding: var(--spacing-4);
+}
+
+.compactCard .cardHeader {
+  margin-bottom: var(--spacing-3);
+}
+
+.compactCard .cardIcon {
+  width: 24px;
+  height: 24px;
+  font-size: var(--text-sm);
+}
+
+.compactCard .cardTitle {
+  font-size: var(--text-sm);
+}
+
 .resultCard {
   background: var(--overlay-medium);
   border-radius: var(--radius-lg);
@@ -185,5 +276,27 @@
 
   .resultsContainer {
     padding: var(--spacing-4);
+  }
+
+  .comparisonContainer {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+
+  .comparisonDivider {
+    flex-direction: row;
+    padding: var(--spacing-2) 0;
+  }
+
+  .dividerLine {
+    width: auto;
+    height: 1px;
+    min-height: 0;
+    min-width: 40px;
+  }
+
+  .dividerArrow {
+    transform: rotate(90deg);
+    padding: 0 var(--spacing-2);
   }
 }

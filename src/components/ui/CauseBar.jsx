@@ -4,14 +4,23 @@ import styles from '../../styles/components/CauseBar.module.css';
  * Horizontal bar chart showing cause allocation percentage
  * Shows original value as ghost bar when values have changed
  * Displays up/down arrows to indicate changes
+ * simpleMode: compact version for comparison view (no change indicators)
  */
-const CauseBar = ({ name, percentage, color, originalPercentage = null, hasChanged = false }) => {
-  const showChange = hasChanged && originalPercentage !== null && percentage !== originalPercentage;
+const CauseBar = ({
+  name,
+  percentage,
+  color,
+  originalPercentage = null,
+  hasChanged = false,
+  simpleMode = false,
+}) => {
+  const showChange =
+    !simpleMode && hasChanged && originalPercentage !== null && percentage !== originalPercentage;
   const isIncrease = showChange && percentage > originalPercentage;
   const _isDecrease = showChange && percentage < originalPercentage; // Unused: deferred to UX designer
 
   return (
-    <div className={styles.causeBar}>
+    <div className={`${styles.causeBar} ${simpleMode ? styles.compact : ''}`}>
       <div className={styles.header}>
         <span className={styles.name}>{name}</span>
         <span className={styles.percentage} style={{ color }}>

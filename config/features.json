@@ -8,6 +8,11 @@
   },
 
   "calculations": {
+    "showMaxEV": true,
+    "showParliament": false,
+    "showMergedFavorites": true,
+    "showMaximin": false,
+    "sideBySideComparison": true
   },
 
   "developer": {

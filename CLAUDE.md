@@ -748,6 +748,45 @@ Major architectural refactor combining two related features:
 
 ---
 
+### Calculation Display Configuration
+**Date:** 2026-01-20
+**Category:** Calculations
+**Flags:** `calculations.showMaxEV`, `calculations.showParliament`, `calculations.showMergedFavorites`, `calculations.showMaximin`, `calculations.sideBySideComparison`
+**Prototype:** N/A (configuration - no snapshot needed)
+**Dependencies:** None
+
+**Description:**
+Controls which calculation methods appear on the results screen and how changes are displayed when users edit their credences.
+
+**Visibility Flags:**
+- `calculations.showMaxEV` - Show Max Expected Value card
+- `calculations.showParliament` - Show Variance Voting card
+- `calculations.showMergedFavorites` - Show Merged Favorites card
+- `calculations.showMaximin` - Show Maximin card
+
+**Default behavior:** Cards are hidden unless flag is explicitly `true`. This differs from most flags where missing = enabled.
+
+**Side-by-Side Comparison Flag:**
+- `calculations.sideBySideComparison` - Controls how credence changes are displayed
+- When `true` + user has edited credences: Shows original results on left, updated results on right, with arrow divider (→) between them
+- When `false` or no changes: Shows standard single grid with inline change indicators (ghost bars + ↑↓ arrows)
+
+**Implementation:**
+- Conditional rendering in `ResultsScreen.jsx` using `=== true` checks
+- Compact card styles for side-by-side mode (smaller icons, no subtitles/footers)
+- `CauseBar` component accepts `simpleMode` prop for compact rendering
+- Slide-in animations for comparison view
+- Mobile responsive: stacks vertically with rotated arrow on small screens
+
+**Files Changed:**
+- `config/features.json` - Added all calculation flags
+- `src/components/ResultsScreen.jsx` - Conditional rendering for visibility and comparison mode
+- `src/components/ui/CauseBar.jsx` - Added `simpleMode` prop
+- `src/styles/components/Results.module.css` - Comparison container, divider, animations
+- `src/styles/components/CauseBar.module.css` - Compact mode styles
+
+---
+
 ## 🗂️ Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down. General rule: keep the codebase readable as we go.
