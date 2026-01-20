@@ -55,7 +55,7 @@ npm install
 # Start dev server (with hot module replacement)
 npm run dev
 
-# Open http://localhost:5173 in your browser
+# Open http://localhost:5173/quiz-demo/ in your browser
 ```
 
 ### Code Quality
@@ -117,15 +117,21 @@ npm run snapshot a               # Rebuilds, tags as v2
 
 ```
 quiz-prototype/
+├── config/                         # JSON configuration files
+│   ├── causes.json                 # Cause definitions (points, colors, flags)
+│   ├── questions.json              # Question definitions and worldview dimensions
+│   └── features.json               # Feature flags for toggling functionality
+│
 ├── src/
-│   ├── main.jsx                    # React entry point
+│   ├── main.jsx                    # React entry point + config validation
 │   ├── App.jsx                     # Main app wrapper
 │   │
 │   ├── components/
-│   │   ├── MoralParliamentQuiz.jsx # Main quiz orchestrator (state management)
+│   │   ├── MoralParliamentQuiz.jsx # Main quiz orchestrator
 │   │   ├── WelcomeScreen.jsx       # Landing page
 │   │   ├── QuestionScreen.jsx      # Reusable question template
 │   │   ├── ResultsScreen.jsx       # Results display
+│   │   ├── CalculationDebugger.jsx # Developer tool for testing calculations
 │   │   │
 │   │   ├── ui/                     # Reusable UI components
 │   │   │   ├── OptionButton.jsx    # Quick selection button
@@ -139,18 +145,16 @@ quiz-prototype/
 │   │       ├── Header.jsx          # Page header
 │   │       └── ProgressBar.jsx     # Progress indicator
 │   │
-│   ├── utils/                      # Pure utility functions
-│   │   └── calculations.js         # All calculation logic
-│   │       ├── calculateCauseValue()
-│   │       ├── calculateMaxEV()
-│   │       ├── calculateVarianceVoting()
-│   │       ├── calculateMergedFavorites()
-│   │       ├── calculateMaximin()
-│   │       ├── adjustCredences()
-│   │       └── roundCredences()
+│   ├── context/                    # React Context for state management
+│   │   └── QuizContext.jsx         # Quiz state provider and hooks
 │   │
-│   ├── constants/                  # Configuration
-│   │   └── config.js               # All constants and config
+│   ├── utils/                      # Pure utility functions
+│   │   ├── calculations.js         # All calculation logic
+│   │   ├── validateCauses.js       # Validates causes.json on startup
+│   │   └── validateQuestions.js    # Validates questions.json on startup
+│   │
+│   ├── constants/                  # Static configuration
+│   │   └── config.js               # Colors, input modes, UI constants
 │   │
 │   └── styles/                     # Styling
 │       ├── variables.css           # CSS custom properties (design system)
@@ -158,17 +162,14 @@ quiz-prototype/
 │       └── components/             # Component-specific CSS modules
 │
 ├── index.html                      # HTML entry point
-├── vite.config.js                  # Vite configuration
+├── vite.config.js                  # Vite configuration (base: /quiz-demo/)
+├── vitest.config.js                # Test configuration
 ├── package.json                    # Dependencies and scripts
 ├── scripts/
 │   └── snapshot.sh                 # Prototype snapshot script
 ├── prototypes/                     # Committed prototype builds
 │   └── index.html                  # Prototype listing page
-├── CLAUDE.md                       # Post-refactoring cleanup plan
-├── COMPONENT_BOUNDARIES.md         # Component analysis documentation
-├── COMPREHENSION_ISSUES.md         # Code comprehension tracking (resolved)
-├── REFACTORING_COMPLETE.md         # Refactoring completion summary
-└── REFACTORING_NOTES.md            # Bug fixes and architecture notes
+└── CLAUDE.md                       # Development guide and feature tracking
 ```
 
 ---
@@ -281,7 +282,7 @@ Global utility classes in `src/styles/global.css` provide common patterns like f
 
 ## 🧪 Testing
 
-The dev server runs at `http://localhost:5173/` with hot module replacement.
+The dev server runs at `http://localhost:5173/quiz-demo/` with hot module replacement.
 
 ### Manual Testing Areas
 Test the following flows:
@@ -299,27 +300,69 @@ Test the following flows:
 
 ### State Management
 
-All state lives in `MoralParliamentQuiz.jsx`:
-- `currentStep` - Current screen (welcome/animals/future/scale/certainty/results)
-- `animalCredences`, `futureCredences`, `scaleCredences`, `certaintyCredences` - Current credence values
-- `originalAnimalCredences`, `originalFutureCredences`, `originalScaleCredences`, `originalCertaintyCredences` - Snapshots for reset
-- `expandedPanel` - Which edit panel is open
-- `animalInputMode`, `futureInputMode`, `scaleInputMode`, `certaintyInputMode` - Options vs. sliders mode
+State is managed via React Context in `src/context/QuizContext.jsx`:
 
-State flows down as props to child components (unidirectional data flow).
+```js
+{
+  currentStep: 'welcome' | questionId | 'results',
+  questions: {
+    [questionId]: {
+      credences: { equal, '10x', '100x' },
+      originalCredences: null | {...},
+      inputMode: 'options' | 'sliders',
+      lockedKey: null | 'equal' | '10x' | '100x'
+    }
+  },
+  expandedPanel: null | questionId,
+  debugConfig: null | {...}
+}
+```
+
+Components access state via the `QuizContext`:
+```js
+import { useContext } from 'react';
+import { QuizContext } from '../context/QuizContext';
+
+const { currentStep, stateMap, goForward } = useContext(QuizContext);
+```
 
 ### Adding New Questions
 
-To add a new question (we expanded from 2 to 4 questions):
+Questions are defined in `config/questions.json`. To add a new question:
 
-1. Add question options and multipliers to `src/constants/config.js`
-2. Add new step to `STEPS` constant
-3. Add state for credences and input mode in `MoralParliamentQuiz.jsx`
-4. Add original credences state for reset functionality
-5. Add `QuestionScreen` instance with new props and navigation
-6. Update all calculation methods to incorporate new dimension (iterate over new credence object)
-7. Add `EditPanel` to results screen for live editing
-8. Update progress percentages and worldview count display
+1. Add the question object to `config/questions.json`:
+   ```json
+   {
+     "id": "newQuestion",
+     "worldviewDimension": {
+       "appliesWhen": "causeFlag",  // or "appliesTo": "points"
+       "applyAs": "multiplier",     // or "exponent"
+       "options": { "equal": 1, "10x": 0.1, "100x": 0.01 }
+     },
+     "categoryLabel": "Category",
+     "emoji": "🎯",
+     "previewText": "Short description",
+     "heading": "Full question text?",
+     "instructionsOptions": "Instructions for option mode...",
+     "instructionsSliders": "Instructions for slider mode...",
+     "editPanelTitle": "Panel Title",
+     "options": [
+       { "key": "equal", "label": "Option A", "description": "...", "panelLabel": "A", "panelShort": "A" },
+       { "key": "10x", "label": "Option B", "description": "...", "panelLabel": "B", "panelShort": "B" },
+       { "key": "100x", "label": "Option C", "description": "...", "panelLabel": "C", "panelShort": "C" }
+     ]
+   }
+   ```
+
+2. If the question affects a new cause flag, add it to `config/causes.json`
+
+3. The app automatically:
+   - Generates the question screen
+   - Updates progress calculation
+   - Adds edit panel to results screen
+   - Includes dimension in worldview calculations
+
+4. Validation runs on startup (dev mode) and will catch config errors
 
 ### Code Quality
 

@@ -3,33 +3,24 @@ import ProgressBar from './layout/ProgressBar';
 import ModeToggle from './ui/ModeToggle';
 import OptionButton from './ui/OptionButton';
 import CredenceSlider from './ui/CredenceSlider';
-import { roundCredences } from '../utils/calculations';
+import { useQuiz } from '../context/useQuiz';
+import { adjustCredences, roundCredences } from '../utils/calculations';
+import { CATEGORY_LABEL_COLOR } from '../constants/config';
 import styles from '../styles/components/QuestionScreen.module.css';
 
 /**
- * Reusable question screen template
- * Used for both animal and future questions
+ * Question screen that renders the current question from context
  */
-const QuestionScreen = ({
-  categoryLabel,
-  categoryColor,
-  questionNumber,
-  progressPercentage,
-  heading,
-  instructionsOptions,
-  instructionsSliders,
-  options,
-  credences,
-  setCredences,
-  inputMode,
-  setInputMode,
-  lockedKey,
-  setLockedKey,
-  onBack,
-  onContinue,
-  adjustCredences,
-}) => {
-  // const total = Math.round(Object.values(credences).reduce((sum, val) => sum + val, 0));
+const QuestionScreen = () => {
+  const { currentQuestion, stateMap, questionNumber, progressPercentage, goBack, goForward } =
+    useQuiz();
+
+  if (!currentQuestion) return null;
+
+  const state = stateMap[currentQuestion.id];
+  if (!state) return null;
+
+  const { credences, setCredences, inputMode, setInputMode, lockedKey, setLockedKey } = state;
 
   return (
     <div className="screen">
@@ -38,14 +29,16 @@ const QuestionScreen = ({
 
       <main className="screen-main">
         <div className={styles.container}>
-          <div className={styles.categoryLabel} style={{ color: categoryColor }}>
-            {categoryLabel}
+          <div className={styles.categoryLabel} style={{ color: CATEGORY_LABEL_COLOR }}>
+            {currentQuestion.categoryLabel}
           </div>
 
-          <h2 className={styles.heading}>{heading}</h2>
+          <h2 className={styles.heading}>{currentQuestion.heading}</h2>
 
           <p className={styles.instructions}>
-            {inputMode === 'options' ? instructionsOptions : instructionsSliders}
+            {inputMode === 'options'
+              ? currentQuestion.instructionsOptions
+              : currentQuestion.instructionsSliders}
           </p>
 
           <ModeToggle mode={inputMode} setMode={setInputMode} />
@@ -53,7 +46,7 @@ const QuestionScreen = ({
           <div className="card">
             {inputMode === 'options' ? (
               <>
-                {options.map((opt) => (
+                {currentQuestion.options.map((opt) => (
                   <OptionButton
                     key={opt.key}
                     label={opt.label}
@@ -68,19 +61,19 @@ const QuestionScreen = ({
               </>
             ) : (
               <>
-                {options.map((opt) => (
+                {currentQuestion.options.map((opt) => (
                   <CredenceSlider
                     key={opt.key}
                     label={opt.label}
                     description={opt.description}
                     value={credences[opt.key]}
-                    onChange={(val, baseCredences, shouldRound, lockedKey) => {
+                    onChange={(val, baseCredences, shouldRound, currentLockedKey) => {
                       const adjusted = adjustCredences(
                         opt.key,
                         val,
                         credences,
                         baseCredences,
-                        lockedKey
+                        currentLockedKey
                       );
                       setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
                     }}
@@ -91,16 +84,15 @@ const QuestionScreen = ({
                     setLockedKey={setLockedKey}
                   />
                 ))}
-                {/* <div className="total">Total: {total}% ✓</div> */}
               </>
             )}
           </div>
 
           <div className={styles.buttonRow}>
-            <button onClick={onBack} className="btn btn-secondary">
+            <button onClick={goBack} className="btn btn-secondary">
               ← Back
             </button>
-            <button onClick={onContinue} className="btn btn-primary">
+            <button onClick={goForward} className="btn btn-primary">
               Continue →
             </button>
           </div>

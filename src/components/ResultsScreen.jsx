@@ -1,62 +1,62 @@
 import { RotateCcw } from 'lucide-react';
 import CauseBar from './ui/CauseBar';
 import EditPanel from './ui/EditPanel';
+import { useQuiz } from '../context/useQuiz';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
-import {
-  ANIMAL_PANEL_CONFIG,
-  FUTURE_PANEL_CONFIG,
-  SCALE_PANEL_CONFIG,
-  CERTAINTY_PANEL_CONFIG,
-} from '../constants/config';
 
 /**
  * Results screen showing all 4 allocation methods
  * Allows editing credences and seeing live recalculation
  */
-const ResultsScreen = ({
-  animalCredences,
-  setAnimalCredences,
-  futureCredences,
-  setFutureCredences,
-  scaleCredences,
-  setScaleCredences,
-  certaintyCredences,
-  setCertaintyCredences,
-  originalAnimalCredences,
-  originalFutureCredences,
-  originalScaleCredences,
-  originalCertaintyCredences,
-  animalLockedKey,
-  setAnimalLockedKey,
-  futureLockedKey,
-  setFutureLockedKey,
-  scaleLockedKey,
-  setScaleLockedKey,
-  certaintyLockedKey,
-  setCertaintyLockedKey,
-  expandedPanel,
-  setExpandedPanel,
-  maxEVResults,
-  parliamentResults,
-  mergedFavoritesResults,
-  maximinResults,
-  originalMaxEV,
-  originalParliament,
-  originalMergedFavorites,
-  originalMaximin,
-  hasChanged,
-  onResetAll,
-  onResetQuiz,
-  onBack,
-}) => {
+const ResultsScreen = () => {
+  const {
+    questionsConfig,
+    causesConfig,
+    stateMap,
+    expandedPanel,
+    setExpandedPanel,
+    calculationResults,
+    originalCalculationResults,
+    hasChanged,
+    resetToOriginal,
+    resetQuiz,
+    goBack,
+  } = useQuiz();
+
+  const { maxEV, parliament, mergedFavorites, maximin } = calculationResults;
+  const causeEntries = Object.entries(causesConfig);
+
   const handleResetClick = () => {
     if (
       window.confirm('Are you sure? This will clear all your answers and return to the beginning.')
     ) {
-      onResetQuiz();
+      resetQuiz();
     }
   };
+
+  // Build panel configs from question options
+  const getPanelConfigs = (question) =>
+    question.options.map((opt) => ({
+      key: opt.key,
+      label: opt.panelLabel,
+      short: opt.panelShort,
+      color: opt.color,
+    }));
+
+  // Render cause bars for a given result set
+  const renderCauseBars = (results, originalResults) =>
+    causeEntries.map(([causeKey, cause]) => (
+      <CauseBar
+        key={causeKey}
+        name={cause.name}
+        percentage={results[causeKey]}
+        originalPercentage={originalResults?.[causeKey]}
+        color={cause.color}
+        hasChanged={hasChanged}
+      />
+    ));
+
   return (
     <div className={styles.resultsContainer}>
       <div className={styles.inner}>
@@ -79,30 +79,12 @@ const ResultsScreen = ({
                 <p className={styles.cardSubtitle}>100% to highest EV</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={maxEVResults.globalHealth}
-              originalPercentage={originalMaxEV?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={maxEVResults.animalWelfare}
-              originalPercentage={originalMaxEV?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={maxEVResults.gcr}
-              originalPercentage={originalMaxEV?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
+            {renderCauseBars(maxEV, originalCalculationResults?.maxEV)}
             <div className={styles.cardFooter}>
-              EVs: GH {maxEVResults.evs.globalHealth.toFixed(0)} · AW{' '}
-              {maxEVResults.evs.animalWelfare.toFixed(0)} · GCR {maxEVResults.evs.gcr.toFixed(0)}
+              EVs:{' '}
+              {causeEntries
+                .map(([key, cause]) => `${cause.name.slice(0, 2)} ${maxEV.evs[key].toFixed(0)}`)
+                .join(' · ')}
             </div>
           </div>
 
@@ -115,28 +97,8 @@ const ResultsScreen = ({
                 <p className={styles.cardSubtitle}>Weighted worldview votes</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={parliamentResults.globalHealth}
-              originalPercentage={originalParliament?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={parliamentResults.animalWelfare}
-              originalPercentage={originalParliament?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={parliamentResults.gcr}
-              originalPercentage={originalParliament?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
-            <div className={styles.cardFooter}>81 worldviews vote for preferred cause</div>
+            {renderCauseBars(parliament, originalCalculationResults?.parliament)}
+            <div className={styles.cardFooter}>Each worldview votes for preferred cause</div>
           </div>
 
           {/* Merged Favorites */}
@@ -148,27 +110,7 @@ const ResultsScreen = ({
                 <p className={styles.cardSubtitle}>Budget shares to favorites</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={mergedFavoritesResults.globalHealth}
-              originalPercentage={originalMergedFavorites?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={mergedFavoritesResults.animalWelfare}
-              originalPercentage={originalMergedFavorites?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={mergedFavoritesResults.gcr}
-              originalPercentage={originalMergedFavorites?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
+            {renderCauseBars(mergedFavorites, originalCalculationResults?.mergedFavorites)}
             <div className={styles.cardFooter}>Each worldview allocates its budget share</div>
           </div>
 
@@ -181,27 +123,7 @@ const ResultsScreen = ({
                 <p className={styles.cardSubtitle}>Fairest to all worldviews</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={maximinResults.globalHealth}
-              originalPercentage={originalMaximin?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={maximinResults.animalWelfare}
-              originalPercentage={originalMaximin?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={maximinResults.gcr}
-              originalPercentage={originalMaximin?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
+            {renderCauseBars(maximin, originalCalculationResults?.maximin)}
             <div className={styles.cardFooter}>Maximizes minimum worldview utility</div>
           </div>
         </div>
@@ -211,66 +133,40 @@ const ResultsScreen = ({
           <div className={styles.adjustHeader}>
             <span className={styles.adjustTitle}>🎛️ Adjust Your Credences</span>
             {hasChanged && (
-              <button onClick={onResetAll} className={styles.resetAllButton}>
+              <button onClick={resetToOriginal} className={styles.resetAllButton}>
                 <RotateCcw size={10} /> Reset All
               </button>
             )}
           </div>
           <div className={styles.panelList}>
-            <EditPanel
-              title="Animal Values"
-              icon="🐾"
-              credences={animalCredences}
-              setCredences={setAnimalCredences}
-              originalCredences={originalAnimalCredences}
-              configs={ANIMAL_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'animals'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'animals' ? null : 'animals')}
-              lockedKey={animalLockedKey}
-              setLockedKey={setAnimalLockedKey}
-            />
-            <EditPanel
-              title="Future Values"
-              icon="⏳"
-              credences={futureCredences}
-              setCredences={setFutureCredences}
-              originalCredences={originalFutureCredences}
-              configs={FUTURE_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'future'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'future' ? null : 'future')}
-              lockedKey={futureLockedKey}
-              setLockedKey={setFutureLockedKey}
-            />
-            <EditPanel
-              title="Scale Sensitivity"
-              icon="📊"
-              credences={scaleCredences}
-              setCredences={setScaleCredences}
-              originalCredences={originalScaleCredences}
-              configs={SCALE_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'scale'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'scale' ? null : 'scale')}
-              lockedKey={scaleLockedKey}
-              setLockedKey={setScaleLockedKey}
-            />
-            <EditPanel
-              title="Evidence Preference"
-              icon="🔬"
-              credences={certaintyCredences}
-              setCredences={setCertaintyCredences}
-              originalCredences={originalCertaintyCredences}
-              configs={CERTAINTY_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'certainty'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'certainty' ? null : 'certainty')}
-              lockedKey={certaintyLockedKey}
-              setLockedKey={setCertaintyLockedKey}
-            />
+            {questionsConfig.map((question) => {
+              const state = stateMap[question.id];
+              if (!state) return null;
+
+              return (
+                <EditPanel
+                  key={question.id}
+                  title={question.editPanelTitle}
+                  icon={question.emoji}
+                  credences={state.credences}
+                  setCredences={state.setCredences}
+                  originalCredences={state.originalCredences}
+                  configs={getPanelConfigs(question)}
+                  isExpanded={expandedPanel === question.id}
+                  onToggle={() =>
+                    setExpandedPanel(expandedPanel === question.id ? null : question.id)
+                  }
+                  lockedKey={state.lockedKey}
+                  setLockedKey={state.setLockedKey}
+                />
+              );
+            })}
           </div>
         </div>
 
         {/* Back button */}
         <div className={styles.backButtonContainer}>
-          <button onClick={onBack} className={styles.backButton}>
+          <button onClick={goBack} className={styles.backButton}>
             ← Back to Quiz
           </button>
           {features.ui?.resetButton && (

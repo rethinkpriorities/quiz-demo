@@ -7,14 +7,13 @@
  * ALGORITHM OVERVIEW:
  *
  * 1. Worldview Combinations:
- *    With 3 options × 4 questions = 81 total worldview combinations
- *    Each combination has a probability = product of individual credences
+ *    Dynamically generates all combinations of options across dimensions.
+ *    With 3 options × N dimensions = 3^N total worldview combinations.
+ *    Each combination has a probability = product of individual credences.
  *
  * 2. Cause Values:
- *    Each cause starts with base points (100)
- *    - Global Health: baseline (no multipliers applied)
- *    - Animal Welfare: affected by animal and scale multipliers
- *    - GCR (Future): affected by future, scale, and certainty multipliers
+ *    Each cause starts with base points and is modified by dimension multipliers
+ *    based on the dimension's configuration (appliesWhen/appliesTo, applyAs).
  *
  * 3. Max Expected Value (MaxEV):
  *    For each cause, calculate EV across all worldview combinations:
@@ -30,298 +29,243 @@
  * All functions are pure (no side effects) and fully testable.
  */
 
-import {
-  CAUSES,
-  ANIMAL_MULTIPLIERS,
-  FUTURE_MULTIPLIERS,
-  SCALE_MULTIPLIERS,
-  CERTAINTY_MULTIPLIERS,
-} from '../constants/config.js';
+import causesConfig from '../../config/causes.json';
+import questionsConfig from '../../config/questions.json';
+
+const { causes: CAUSES, defaultCredences: DEFAULT_CREDENCES } = causesConfig;
 
 /**
- * Calculate the value of a cause given all four credence dimensions
- * @param {Object} cause - Cause object from CAUSES
- * @param {number} animalMult - Multiplier from ANIMAL_MULTIPLIERS
- * @param {number} futureMult - Multiplier from FUTURE_MULTIPLIERS
- * @param {number} scaleExp - Exponent from SCALE_MULTIPLIERS (0, 0.5, or 1)
- * @param {number} certaintyMult - Multiplier from CERTAINTY_MULTIPLIERS
+ * Build dimensions object from questions config (keyed by question ID).
+ * @param {boolean} includeName - Include question editPanelTitle as name property
+ * @returns {Object} Dimensions keyed by question ID
+ */
+export function buildDimensionsFromQuestions(includeName = false) {
+  return Object.fromEntries(
+    questionsConfig.questions.map((q) => [
+      q.id,
+      includeName ? { ...q.worldviewDimension, name: q.editPanelTitle } : q.worldviewDimension,
+    ])
+  );
+}
+
+const DIMENSIONS = buildDimensionsFromQuestions();
+
+/**
+ * Generator that yields all worldview combinations from credences.
+ * Each worldview includes the selected option for each dimension and its probability.
+ *
+ * @param {Object} credences - Credences object keyed by dimension ID
+ *   e.g., { animal: { equal: 33, '10x': 33, '100x': 34 }, future: {...}, ... }
+ * @yields {{ options: Object, probability: number }}
+ */
+export function* generateWorldviews(credences) {
+  const dimensionIds = Object.keys(credences);
+  if (dimensionIds.length === 0) return;
+
+  const optionKeys = Object.keys(credences[dimensionIds[0]]);
+
+  // Recursive generator for cartesian product
+  function* cartesian(index, current) {
+    if (index === dimensionIds.length) {
+      // Calculate probability as product of all credences
+      let probability = 1;
+      for (const dimId of dimensionIds) {
+        probability *= credences[dimId][current[dimId]] / 100;
+      }
+      yield { options: current, probability };
+      return;
+    }
+
+    const dimId = dimensionIds[index];
+    for (const optKey of optionKeys) {
+      yield* cartesian(index + 1, { ...current, [dimId]: optKey });
+    }
+  }
+
+  yield* cartesian(0, {});
+}
+
+/**
+ * Calculate the value of a cause for a specific worldview combination.
+ * Uses dimension configuration to determine how multipliers apply.
+ *
+ * @param {Object} cause - Cause object from worldviews config
+ * @param {Object} options - Selected options { animal: 'equal', future: '10x', ... }
+ * @param {Object} dimensions - Dimensions config (or override)
  * @returns {number} The calculated value for the cause
  */
-export const calculateCauseValue = (cause, animalMult, futureMult, scaleExp, certaintyMult) => {
+export function calculateCauseValue(cause, options, dimensions) {
   let value = cause.points;
 
-  // Apply animal discount (if cause helps animals)
-  if (cause.helpsAnimals) {
-    value *= animalMult;
-  }
+  // Apply each dimension's effect
+  for (const [dimId, dimension] of Object.entries(dimensions)) {
+    const selectedOption = options[dimId];
+    const multiplier = dimension.options[selectedOption];
 
-  // Apply future discount (if cause helps future humans)
-  if (cause.helpsFutureHumans) {
-    value *= futureMult;
-  }
-
-  // Apply scale boost (all causes, based on their scaleFactor)
-  // scaleFactor^exponent: when exp=0, all get 1; when exp=1, full scaleFactor
-  value *= Math.pow(cause.scaleFactor, scaleExp);
-
-  // Apply certainty discount (if cause is speculative)
-  if (cause.isSpeculative) {
-    value *= certaintyMult;
+    if (dimension.applyAs === 'multiplier') {
+      // Conditional multiplier: only applies if cause has the flag
+      if (dimension.appliesWhen && cause[dimension.appliesWhen]) {
+        value *= multiplier;
+      }
+    } else if (dimension.applyAs === 'exponent') {
+      // Exponent: applies to a cause property
+      if (dimension.appliesTo) {
+        const baseValue = cause[dimension.appliesTo] || 1;
+        value *= Math.pow(baseValue, multiplier);
+      }
+    }
   }
 
   return value;
-};
+}
 
 /**
- * Calculate max expected value allocation across all causes
- * Determines which cause has highest EV and allocates 100% to it
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * Calculate values for all causes in a specific worldview.
+ *
+ * @param {Object} options - Selected options { animal: 'equal', future: '10x', ... }
+ * @param {Object} causes - Causes config (or override)
+ * @param {Object} dimensions - Dimensions config (or override)
+ * @returns {Object} Values keyed by cause ID
+ */
+function calculateAllCauseValues(options, causes, dimensions) {
+  const values = {};
+  for (const [causeKey, cause] of Object.entries(causes)) {
+    values[causeKey] = calculateCauseValue(cause, options, dimensions);
+  }
+  return values;
+}
+
+/**
+ * Find causes with maximum value (handles ties).
+ *
+ * @param {Object} values - Cause values keyed by cause ID
+ * @returns {string[]} Array of cause IDs with max value
+ */
+function findMaxCauses(values) {
+  const maxValue = Math.max(...Object.values(values));
+  return Object.keys(values).filter((key) => Math.abs(values[key] - maxValue) < 0.0001);
+}
+
+/**
+ * Initialize an object with zero values for each cause key.
+ *
+ * @param {Object} causes - Causes config object
+ * @returns {Object} Object with cause keys mapped to 0
+ */
+function initCauseValues(causes) {
+  return Object.fromEntries(Object.keys(causes).map((k) => [k, 0]));
+}
+
+/**
+ * Calculate max expected value allocation across all causes.
+ * Determines which cause has highest EV and allocates 100% to it.
+ *
+ * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages and EVs for each cause
  */
-export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCreds, config) => {
-  // Use config values if provided, otherwise use defaults
+export function calculateMaxEV(credences, config) {
   const causes = config?.causes || CAUSES;
-  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
-  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
-  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
-  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
-
-  const causeEVs = {};
+  const dimensions = config?.dimensions || DIMENSIONS;
+  const causeEVs = initCauseValues(causes);
 
   // Calculate expected value for each cause across all worldview combinations
-  Object.entries(causes).forEach(([causeKey, cause]) => {
-    let ev = 0;
-
-    Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-      Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-        Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-          Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
-            const animalMult = animalMults[animalKey];
-            const futureMult = futureMults[futureKey];
-            const scaleExp = scaleMults[scaleKey];
-            const certaintyMult = certaintyMults[certaintyKey];
-
-            const worldviewProb =
-              (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
-
-            const causeValue = calculateCauseValue(
-              cause,
-              animalMult,
-              futureMult,
-              scaleExp,
-              certaintyMult
-            );
-            ev += worldviewProb * causeValue;
-          });
-        });
-      });
-    });
-
-    causeEVs[causeKey] = ev;
-  });
+  for (const { options, probability } of generateWorldviews(credences)) {
+    const values = calculateAllCauseValues(options, causes, dimensions);
+    for (const [causeKey, value] of Object.entries(values)) {
+      causeEVs[causeKey] += probability * value;
+    }
+  }
 
   // Find cause with maximum EV
   const maxEVCause = Object.keys(causeEVs).reduce((a, b) => (causeEVs[a] > causeEVs[b] ? a : b));
 
-  return {
-    globalHealth: maxEVCause === 'globalHealth' ? 100 : 0,
-    animalWelfare: maxEVCause === 'animalWelfare' ? 100 : 0,
-    gcr: maxEVCause === 'gcr' ? 100 : 0,
-    evs: causeEVs,
-  };
-};
+  // Build result object dynamically
+  const result = { evs: causeEVs };
+  for (const causeKey of Object.keys(causes)) {
+    result[causeKey] = causeKey === maxEVCause ? 100 : 0;
+  }
+
+  return result;
+}
 
 /**
- * Calculate variance voting allocation (moral parliament approach)
- * Each worldview votes for its preferred cause(s), votes weighted by credence
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * Calculate variance voting allocation (moral parliament approach).
+ * Each worldview votes for its preferred cause(s), votes weighted by credence.
+ *
+ * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateVarianceVoting = (
-  animalCreds,
-  futureCreds,
-  scaleCreds,
-  certaintyCreds,
-  config
-) => {
-  // Use config values if provided, otherwise use defaults
+export function calculateVarianceVoting(credences, config) {
   const causes = config?.causes || CAUSES;
-  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
-  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
-  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
-  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
-
-  const votes = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
+  const dimensions = config?.dimensions || DIMENSIONS;
+  const votes = initCauseValues(causes);
 
   // Each worldview combination casts votes
-  Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-    Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-      Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-        Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
-          const worldviewWeight =
-            (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
+  for (const { options, probability } of generateWorldviews(credences)) {
+    const values = calculateAllCauseValues(options, causes, dimensions);
+    const maxCauses = findMaxCauses(values);
 
-          const animalMult = animalMults[animalKey];
-          const futureMult = futureMults[futureKey];
-          const scaleExp = scaleMults[scaleKey];
-          const certaintyMult = certaintyMults[certaintyKey];
-
-          // Calculate values for all causes in this worldview
-          const values = {};
-          Object.entries(causes).forEach(([causeKey, cause]) => {
-            values[causeKey] = calculateCauseValue(
-              cause,
-              animalMult,
-              futureMult,
-              scaleExp,
-              certaintyMult
-            );
-          });
-
-          // Find max value and identify tied causes
-          const maxValue = Math.max(...Object.values(values));
-          const tiedCauses = Object.keys(values).filter(
-            (causeKey) => Math.abs(values[causeKey] - maxValue) < 0.0001
-          );
-
-          // Split vote equally among tied causes
-          const votePerCause = worldviewWeight / tiedCauses.length;
-          tiedCauses.forEach((causeKey) => {
-            votes[causeKey] += votePerCause;
-          });
-        });
-      });
-    });
-  });
+    // Split vote equally among tied causes
+    const votePerCause = probability / maxCauses.length;
+    for (const causeKey of maxCauses) {
+      votes[causeKey] += votePerCause;
+    }
+  }
 
   // Convert to percentages
-  return {
-    globalHealth: votes.globalHealth * 100,
-    animalWelfare: votes.animalWelfare * 100,
-    gcr: votes.gcr * 100,
-  };
-};
+  const result = {};
+  for (const causeKey of Object.keys(causes)) {
+    result[causeKey] = votes[causeKey] * 100;
+  }
+
+  return result;
+}
 
 /**
- * Calculate merged favorites allocation
- * Each worldview allocates its probability share to its favorite cause
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * Calculate merged favorites allocation.
+ * Each worldview allocates its probability share to its favorite cause.
+ *
+ * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateMergedFavorites = (
-  animalCreds,
-  futureCreds,
-  scaleCreds,
-  certaintyCreds,
-  config
-) => {
-  // Use config values if provided, otherwise use defaults
+export function calculateMergedFavorites(credences, config) {
   const causes = config?.causes || CAUSES;
-  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
-  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
-  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
-  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
-
-  const allocation = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
+  const dimensions = config?.dimensions || DIMENSIONS;
+  const allocation = initCauseValues(causes);
 
   // Each worldview combination allocates its share
-  Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-    Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-      Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-        Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
-          // This worldview gets (probability * 100) percent of the budget
-          const worldviewShare =
-            (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
+  for (const { options, probability } of generateWorldviews(credences)) {
+    const values = calculateAllCauseValues(options, causes, dimensions);
+    const favoriteCauses = findMaxCauses(values);
 
-          const animalMult = animalMults[animalKey];
-          const futureMult = futureMults[futureKey];
-          const scaleExp = scaleMults[scaleKey];
-          const certaintyMult = certaintyMults[certaintyKey];
+    // Allocate worldview's share equally among favorites
+    const allocPerCause = (probability * 100) / favoriteCauses.length;
+    for (const causeKey of favoriteCauses) {
+      allocation[causeKey] += allocPerCause;
+    }
+  }
 
-          // Calculate values for all causes in this worldview
-          const values = {};
-          Object.entries(causes).forEach(([causeKey, cause]) => {
-            values[causeKey] = calculateCauseValue(
-              cause,
-              animalMult,
-              futureMult,
-              scaleExp,
-              certaintyMult
-            );
-          });
-
-          // Find favorite cause(s) for this worldview
-          const maxValue = Math.max(...Object.values(values));
-          const favoriteCauses = Object.keys(values).filter(
-            (causeKey) => Math.abs(values[causeKey] - maxValue) < 0.0001
-          );
-
-          // Allocate worldview's share equally among favorites
-          const allocPerCause = (worldviewShare * 100) / favoriteCauses.length;
-          favoriteCauses.forEach((causeKey) => {
-            allocation[causeKey] += allocPerCause;
-          });
-        });
-      });
-    });
-  });
-
-  return {
-    globalHealth: allocation.globalHealth,
-    animalWelfare: allocation.animalWelfare,
-    gcr: allocation.gcr,
-  };
-};
+  return allocation;
+}
 
 /**
- * Calculate maximin allocation
- * Find allocation that maximizes the minimum utility any worldview receives
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * Calculate maximin allocation.
+ * Find allocation that maximizes the minimum utility any worldview receives.
+ *
+ * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certaintyCreds, config) => {
-  // Use config values if provided, otherwise use defaults
+export function calculateMaximin(credences, config) {
   const causes = config?.causes || CAUSES;
-  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
-  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
-  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
-  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
+  const dimensions = config?.dimensions || DIMENSIONS;
+  const causeKeys = Object.keys(causes);
 
-  // Generate candidate allocations (discrete options)
-  const candidateAllocations = [
-    { globalHealth: 100, animalWelfare: 0, gcr: 0 },
-    { globalHealth: 0, animalWelfare: 100, gcr: 0 },
-    { globalHealth: 0, animalWelfare: 0, gcr: 100 },
-    { globalHealth: 50, animalWelfare: 50, gcr: 0 },
-    { globalHealth: 50, animalWelfare: 0, gcr: 50 },
-    { globalHealth: 0, animalWelfare: 50, gcr: 50 },
-    { globalHealth: 34, animalWelfare: 33, gcr: 33 },
-    { globalHealth: 60, animalWelfare: 20, gcr: 20 },
-    { globalHealth: 20, animalWelfare: 60, gcr: 20 },
-    { globalHealth: 20, animalWelfare: 20, gcr: 60 },
-    { globalHealth: 70, animalWelfare: 15, gcr: 15 },
-    { globalHealth: 15, animalWelfare: 70, gcr: 15 },
-    { globalHealth: 15, animalWelfare: 15, gcr: 70 },
-    { globalHealth: 80, animalWelfare: 10, gcr: 10 },
-    { globalHealth: 10, animalWelfare: 80, gcr: 10 },
-    { globalHealth: 10, animalWelfare: 10, gcr: 80 },
-  ];
+  // Generate candidate allocations dynamically based on number of causes
+  const candidateAllocations = generateCandidateAllocations(causeKeys);
 
   let bestAllocation = candidateAllocations[0];
   let bestMinUtility = -Infinity;
@@ -330,39 +274,20 @@ export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certainty
     let minUtility = Infinity;
 
     // Check minimum utility across all worldviews
-    Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-      Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-        Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-          Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
-            const probability =
-              (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
+    for (const { options, probability } of generateWorldviews(credences)) {
+      // Skip very unlikely worldviews
+      if (probability < 0.001) continue;
 
-            // Skip very unlikely worldviews
-            if (probability < 0.001) return;
+      const values = calculateAllCauseValues(options, causes, dimensions);
 
-            const animalMult = animalMults[animalKey];
-            const futureMult = futureMults[futureKey];
-            const scaleExp = scaleMults[scaleKey];
-            const certaintyMult = certaintyMults[certaintyKey];
+      // Calculate utility this worldview gets from the allocation
+      let utility = 0;
+      for (const causeKey of causeKeys) {
+        utility += values[causeKey] * (allocation[causeKey] / 100);
+      }
 
-            // Calculate utility this worldview gets from the allocation
-            let utility = 0;
-            Object.entries(causes).forEach(([causeKey, cause]) => {
-              const causeValue = calculateCauseValue(
-                cause,
-                animalMult,
-                futureMult,
-                scaleExp,
-                certaintyMult
-              );
-              utility += causeValue * (allocation[causeKey] / 100);
-            });
-
-            minUtility = Math.min(minUtility, utility);
-          });
-        });
-      });
-    });
+      minUtility = Math.min(minUtility, utility);
+    }
 
     // Is this allocation better (higher minimum)?
     if (minUtility > bestMinUtility) {
@@ -371,40 +296,109 @@ export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certainty
     }
   }
 
-  return {
-    globalHealth: bestAllocation.globalHealth,
-    animalWelfare: bestAllocation.animalWelfare,
-    gcr: bestAllocation.gcr,
-  };
-};
+  return bestAllocation;
+}
 
 /**
- * Auto-balance credences to maintain 100% total
- * When one slider changes, proportionally adjusts others to keep sum at 100%
+ * Generate candidate allocations for maximin calculation.
+ * Creates a variety of allocation patterns for any number of causes.
+ *
+ * @param {string[]} causeKeys - Array of cause IDs
+ * @returns {Object[]} Array of allocation objects
+ */
+function generateCandidateAllocations(causeKeys) {
+  const allocations = [];
+  const n = causeKeys.length;
+
+  // Helper to create allocation object from array of percentages
+  const makeAllocation = (percentages) => {
+    const alloc = {};
+    causeKeys.forEach((key, i) => {
+      alloc[key] = percentages[i];
+    });
+    return alloc;
+  };
+
+  // 100% to each single cause
+  for (let i = 0; i < n; i++) {
+    const percentages = new Array(n).fill(0);
+    percentages[i] = 100;
+    allocations.push(makeAllocation(percentages));
+  }
+
+  // 50/50 splits between pairs
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const percentages = new Array(n).fill(0);
+      percentages[i] = 50;
+      percentages[j] = 50;
+      allocations.push(makeAllocation(percentages));
+    }
+  }
+
+  // Equal split among all
+  const equalShare = Math.floor(100 / n);
+  const remainder = 100 - equalShare * n;
+  const equalPercentages = new Array(n).fill(equalShare);
+  equalPercentages[0] += remainder; // Give remainder to first
+  allocations.push(makeAllocation(equalPercentages));
+
+  // Various weighted distributions
+  const weightedPatterns = [
+    [60, 20, 20],
+    [70, 15, 15],
+    [80, 10, 10],
+  ];
+
+  for (const pattern of weightedPatterns) {
+    if (pattern.length !== n) continue; // Skip if pattern doesn't match cause count
+
+    // Try each cause as the dominant one
+    for (let dominant = 0; dominant < n; dominant++) {
+      const percentages = new Array(n).fill(0);
+      percentages[dominant] = pattern[0];
+
+      // Distribute remaining percentages to others
+      let patternIdx = 1;
+      for (let i = 0; i < n; i++) {
+        if (i !== dominant && patternIdx < pattern.length) {
+          percentages[i] = pattern[patternIdx++];
+        }
+      }
+
+      allocations.push(makeAllocation(percentages));
+    }
+  }
+
+  return allocations;
+}
+
+/**
+ * Auto-balance credences to maintain 100% total.
+ * When one slider changes, proportionally adjusts others to keep sum at 100%.
+ *
  * @param {string} changedKey - The key of the credence that was changed
  * @param {number} newValue - The new value for the changed credence (0-100)
  * @param {Object} credences - Current credence values { equal, 10x, 100x }
- * @param {Object} baseCredences - Optional: original credences when drag started (for maintaining ratios)
+ * @param {Object} baseCredences - Optional: original credences when drag started
  * @param {string} lockedKey - Optional: key of the locked slider (will not be adjusted)
  * @returns {Object} New credence object with all values summing to 100
  */
-export const adjustCredences = (
+export function adjustCredences(
   changedKey,
   newValue,
   credences,
   baseCredences = null,
   lockedKey = null
-) => {
+) {
   // If there's a locked slider, limit the max value for the changed slider
-  // to ensure the remaining slider(s) don't go negative
   const lockedValue = lockedKey ? credences[lockedKey] : 0;
   const maxAllowedValue = 100 - lockedValue;
 
   // Clamp new value between 0 and the maximum allowed value
   newValue = Math.max(0, Math.min(maxAllowedValue, newValue));
 
-  // Use baseCredences for ratio calculation if provided (during drag), otherwise use current
-  // This preserves the ORIGINAL ratios between other sliders throughout the entire drag
+  // Use baseCredences for ratio calculation if provided (during drag)
   const referenceCredences = baseCredences || credences;
 
   // Filter out both the changed key AND the locked key
@@ -429,16 +423,13 @@ export const adjustCredences = (
       result[k] = each + (i < remainder ? 1 : 0);
     });
   } else {
-    // Proportionally adjust other sliders based on ORIGINAL ratios
+    // Proportionally adjust other sliders based on original ratios
     let allocated = 0;
     otherKeys.forEach((k, i) => {
       if (i === otherKeys.length - 1) {
         // Last slider gets remainder to ensure exactly 100%
         result[k] = Math.max(0, targetOtherSum - allocated);
       } else {
-        // KEY CHANGE: Use referenceCredences to calculate proportion
-        // This preserves the starting ratio between B and C throughout the drag
-        // NO ROUNDING during drag - keeps decimal precision for smooth animation
         const proportion = referenceCredences[k] / referenceOtherSum;
         const value = targetOtherSum * proportion;
         result[k] = Math.max(0, value);
@@ -448,14 +439,15 @@ export const adjustCredences = (
   }
 
   return result;
-};
+}
 
 /**
- * Round all credence values to integers and ensure they sum to 100
+ * Round all credence values to integers and ensure they sum to 100.
+ *
  * @param {Object} credences - Credence values that may have decimal places
  * @returns {Object} Rounded credences that sum to exactly 100
  */
-export const roundCredences = (credences) => {
+export function roundCredences(credences) {
   const keys = Object.keys(credences);
   const rounded = {};
   let total = 0;
@@ -470,4 +462,7 @@ export const roundCredences = (credences) => {
   rounded[keys[keys.length - 1]] = 100 - total;
 
   return rounded;
-};
+}
+
+// Export config for use by other modules
+export { CAUSES, DIMENSIONS, DEFAULT_CREDENCES };
