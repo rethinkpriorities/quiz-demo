@@ -46,6 +46,12 @@ const MoralParliamentQuiz = () => {
   const [scaleInputMode, setScaleInputMode] = useState(INPUT_MODES.OPTIONS);
   const [certaintyInputMode, setCertaintyInputMode] = useState(INPUT_MODES.OPTIONS);
 
+  // Locked slider state (null = none locked, otherwise key name of locked slider)
+  const [animalLockedKey, setAnimalLockedKey] = useState(null);
+  const [futureLockedKey, setFutureLockedKey] = useState(null);
+  const [scaleLockedKey, setScaleLockedKey] = useState(null);
+  const [certaintyLockedKey, setCertaintyLockedKey] = useState(null);
+
   // Calculate results
   const maxEVResults = calculateMaxEV(
     animalCredences,
@@ -135,6 +141,10 @@ const MoralParliamentQuiz = () => {
     setFutureInputMode(INPUT_MODES.OPTIONS);
     setScaleInputMode(INPUT_MODES.OPTIONS);
     setCertaintyInputMode(INPUT_MODES.OPTIONS);
+    setAnimalLockedKey(null);
+    setFutureLockedKey(null);
+    setScaleLockedKey(null);
+    setCertaintyLockedKey(null);
     setExpandedPanel(null);
     setCurrentStep(STEPS.WELCOME);
   };
@@ -170,6 +180,8 @@ const MoralParliamentQuiz = () => {
         setCredences={setAnimalCredences}
         inputMode={animalInputMode}
         setInputMode={setAnimalInputMode}
+        lockedKey={animalLockedKey}
+        setLockedKey={setAnimalLockedKey}
         onBack={() => setCurrentStep(STEPS.WELCOME)}
         onContinue={() => setCurrentStep(STEPS.FUTURE)}
         adjustCredences={adjustCredences}
@@ -192,6 +204,8 @@ const MoralParliamentQuiz = () => {
         setCredences={setFutureCredences}
         inputMode={futureInputMode}
         setInputMode={setFutureInputMode}
+        lockedKey={futureLockedKey}
+        setLockedKey={setFutureLockedKey}
         onBack={() => setCurrentStep(STEPS.ANIMALS)}
         onContinue={() => setCurrentStep(STEPS.SCALE)}
         adjustCredences={adjustCredences}
@@ -214,6 +228,8 @@ const MoralParliamentQuiz = () => {
         setCredences={setScaleCredences}
         inputMode={scaleInputMode}
         setInputMode={setScaleInputMode}
+        lockedKey={scaleLockedKey}
+        setLockedKey={setScaleLockedKey}
         onBack={() => setCurrentStep(STEPS.FUTURE)}
         onContinue={() => setCurrentStep(STEPS.CERTAINTY)}
         adjustCredences={adjustCredences}
@@ -236,6 +252,8 @@ const MoralParliamentQuiz = () => {
         setCredences={setCertaintyCredences}
         inputMode={certaintyInputMode}
         setInputMode={setCertaintyInputMode}
+        lockedKey={certaintyLockedKey}
+        setLockedKey={setCertaintyLockedKey}
         onBack={() => setCurrentStep(STEPS.SCALE)}
         onContinue={handleContinueToResults}
         adjustCredences={adjustCredences}
@@ -258,6 +276,14 @@ const MoralParliamentQuiz = () => {
         originalFutureCredences={originalFutureCredences}
         originalScaleCredences={originalScaleCredences}
         originalCertaintyCredences={originalCertaintyCredences}
+        animalLockedKey={animalLockedKey}
+        setAnimalLockedKey={setAnimalLockedKey}
+        futureLockedKey={futureLockedKey}
+        setFutureLockedKey={setFutureLockedKey}
+        scaleLockedKey={scaleLockedKey}
+        setScaleLockedKey={setScaleLockedKey}
+        certaintyLockedKey={certaintyLockedKey}
+        setCertaintyLockedKey={setCertaintyLockedKey}
         expandedPanel={expandedPanel}
         setExpandedPanel={setExpandedPanel}
         maxEVResults={maxEVResults}

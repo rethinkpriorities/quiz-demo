@@ -939,11 +939,70 @@ Adds a "Start Over" button to the results screen that clears all quiz state and 
 
 ---
 
+### Slider Lock Feature
+**Date:** 2026-01-19
+**Category:** UI
+**Flag:** `ui.sliderLock`
+**Prototype:** `prototype-slider-lock-v2` (2026-01-19)
+**Dependencies:** None
+
+**Description:**
+Allows users to lock any slider in place, preventing it from moving while other sliders adjust proportionally. Visual indicators show the maximum reach for unlocked sliders when one is locked.
+
+**Implementation:**
+- Lock button (monochrome icon from lucide-react) appears at right end of each credence slider
+- Only one slider can be locked at a time (due to three-slider constraint totaling 100%)
+- Clicking lock on another slider moves the lock to that slider
+- Locked sliders are disabled and cannot be dragged
+- Lock state is per-question and persists between question view and results view
+- All sliders start unlocked by default
+
+**Visual Feedback:**
+- Locked slider: Lock icon appears solid/opaque, slider is disabled with `not-allowed` cursor
+- Unlocked sliders when sibling is locked:
+  - Semi-transparent white vertical line shows maximum reach point
+  - Darker gray background appears beyond the limit
+  - Line and color change positioned to account for browser slider thumb offset
+- Lock icon opacity: 0.3 default, 0.6 on hover, 1.0 when locked
+
+**Technical Implementation:**
+- Added locked slider state management (4 state pairs for 4 questions)
+- Updated `adjustCredences()` to skip locked slider and clamp other sliders to maximum allowed value
+- Both `CredenceSlider` (question screens) and `CompactSlider` (results edit panels) support locking
+- Thumb offset calculation: `calc(${maxAllowed}% + ${(50 - maxAllowed) * 0.16}px)` accounts for 16px thumb width
+- Locked sliders completely ignore all input events (onChange, drag handlers)
+
+**Testing:**
+- 7 passing tests covering:
+  - Lock button visibility with flag enabled/disabled
+  - Lock/unlock functionality
+  - Slider disabled state when locked
+  - lockedKey parameter passed to onChange handler
+- All tests passing (12 total across test suite)
+
+**Files Changed:**
+- `config/features.json` - Added `ui.sliderLock` flag
+- `src/components/MoralParliamentQuiz.jsx` - Added locked key state for all 4 questions, passed to components
+- `src/components/QuestionScreen.jsx` - Accept and pass through lockedKey/setLockedKey props
+- `src/components/ResultsScreen.jsx` - Accept and pass through locked key state for all 4 questions
+- `src/components/ui/CredenceSlider.jsx` - Added lock button, visual indicators, lock handling
+- `src/components/ui/CompactSlider.jsx` - Added lock button, visual indicators, lock handling
+- `src/components/ui/EditPanel.jsx` - Accept and pass through lockedKey/setLockedKey props
+- `src/utils/calculations.js` - Updated `adjustCredences()` to handle locked sliders
+- `src/styles/components/Slider.module.css` - Added styles for lock button, limit line, slider container
+- `src/components/ui/CredenceSlider.test.jsx` - Test suite for lock feature
+
+**Known Limitations:**
+- State management has reached 30+ props threaded through components (refactor to Context API planned)
+
+---
+
 ## 🗂️ Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down. General rule: keep the codebase readable as we go.
 
 ### Code Quality Polish
+- [ ] **Context API Refactor** - Replace prop drilling (30+ props) with React Context. Use single keyed context with question IDs to support future config-driven questions. Implement when Question Configuration System (#2) is built.
 - [ ] Ensure consistent prop naming across components
 - [ ] Verify consistent error handling (if any)
 - [ ] Consider React.memo for frequently re-rendering components

@@ -341,21 +341,41 @@ export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certainty
  * @param {number} newValue - The new value for the changed credence (0-100)
  * @param {Object} credences - Current credence values { equal, 10x, 100x }
  * @param {Object} baseCredences - Optional: original credences when drag started (for maintaining ratios)
+ * @param {string} lockedKey - Optional: key of the locked slider (will not be adjusted)
  * @returns {Object} New credence object with all values summing to 100
  */
-export const adjustCredences = (changedKey, newValue, credences, baseCredences = null) => {
-  // Clamp new value between 0 and 100
-  newValue = Math.max(0, Math.min(100, newValue));
+export const adjustCredences = (
+  changedKey,
+  newValue,
+  credences,
+  baseCredences = null,
+  lockedKey = null
+) => {
+  // If there's a locked slider, limit the max value for the changed slider
+  // to ensure the remaining slider(s) don't go negative
+  const lockedValue = lockedKey ? credences[lockedKey] : 0;
+  const maxAllowedValue = 100 - lockedValue;
+
+  // Clamp new value between 0 and the maximum allowed value
+  newValue = Math.max(0, Math.min(maxAllowedValue, newValue));
 
   // Use baseCredences for ratio calculation if provided (during drag), otherwise use current
   // This preserves the ORIGINAL ratios between other sliders throughout the entire drag
   const referenceCredences = baseCredences || credences;
 
-  const otherKeys = Object.keys(credences).filter((k) => k !== changedKey);
+  // Filter out both the changed key AND the locked key
+  const otherKeys = Object.keys(credences).filter((k) => k !== changedKey && k !== lockedKey);
   const referenceOtherSum = otherKeys.reduce((sum, k) => sum + referenceCredences[k], 0);
-  const targetOtherSum = 100 - newValue;
+
+  // Calculate target sum for other sliders (excluding locked slider value)
+  const targetOtherSum = 100 - newValue - lockedValue;
 
   const result = { [changedKey]: newValue };
+
+  // Preserve locked slider value if exists
+  if (lockedKey) {
+    result[lockedKey] = credences[lockedKey];
+  }
 
   // If other sliders are all at 0 in reference, distribute evenly
   if (referenceOtherSum === 0) {

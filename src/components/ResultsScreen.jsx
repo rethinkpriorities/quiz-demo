@@ -27,6 +27,14 @@ const ResultsScreen = ({
   originalFutureCredences,
   originalScaleCredences,
   originalCertaintyCredences,
+  animalLockedKey,
+  setAnimalLockedKey,
+  futureLockedKey,
+  setFutureLockedKey,
+  scaleLockedKey,
+  setScaleLockedKey,
+  certaintyLockedKey,
+  setCertaintyLockedKey,
   expandedPanel,
   setExpandedPanel,
   maxEVResults,
@@ -218,6 +226,8 @@ const ResultsScreen = ({
               configs={ANIMAL_PANEL_CONFIG}
               isExpanded={expandedPanel === 'animals'}
               onToggle={() => setExpandedPanel(expandedPanel === 'animals' ? null : 'animals')}
+              lockedKey={animalLockedKey}
+              setLockedKey={setAnimalLockedKey}
             />
             <EditPanel
               title="Future Values"
@@ -228,6 +238,8 @@ const ResultsScreen = ({
               configs={FUTURE_PANEL_CONFIG}
               isExpanded={expandedPanel === 'future'}
               onToggle={() => setExpandedPanel(expandedPanel === 'future' ? null : 'future')}
+              lockedKey={futureLockedKey}
+              setLockedKey={setFutureLockedKey}
             />
             <EditPanel
               title="Scale Sensitivity"
@@ -238,6 +250,8 @@ const ResultsScreen = ({
               configs={SCALE_PANEL_CONFIG}
               isExpanded={expandedPanel === 'scale'}
               onToggle={() => setExpandedPanel(expandedPanel === 'scale' ? null : 'scale')}
+              lockedKey={scaleLockedKey}
+              setLockedKey={setScaleLockedKey}
             />
             <EditPanel
               title="Evidence Preference"
@@ -248,6 +262,8 @@ const ResultsScreen = ({
               configs={CERTAINTY_PANEL_CONFIG}
               isExpanded={expandedPanel === 'certainty'}
               onToggle={() => setExpandedPanel(expandedPanel === 'certainty' ? null : 'certainty')}
+              lockedKey={certaintyLockedKey}
+              setLockedKey={setCertaintyLockedKey}
             />
           </div>
         </div>

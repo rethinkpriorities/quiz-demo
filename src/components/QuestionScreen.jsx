@@ -23,6 +23,8 @@ const QuestionScreen = ({
   setCredences,
   inputMode,
   setInputMode,
+  lockedKey,
+  setLockedKey,
   onBack,
   onContinue,
   adjustCredences,
@@ -72,12 +74,21 @@ const QuestionScreen = ({
                     label={opt.label}
                     description={opt.description}
                     value={credences[opt.key]}
-                    onChange={(val, baseCredences, shouldRound) => {
-                      const adjusted = adjustCredences(opt.key, val, credences, baseCredences);
+                    onChange={(val, baseCredences, shouldRound, lockedKey) => {
+                      const adjusted = adjustCredences(
+                        opt.key,
+                        val,
+                        credences,
+                        baseCredences,
+                        lockedKey
+                      );
                       setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
                     }}
                     color={opt.color}
                     credences={credences}
+                    sliderKey={opt.key}
+                    lockedKey={lockedKey}
+                    setLockedKey={setLockedKey}
                   />
                 ))}
                 {/* <div className="total">Total: {total}% ✓</div> */}

@@ -17,6 +17,8 @@ const EditPanel = ({
   configs,
   isExpanded,
   onToggle,
+  lockedKey,
+  setLockedKey,
 }) => {
   const panelChanged =
     originalCredences && JSON.stringify(credences) !== JSON.stringify(originalCredences);
@@ -51,12 +53,21 @@ const EditPanel = ({
               key={config.key}
               label={config.label}
               value={credences[config.key]}
-              onChange={(val, baseCredences, shouldRound) => {
-                const adjusted = adjustCredences(config.key, val, credences, baseCredences);
+              onChange={(val, baseCredences, shouldRound, lockedKey) => {
+                const adjusted = adjustCredences(
+                  config.key,
+                  val,
+                  credences,
+                  baseCredences,
+                  lockedKey
+                );
                 setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
               }}
               color={config.color}
               credences={credences}
+              sliderKey={config.key}
+              lockedKey={lockedKey}
+              setLockedKey={setLockedKey}
             />
           ))}
           <div className={styles.footer}>
