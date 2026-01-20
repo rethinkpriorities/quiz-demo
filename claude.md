@@ -896,6 +896,49 @@ Developer tool for testing different calculation parameters without editing code
 
 ---
 
+### Reset Button Feature
+**Date:** 2026-01-19
+**Category:** UI
+**Flag:** `ui.resetButton`
+**Prototype:** `prototype-reset-button` (2026-01-19)
+**Dependencies:** None
+
+**Description:**
+Adds a "Start Over" button to the results screen that clears all quiz state and returns user to the welcome screen.
+
+**Implementation:**
+- Button appears on results screen next to "← Back to Quiz"
+- Clicking shows confirmation dialog: "Are you sure? This will clear all your answers and return to the beginning."
+- On confirm: resets all credences, input modes, expanded panels, and returns to welcome screen
+- Button styled as secondary/warning (orange border, transparent background)
+- Conditionally rendered based on `features.ui.resetButton` flag
+
+**Testing:**
+- Set up Vitest + React Testing Library infrastructure
+- 5 passing tests covering:
+  - Button visibility with flag enabled/disabled
+  - Confirmation dialog behavior
+  - Reset functionality when confirmed/cancelled
+- Tests run in pre-commit hook alongside linting
+
+**Files Changed:**
+- `config/features.json` - Added `ui.resetButton` flag
+- `src/components/MoralParliamentQuiz.jsx` - Added `handleResetQuiz()` function
+- `src/components/ResultsScreen.jsx` - Added reset button with confirmation
+- `src/styles/components/Results.module.css` - Added `.resetButton` styles
+- `src/components/ResultsScreen.test.jsx` - Test suite for feature
+- `.husky/pre-commit` - Added test runner to git hook
+
+**Test Infrastructure Added:**
+- Vitest test runner (fast, Vite-native)
+- React Testing Library for component testing
+- `vitest.config.js` configuration
+- `src/test/setup.js` global test setup
+- Test scripts: `npm test`, `npm run test:run`, `npm run test:ui`
+- Pre-commit hook runs tests before allowing commits
+
+---
+
 ## 🗂️ Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down. General rule: keep the codebase readable as we go.
@@ -930,10 +973,10 @@ These items are deprioritized but may be addressed when development pace slows d
 - [ ] Add screenshots to README
 
 ### Testing Infrastructure
-- [ ] Set up Vitest for unit testing
+- [x] Set up Vitest for unit testing
 - [ ] Write tests for calculation functions
-- [ ] Set up React Testing Library
-- [ ] Write component tests for UI elements
+- [x] Set up React Testing Library
+- [x] Write component tests for UI elements
 - [ ] Add test coverage reporting
 
 ### Visual Polish

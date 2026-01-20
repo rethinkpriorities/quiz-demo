@@ -121,6 +121,24 @@ const MoralParliamentQuiz = () => {
     setCertaintyCredences({ ...originalCertaintyCredences });
   };
 
+  // Full quiz reset - returns to welcome screen
+  const handleResetQuiz = () => {
+    setAnimalCredences({ ...DEFAULT_CREDENCES });
+    setFutureCredences({ ...DEFAULT_CREDENCES });
+    setScaleCredences({ ...DEFAULT_CREDENCES });
+    setCertaintyCredences({ ...DEFAULT_CREDENCES });
+    setOriginalAnimalCredences(null);
+    setOriginalFutureCredences(null);
+    setOriginalScaleCredences(null);
+    setOriginalCertaintyCredences(null);
+    setAnimalInputMode(INPUT_MODES.OPTIONS);
+    setFutureInputMode(INPUT_MODES.OPTIONS);
+    setScaleInputMode(INPUT_MODES.OPTIONS);
+    setCertaintyInputMode(INPUT_MODES.OPTIONS);
+    setExpandedPanel(null);
+    setCurrentStep(STEPS.WELCOME);
+  };
+
   // Save original credences when entering results
   const handleContinueToResults = () => {
     if (!originalAnimalCredences) {
@@ -252,6 +270,7 @@ const MoralParliamentQuiz = () => {
         originalMaximin={originalMaximin}
         hasChanged={hasChanged}
         onResetAll={resetToOriginal}
+        onResetQuiz={handleResetQuiz}
         onBack={() => setCurrentStep(STEPS.CERTAINTY)}
       />
     );

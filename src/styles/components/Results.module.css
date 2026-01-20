@@ -138,6 +138,8 @@
 .backButtonContainer {
   display: flex;
   justify-content: center;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
 }
 
 .backButton {
@@ -156,6 +158,24 @@
 
 .backButton:hover {
   background: var(--overlay-subtle);
+}
+
+.resetButton {
+  background: transparent;
+  color: var(--color-warning);
+  border: 1px solid var(--border-orange);
+  padding: var(--spacing-4) var(--spacing-8);
+  font-size: var(--text-md);
+  font-family: var(--font-body);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  letter-spacing: var(--tracking-wide);
+  transition: var(--transition-base);
+}
+
+.resetButton:hover {
+  background: var(--badge-orange-bg);
 }
 
 @media (max-width: 768px) {

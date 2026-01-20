@@ -2,6 +2,7 @@ import { RotateCcw } from 'lucide-react';
 import CauseBar from './ui/CauseBar';
 import EditPanel from './ui/EditPanel';
 import styles from '../styles/components/Results.module.css';
+import features from '../../config/features.json';
 import {
   ANIMAL_PANEL_CONFIG,
   FUTURE_PANEL_CONFIG,
@@ -38,8 +39,16 @@ const ResultsScreen = ({
   originalMaximin,
   hasChanged,
   onResetAll,
+  onResetQuiz,
   onBack,
 }) => {
+  const handleResetClick = () => {
+    if (
+      window.confirm('Are you sure? This will clear all your answers and return to the beginning.')
+    ) {
+      onResetQuiz();
+    }
+  };
   return (
     <div className={styles.resultsContainer}>
       <div className={styles.inner}>
@@ -248,6 +257,11 @@ const ResultsScreen = ({
           <button onClick={onBack} className={styles.backButton}>
             ← Back to Quiz
           </button>
+          {features.ui?.resetButton && (
+            <button onClick={handleResetClick} className={styles.resetButton}>
+              Start Over
+            </button>
+          )}
         </div>
       </div>
     </div>
