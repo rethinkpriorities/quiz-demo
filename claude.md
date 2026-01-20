@@ -731,159 +731,6 @@ const handleReset = () => {
 
 ---
 
-### 9. Calculation Debugger
-**Category:** Developer
-**Flag:** `developer.calculationDebugger`
-**Dependencies:** None (no snapshot needed - dev tool)
-
-**Description:**
-Developer tool for testing different calculation parameters without editing code. Allows runtime modification of multipliers, point values, and cause configurations.
-
-**Behavior:**
-
-- **Settings Button:**
-  - Fixed position bottom-right corner
-  - Appears on all screens (welcome, questions, results, everywhere)
-  - Simple icon/text button (e.g., "⚙️ Debug" or just "⚙️")
-  - Overlays content with high z-index
-
-- **Modal Window:**
-  - Opens when settings button clicked
-  - Blocks interaction with page (true modal)
-  - Sparsely styled (minimal CSS, not production-ready)
-  - Close button (X) in top-right
-
-- **Editable Constants:**
-  Form inputs for all calculation parameters:
-
-  1. **Cause Data:**
-     - Global Health: points, helpsAnimals, helpsFutureHumans, scaleFactor, isSpeculative
-     - Animal Welfare: points, helpsAnimals, helpsFutureHumans, scaleFactor, isSpeculative
-     - GCR (Future): points, helpsAnimals, helpsFutureHumans, scaleFactor, isSpeculative
-
-  2. **Animal Multipliers:**
-     - equal, 10x, 100x
-
-  3. **Future Multipliers:**
-     - equal, 10x, 100x
-
-  4. **Scale Multipliers:**
-     - equal, 10x, 100x
-
-  5. **Certainty Multipliers:**
-     - equal, 10x, 100x
-
-- **Save Behavior:**
-  - "Save" button at bottom of modal
-  - Values only update on save (not live/reactive)
-  - Modal closes on save
-  - Changes persist in memory until page reload
-  - Calculations immediately recalculate with new values
-
-- **Restore Defaults:**
-  - No reset button in modal
-  - Reload page to restore original values
-
-- **Validation:**
-  - Zero validation
-  - User responsible for entering valid numbers
-  - Invalid values may cause calculation errors (expected for dev tool)
-
-**UI Layout (Form Structure):**
-
-```
-╔══════════════════════════════════════╗
-║  Calculation Debugger          [X]  ║
-╠══════════════════════════════════════╣
-║                                      ║
-║  CAUSES                              ║
-║  ─────────────────────────────────  ║
-║  Global Health:                      ║
-║    Points: [100]                     ║
-║    Scale Factor: [1]                 ║
-║    ☐ Helps Animals                   ║
-║    ☐ Helps Future Humans             ║
-║    ☐ Is Speculative                  ║
-║                                      ║
-║  Animal Welfare:                     ║
-║    Points: [100]                     ║
-║    Scale Factor: [10]                ║
-║    ☑ Helps Animals                   ║
-║    ☐ Helps Future Humans             ║
-║    ☐ Is Speculative                  ║
-║                                      ║
-║  GCR (Future):                       ║
-║    Points: [100]                     ║
-║    Scale Factor: [100]               ║
-║    ☐ Helps Animals                   ║
-║    ☑ Helps Future Humans             ║
-║    ☑ Is Speculative                  ║
-║                                      ║
-║  MULTIPLIERS                         ║
-║  ─────────────────────────────────  ║
-║  Animal:   Equal [1]   10× [0.1]    ║
-║            100× [0.01]               ║
-║                                      ║
-║  Future:   Equal [1]   10× [0.1]    ║
-║            100× [0.01]               ║
-║                                      ║
-║  Scale:    Equal [0]   10× [0.5]    ║
-║            100× [1]                  ║
-║                                      ║
-║  Certainty: Equal [1]  10× [0.1]    ║
-║             100× [0.01]              ║
-║                                      ║
-║              [Save]                  ║
-╚══════════════════════════════════════╝
-```
-
-**Implementation Details:**
-
-1. **State Management:**
-   ```js
-   const [debugConfig, setDebugConfig] = useState({
-     causes: CAUSES,
-     animalMultipliers: ANIMAL_MULTIPLIERS,
-     futureMultipliers: FUTURE_MULTIPLIERS,
-     scaleMultipliers: SCALE_MULTIPLIERS,
-     certaintyMultipliers: CERTAINTY_MULTIPLIERS
-   });
-   ```
-
-2. **Calculation Functions:**
-   - Accept optional config override parameter
-   - Use debugConfig if provided, else use defaults
-   - Example: `calculateMaxEV(credences, debugConfig)`
-
-3. **Settings Button Component:**
-   ```jsx
-   {features.developer?.calculationDebugger && (
-     <button className="debug-settings-btn" onClick={openModal}>
-       ⚙️
-     </button>
-   )}
-   ```
-
-4. **Modal Form:**
-   - Controlled inputs bound to temporary state
-   - On save: update debugConfig in parent state
-   - Triggers recalculation of all results
-
-**Styling:**
-- Minimal CSS (basic layout, no polish)
-- Fixed position button: `position: fixed; bottom: 20px; right: 20px;`
-- Modal: centered overlay with basic border
-- Not intended for production users
-
-**Technical Notes:**
-- This is a developer tool, not a user-facing feature
-- No prototype snapshot needed
-- Zero error handling for invalid inputs
-- Page reload to restore defaults (simple, no state persistence)
-- Works with all other features (presets, difficulty selection, etc.)
-
----
-
 ## ✅ Completed Features
 
 ### Refactoring & Initial Setup
@@ -994,6 +841,49 @@ Allows users to lock any slider in place, preventing it from moving while other 
 
 **Known Limitations:**
 - State management has reached 30+ props threaded through components (refactor to Context API planned)
+
+---
+
+### Calculation Debugger Feature
+**Date:** 2026-01-19
+**Category:** Developer
+**Flag:** `developer.calculationDebugger`
+**Prototype:** N/A (developer tool - no snapshot needed)
+**Dependencies:** None
+
+**Description:**
+Developer tool for testing different calculation parameters without editing code. Allows runtime modification of multipliers, point values, and cause configurations.
+
+**Implementation:**
+- Fixed "Settings" button at bottom-right corner (z-index 9999), visible on all screens
+- Modal overlay with form inputs for all calculation parameters
+- Editable constants include:
+  - **Causes**: points, scaleFactor, helpsAnimals, helpsFutureHumans, isSpeculative for each cause
+  - **Multipliers**: Animal, Future, Scale (exponents), and Certainty multipliers (equal, 10x, 100x values)
+- Save button applies changes; modal closes on save
+- No reset button in modal - reload page to restore defaults
+- Zero validation - user responsible for valid numbers
+
+**Technical Implementation:**
+- Added `debugConfig` state to `MoralParliamentQuiz.jsx`
+- Modified all 4 calculation functions (`calculateMaxEV`, `calculateVarianceVoting`, `calculateMergedFavorites`, `calculateMaximin`) to accept optional `config` parameter
+- When `config` is provided, functions use config values instead of imported defaults
+- CalculationDebugger component manages its own form state, passes config to parent on save
+- Minimal CSS styling (dev tool, not production-ready)
+
+**Files Changed:**
+- `config/features.json` - Added `developer.calculationDebugger` flag
+- `src/components/CalculationDebugger.jsx` - New component (modal + button)
+- `src/styles/components/Debugger.module.css` - Minimal styles for debugger
+- `src/utils/calculations.js` - Added optional config parameter to 4 calculation functions
+- `src/components/MoralParliamentQuiz.jsx` - Added debugConfig state, pass to calculations, render debugger
+
+**Usage:**
+1. Enable flag: set `developer.calculationDebugger: true` in `config/features.json`
+2. "Settings" button appears at bottom-right on all screens
+3. Click to open modal, modify values, click Save
+4. Results immediately recalculate with new values
+5. Reload page to restore original values
 
 ---
 

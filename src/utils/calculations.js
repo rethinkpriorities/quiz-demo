@@ -79,23 +79,31 @@ export const calculateCauseValue = (cause, animalMult, futureMult, scaleExp, cer
  * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
  * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
  * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages and EVs for each cause
  */
-export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
+export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCreds, config) => {
+  // Use config values if provided, otherwise use defaults
+  const causes = config?.causes || CAUSES;
+  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
+  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
+  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
+  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
+
   const causeEVs = {};
 
   // Calculate expected value for each cause across all worldview combinations
-  Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+  Object.entries(causes).forEach(([causeKey, cause]) => {
     let ev = 0;
 
     Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
       Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
         Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
           Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
-            const animalMult = ANIMAL_MULTIPLIERS[animalKey];
-            const futureMult = FUTURE_MULTIPLIERS[futureKey];
-            const scaleExp = SCALE_MULTIPLIERS[scaleKey];
-            const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+            const animalMult = animalMults[animalKey];
+            const futureMult = futureMults[futureKey];
+            const scaleExp = scaleMults[scaleKey];
+            const certaintyMult = certaintyMults[certaintyKey];
 
             const worldviewProb =
               (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
@@ -134,9 +142,23 @@ export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCr
  * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
  * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
  * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateVarianceVoting = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
+export const calculateVarianceVoting = (
+  animalCreds,
+  futureCreds,
+  scaleCreds,
+  certaintyCreds,
+  config
+) => {
+  // Use config values if provided, otherwise use defaults
+  const causes = config?.causes || CAUSES;
+  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
+  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
+  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
+  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
+
   const votes = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
 
   // Each worldview combination casts votes
@@ -147,14 +169,14 @@ export const calculateVarianceVoting = (animalCreds, futureCreds, scaleCreds, ce
           const worldviewWeight =
             (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
 
-          const animalMult = ANIMAL_MULTIPLIERS[animalKey];
-          const futureMult = FUTURE_MULTIPLIERS[futureKey];
-          const scaleExp = SCALE_MULTIPLIERS[scaleKey];
-          const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+          const animalMult = animalMults[animalKey];
+          const futureMult = futureMults[futureKey];
+          const scaleExp = scaleMults[scaleKey];
+          const certaintyMult = certaintyMults[certaintyKey];
 
           // Calculate values for all causes in this worldview
           const values = {};
-          Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+          Object.entries(causes).forEach(([causeKey, cause]) => {
             values[causeKey] = calculateCauseValue(
               cause,
               animalMult,
@@ -195,9 +217,23 @@ export const calculateVarianceVoting = (animalCreds, futureCreds, scaleCreds, ce
  * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
  * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
  * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateMergedFavorites = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
+export const calculateMergedFavorites = (
+  animalCreds,
+  futureCreds,
+  scaleCreds,
+  certaintyCreds,
+  config
+) => {
+  // Use config values if provided, otherwise use defaults
+  const causes = config?.causes || CAUSES;
+  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
+  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
+  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
+  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
+
   const allocation = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
 
   // Each worldview combination allocates its share
@@ -209,14 +245,14 @@ export const calculateMergedFavorites = (animalCreds, futureCreds, scaleCreds, c
           const worldviewShare =
             (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
 
-          const animalMult = ANIMAL_MULTIPLIERS[animalKey];
-          const futureMult = FUTURE_MULTIPLIERS[futureKey];
-          const scaleExp = SCALE_MULTIPLIERS[scaleKey];
-          const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+          const animalMult = animalMults[animalKey];
+          const futureMult = futureMults[futureKey];
+          const scaleExp = scaleMults[scaleKey];
+          const certaintyMult = certaintyMults[certaintyKey];
 
           // Calculate values for all causes in this worldview
           const values = {};
-          Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+          Object.entries(causes).forEach(([causeKey, cause]) => {
             values[causeKey] = calculateCauseValue(
               cause,
               animalMult,
@@ -256,9 +292,17 @@ export const calculateMergedFavorites = (animalCreds, futureCreds, scaleCreds, c
  * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
  * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
  * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certaintyCreds) => {
+export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certaintyCreds, config) => {
+  // Use config values if provided, otherwise use defaults
+  const causes = config?.causes || CAUSES;
+  const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
+  const futureMults = config?.futureMultipliers || FUTURE_MULTIPLIERS;
+  const scaleMults = config?.scaleMultipliers || SCALE_MULTIPLIERS;
+  const certaintyMults = config?.certaintyMultipliers || CERTAINTY_MULTIPLIERS;
+
   // Generate candidate allocations (discrete options)
   const candidateAllocations = [
     { globalHealth: 100, animalWelfare: 0, gcr: 0 },
@@ -296,14 +340,14 @@ export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certainty
             // Skip very unlikely worldviews
             if (probability < 0.001) return;
 
-            const animalMult = ANIMAL_MULTIPLIERS[animalKey];
-            const futureMult = FUTURE_MULTIPLIERS[futureKey];
-            const scaleExp = SCALE_MULTIPLIERS[scaleKey];
-            const certaintyMult = CERTAINTY_MULTIPLIERS[certaintyKey];
+            const animalMult = animalMults[animalKey];
+            const futureMult = futureMults[futureKey];
+            const scaleExp = scaleMults[scaleKey];
+            const certaintyMult = certaintyMults[certaintyKey];
 
             // Calculate utility this worldview gets from the allocation
             let utility = 0;
-            Object.entries(CAUSES).forEach(([causeKey, cause]) => {
+            Object.entries(causes).forEach(([causeKey, cause]) => {
               const causeValue = calculateCauseValue(
                 cause,
                 animalMult,

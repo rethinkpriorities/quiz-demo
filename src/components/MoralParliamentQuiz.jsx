@@ -2,6 +2,7 @@ import { useState } from 'react';
 import WelcomeScreen from './WelcomeScreen';
 import QuestionScreen from './QuestionScreen';
 import ResultsScreen from './ResultsScreen';
+import CalculationDebugger from './CalculationDebugger';
 import {
   calculateMaxEV,
   calculateVarianceVoting,
@@ -18,6 +19,7 @@ import {
   STEPS,
   INPUT_MODES,
 } from '../constants/config';
+import features from '../../config/features.json';
 
 /**
  * Main quiz orchestrator component
@@ -52,30 +54,37 @@ const MoralParliamentQuiz = () => {
   const [scaleLockedKey, setScaleLockedKey] = useState(null);
   const [certaintyLockedKey, setCertaintyLockedKey] = useState(null);
 
-  // Calculate results
+  // Debug config for calculation overrides (developer tool)
+  const [debugConfig, setDebugConfig] = useState(null);
+
+  // Calculate results (pass debugConfig for developer overrides)
   const maxEVResults = calculateMaxEV(
     animalCredences,
     futureCredences,
     scaleCredences,
-    certaintyCredences
+    certaintyCredences,
+    debugConfig
   );
   const parliamentResults = calculateVarianceVoting(
     animalCredences,
     futureCredences,
     scaleCredences,
-    certaintyCredences
+    certaintyCredences,
+    debugConfig
   );
   const mergedFavoritesResults = calculateMergedFavorites(
     animalCredences,
     futureCredences,
     scaleCredences,
-    certaintyCredences
+    certaintyCredences,
+    debugConfig
   );
   const maximinResults = calculateMaximin(
     animalCredences,
     futureCredences,
     scaleCredences,
-    certaintyCredences
+    certaintyCredences,
+    debugConfig
   );
 
   const originalMaxEV = originalAnimalCredences
@@ -83,7 +92,8 @@ const MoralParliamentQuiz = () => {
         originalAnimalCredences,
         originalFutureCredences,
         originalScaleCredences,
-        originalCertaintyCredences
+        originalCertaintyCredences,
+        debugConfig
       )
     : null;
   const originalParliament = originalAnimalCredences
@@ -91,7 +101,8 @@ const MoralParliamentQuiz = () => {
         originalAnimalCredences,
         originalFutureCredences,
         originalScaleCredences,
-        originalCertaintyCredences
+        originalCertaintyCredences,
+        debugConfig
       )
     : null;
   const originalMergedFavorites = originalAnimalCredences
@@ -99,7 +110,8 @@ const MoralParliamentQuiz = () => {
         originalAnimalCredences,
         originalFutureCredences,
         originalScaleCredences,
-        originalCertaintyCredences
+        originalCertaintyCredences,
+        debugConfig
       )
     : null;
   const originalMaximin = originalAnimalCredences
@@ -107,7 +119,8 @@ const MoralParliamentQuiz = () => {
         originalAnimalCredences,
         originalFutureCredences,
         originalScaleCredences,
-        originalCertaintyCredences
+        originalCertaintyCredences,
+        debugConfig
       )
     : null;
 
@@ -160,13 +173,13 @@ const MoralParliamentQuiz = () => {
     setCurrentStep(STEPS.RESULTS);
   };
 
-  // Render appropriate screen
-  if (currentStep === STEPS.WELCOME) {
-    return <WelcomeScreen onStart={() => setCurrentStep(STEPS.ANIMALS)} />;
-  }
+  // Determine which screen to render
+  let screenContent = null;
 
-  if (currentStep === STEPS.ANIMALS) {
-    return (
+  if (currentStep === STEPS.WELCOME) {
+    screenContent = <WelcomeScreen onStart={() => setCurrentStep(STEPS.ANIMALS)} />;
+  } else if (currentStep === STEPS.ANIMALS) {
+    screenContent = (
       <QuestionScreen
         categoryLabel="Moral Weights"
         categoryColor="#81B29A"
@@ -187,10 +200,8 @@ const MoralParliamentQuiz = () => {
         adjustCredences={adjustCredences}
       />
     );
-  }
-
-  if (currentStep === STEPS.FUTURE) {
-    return (
+  } else if (currentStep === STEPS.FUTURE) {
+    screenContent = (
       <QuestionScreen
         categoryLabel="Time Preference"
         categoryColor="#81B29A"
@@ -211,10 +222,8 @@ const MoralParliamentQuiz = () => {
         adjustCredences={adjustCredences}
       />
     );
-  }
-
-  if (currentStep === STEPS.SCALE) {
-    return (
+  } else if (currentStep === STEPS.SCALE) {
+    screenContent = (
       <QuestionScreen
         categoryLabel="Scale Sensitivity"
         categoryColor="#98C1D9"
@@ -235,10 +244,8 @@ const MoralParliamentQuiz = () => {
         adjustCredences={adjustCredences}
       />
     );
-  }
-
-  if (currentStep === STEPS.CERTAINTY) {
-    return (
+  } else if (currentStep === STEPS.CERTAINTY) {
+    screenContent = (
       <QuestionScreen
         categoryLabel="Evidence Preference"
         categoryColor="#E07A5F"
@@ -259,10 +266,8 @@ const MoralParliamentQuiz = () => {
         adjustCredences={adjustCredences}
       />
     );
-  }
-
-  if (currentStep === STEPS.RESULTS) {
-    return (
+  } else if (currentStep === STEPS.RESULTS) {
+    screenContent = (
       <ResultsScreen
         animalCredences={animalCredences}
         setAnimalCredences={setAnimalCredences}
@@ -302,7 +307,14 @@ const MoralParliamentQuiz = () => {
     );
   }
 
-  return null;
+  return (
+    <>
+      {screenContent}
+      {features.developer?.calculationDebugger && (
+        <CalculationDebugger onConfigChange={setDebugConfig} />
+      )}
+    </>
+  );
 };
 
 export default MoralParliamentQuiz;
