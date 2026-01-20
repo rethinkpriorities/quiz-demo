@@ -27,6 +27,28 @@ const mockResults = {
   evs: { globalHealth: 100, animalWelfare: 50, gcr: 75 },
 };
 
+// Mock causes config
+const mockCausesConfig = {
+  globalHealth: {
+    name: 'Global Health',
+    color: '#f2cc8f',
+    points: 100,
+    scaleFactor: 1,
+  },
+  animalWelfare: {
+    name: 'Animal Welfare',
+    color: '#81b29a',
+    points: 100,
+    scaleFactor: 10,
+  },
+  gcr: {
+    name: 'GCR (Future)',
+    color: '#3d5a80',
+    points: 100,
+    scaleFactor: 100,
+  },
+};
+
 // Mock questions matching the new config structure
 const mockQuestions = [
   {
@@ -107,6 +129,7 @@ const createMockContextValue = (overrides = {}) => {
   const resetQuiz = overrides.resetQuiz || vi.fn();
   return {
     questionsConfig: mockQuestions,
+    causesConfig: mockCausesConfig,
     stateMap: createMockStateMap(resetQuiz),
     expandedPanel: null,
     setExpandedPanel: vi.fn(),

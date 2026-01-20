@@ -5,62 +5,6 @@ export const OPTION_COLORS = ['#81B29A', '#98C1D9', '#E07A5F'];
 // Category label color (appears above question heading)
 export const CATEGORY_LABEL_COLOR = '#81B29A';
 
-// Cause definitions with dimension flags
-export const CAUSES = {
-  globalHealth: {
-    name: 'Global Health',
-    points: 100,
-    helpsAnimals: false,
-    helpsFutureHumans: false,
-    scaleFactor: 1,
-    isSpeculative: false,
-  },
-  animalWelfare: {
-    name: 'Animal Welfare',
-    points: 100,
-    helpsAnimals: true,
-    helpsFutureHumans: false,
-    scaleFactor: 10,
-    isSpeculative: false,
-  },
-  gcr: {
-    name: 'GCR (Future)',
-    points: 100,
-    helpsAnimals: false,
-    helpsFutureHumans: true,
-    scaleFactor: 100,
-    isSpeculative: true,
-  },
-};
-
-// Multiplier values for different worldviews
-export const ANIMAL_MULTIPLIERS = {
-  equal: 1,
-  '10x': 0.1,
-  '100x': 0.01,
-};
-
-export const FUTURE_MULTIPLIERS = {
-  equal: 1,
-  '10x': 0.1,
-  '100x': 0.01,
-};
-
-// Scale multipliers - exponents for scaleFactor
-// Applied as: value *= (cause.scaleFactor ** scaleExponent)
-export const SCALE_MULTIPLIERS = {
-  equal: 0, // scale irrelevant: scaleFactor^0 = 1
-  '10x': 0.5, // moderate: sqrt of scale factor
-  '100x': 1, // full: linear scale factor
-};
-
-// Certainty multipliers - discount for speculative interventions
-export const CERTAINTY_MULTIPLIERS = {
-  equal: 1,
-  '10x': 0.1,
-  '100x': 0.01,
-};
-
 // Color palette
 export const COLORS = {
   // Primary colors

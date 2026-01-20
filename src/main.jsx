@@ -1,13 +1,18 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import validateCausesConfig from './utils/validateCauses.js';
 import validateQuestionsConfig from './utils/validateQuestions.js';
+import causesConfig from '../config/causes.json';
 import questionsConfig from '../config/questions.json';
 
-// Validate questions config on startup (dev mode only)
+// Validate configs on startup (dev mode only)
 if (import.meta.env.DEV) {
   try {
-    validateQuestionsConfig(questionsConfig);
+    validateCausesConfig(causesConfig);
+    console.log('Causes config validated successfully');
+
+    validateQuestionsConfig(questionsConfig, causesConfig);
     console.log('Questions config validated successfully');
   } catch (error) {
     console.error(error.message);

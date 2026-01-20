@@ -14,6 +14,18 @@ The project is now in **iterative feature development mode**. We add configurabl
 
 ---
 
+## Development Notes
+
+### Dev Server URL
+The app is served at `http://localhost:5173/quiz-demo/` (not the root). This is configured via `base: '/quiz-demo/'` in `vite.config.js`.
+
+When testing the dev server, always use:
+```bash
+curl http://localhost:5173/quiz-demo/
+```
+
+---
+
 ## Feature Flag System
 
 ### Configuration Location
@@ -48,125 +60,10 @@ The project is now in **iterative feature development mode**. We add configurabl
 
 ## 📋 Planned Features
 
-### 1. Slider Lock Feature
-**Category:** UI
-**Flag:** `ui.sliderLock`
-
-**Description:**
-Add a lock icon (🔒) at the right end of each credence slider that allows users to lock one slider in place. When locked, only the other two sliders will adjust when changes are made.
-
-**Requirements:**
-- Lock emoji appears at the right end of all credence sliders
-- Applies to both question screens and results panel
-- Only one slider can be locked at a time (due to three-slider constraint totaling 100%)
-- Clicking a lock icon when another is locked moves the lock to the new slider
-- Locked slider becomes immobile (cannot be dragged)
-- No visual change to locked slider appearance (just immobility)
-- Lock state is global and persists between question view and results view for that question
-- All sliders start unlocked by default
-
-**Technical Notes:**
-- Need to track locked slider index in state (per question)
-- Adjustment logic needs to skip locked slider when distributing changes
-- Lock state should be stored in question responses or separate lock state object
-
----
-
-### 2. Question Configuration System
-**Category:** Developer
-**Flag:** None (no snapshot needed - productivity feature)
-
-**Description:**
-Move question definitions out of hardcoded React components into a JSON configuration file. Generate question screens, progress tracking, and navigation programmatically from config.
-
-**Current State:**
-- Questions hardcoded in `src/constants/config.js` (ANIMAL_QUESTION_OPTIONS, FUTURE_QUESTION_OPTIONS, etc.)
-- Question screens manually instantiated in `MoralParliamentQuiz.jsx` with duplicate props
-- Progress percentages, question numbers, navigation all hardcoded
-- Separate state variables for each question (animalCredences, futureCredences, etc.)
-
-**Proposed Structure:**
-```json
-{
-  "questions": [
-    {
-      "id": "animal",
-      "categoryLabel": "Species Weighting",
-      "heading": "How do you value animal welfare relative to human welfare?",
-      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
-      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "options": [
-        {
-          "key": "equal",
-          "label": "Animals and humans matter equally",
-          "description": "Equal weight to equivalent experiences",
-          "panelLabel": "Equal weight",
-          "panelShort": "Eq",
-          "multiplier": 1
-        },
-        {
-          "key": "10x",
-          "label": "Animals matter 10× less than humans",
-          "description": "Moderate speciesist view",
-          "panelLabel": "10× less",
-          "panelShort": "10×",
-          "multiplier": 0.1
-        },
-        {
-          "key": "100x",
-          "label": "Animals matter 100× less than humans",
-          "description": "Strong speciesist view",
-          "panelLabel": "100× less",
-          "panelShort": "100×",
-          "multiplier": 0.01
-        }
-      ]
-    }
-  ]
-}
-```
-
-**Design Decisions:**
-- **Colors**: Fixed for options A, B, C (not per-question). Later will be per question-type.
-- **Naming Convention**: Question ID `"animal"` maps to state `animalCredences` via `${id}Credences` pattern
-- **All option data together**: Each option includes label, description, panel labels, and multiplier
-- **No inference**: Exact match between question ID and credence collection name
-
-**Benefits:**
-- Add/remove/reorder questions without touching React code
-- Enables future question type system (different renderers for different types)
-- Cleaner state management (dynamic question responses object)
-- Programmatic progress calculation
-- Easier to validate and test question content
-
-**Concerns & Mitigations:**
-1. **No compile-time validation** → Build-time validation function with helpful errors (fail fast)
-2. **More complex state management** → Use question IDs to key responses object dynamically
-3. **Results screen coupling** → Needs refactor to work with dynamic questions
-4. **Navigation logic** → Generate step constants from config, programmatic next/prev
-
-**Implementation Scope:**
-- Create `config/questions.json` with all current questions
-- Add validation function that runs on app initialization
-- Refactor `MoralParliamentQuiz` to generate questions from config
-- Update state management to use dynamic question IDs (or keep individual state vars with naming convention)
-- Programmatically calculate progress (currentIndex / totalQuestions)
-- Refactor ResultsScreen to handle dynamic question data structure
-- Update calculation functions to pull multipliers from question config instead of separate constants
-
-**Future Extensibility:**
-This sets up infrastructure for:
-- Question type system (different renderers)
-- Conditional question logic (skip questions based on previous answers)
-- Question branching/routing
-- External question sets (multiple quizzes)
-
----
-
-### 3. Preset Credences Feature
+### 1. Preset Credences Feature
 **Category:** UI
 **Flag:** `ui.presets`
-**Dependencies:** Requires Feature #2 (Question Configuration System)
+**Dependencies:** None (Question Configuration System completed)
 
 **Description:**
 Allow users to quickly set credences to predefined viewpoints (e.g., "Rethink Priorities' answer", "Classical Utilitarian", "Longtermist") instead of manually adjusting sliders.
@@ -248,83 +145,28 @@ Allow users to quickly set credences to predefined viewpoints (e.g., "Rethink Pr
 
 ---
 
-### 4. Dynamic Welcome Screen Preview
+### 2. Welcome Screen Preview Toggle
 **Category:** UI
 **Flag:** `ui.welcomePreview`
-**Dependencies:** Requires Feature #2 (Question Configuration System)
+**Dependencies:** None
 
 **Description:**
-The welcome screen currently has hardcoded preview items ("🐾 Animal vs. Human welfare", "⏳ Current vs. Future generations"). This should programmatically generate from the question configuration.
+Add a feature flag to hide the "You'll be asked about:" preview box on the welcome screen.
 
 **Current State:**
-- Hardcoded in `WelcomeScreen.jsx` lines 34-35
-- Only shows 2 of 4 questions
-- Would need code changes to add/remove/reorder questions
-
-**Requirements:**
-- Generate preview items from question config
-- All questions included in preview (no filtering in first version)
-- Each question needs `previewText` and `previewEmoji` in config
-- Feature flag controls whether entire preview box appears
-- Default: `true` (preview shows)
-- When `false`: entire "You'll be asked about:" box disappears
-
-**Updated Question Config Structure:**
-```json
-{
-  "questions": [
-    {
-      "id": "animal",
-      "categoryLabel": "Species Weighting",
-      "previewText": "Animal vs. Human welfare",
-      "previewEmoji": "🐾",
-      "heading": "How do you value animal welfare...",
-      "options": [...]
-    },
-    {
-      "id": "future",
-      "categoryLabel": "Time Preference",
-      "previewText": "Current vs. Future generations",
-      "previewEmoji": "⏳",
-      "heading": "How do you value future humans...",
-      "options": [...]
-    },
-    {
-      "id": "scale",
-      "categoryLabel": "Scale Sensitivity",
-      "previewText": "Helping one vs. helping millions",
-      "previewEmoji": "📊",
-      "heading": "How much does the scale of impact matter?",
-      "options": [...]
-    },
-    {
-      "id": "certainty",
-      "categoryLabel": "Evidence Preference",
-      "previewText": "Proven vs. speculative interventions",
-      "previewEmoji": "🔬",
-      "heading": "How much do you value proven interventions...",
-      "options": [...]
-    }
-  ]
-}
-```
+The welcome screen already dynamically generates preview items from `questionsConfig` using `emoji` and `previewText` fields. This feature just adds the ability to hide the box entirely.
 
 **Implementation:**
-- `WelcomeScreen` receives questions config as prop
-- Maps over questions to generate preview items
-- Conditionally renders entire `infoBox` div based on `features.ui.welcomePreview`
-- Grid automatically adjusts for any number of questions
-
-**Technical Notes:**
-- CSS grid in `WelcomeScreen.module.css` should handle any number of items
-- May need to adjust grid columns if more than 4-6 questions (responsive design)
+- Add `ui.welcomePreview` flag to `config/features.json` (default: `true`)
+- Wrap the `infoBox` div in WelcomeScreen.jsx with conditional render based on flag
+- When `false`: entire preview box disappears
 
 ---
 
-### 5. Question Types System
+### 3. Question Types System
 **Category:** UI
 **Flag:** `ui.questionTypes`
-**Dependencies:** Requires Feature #2 (Question Configuration System)
+**Dependencies:** None (Question Configuration System completed)
 
 **Description:**
 Add a question type system that allows different presentation modes. The first two types are "default" (current slider-based questions) and "no-credence" (discrete choice with no visible credences).
@@ -418,10 +260,10 @@ Colors accessed by: `QUESTION_TYPE_COLORS[question.type][optionIndex]`
 
 ---
 
-### 6. Intermission Question Type
+### 4. Intermission Question Type
 **Category:** UI
 **Flag:** `ui.intermissionType`
-**Dependencies:** Requires Feature #2 (Question Configuration System), Feature #5 (Question Types System)
+**Dependencies:** Requires Feature #3 (Question Types System)
 
 **Description:**
 Add "intermission" question type - a pause in the quiz that displays partial results and contextual copy based on answers so far. Intermissions don't collect input and don't count toward question progress.
@@ -548,10 +390,10 @@ Intermissions can show different copy based on user's credences so far.
 
 ---
 
-### 7. Difficulty Selection System
+### 5. Difficulty Selection System
 **Category:** UI
 **Flag:** `ui.difficultySelection`
-**Dependencies:** Requires Feature #2 (Question Configuration System)
+**Dependencies:** None (Question Configuration System completed)
 
 **Description:**
 Allow users to choose between different difficulty levels with different question sets. Each difficulty presents the same underlying moral dimensions but with different question styles and complexity.
@@ -680,54 +522,6 @@ Allow users to choose between different difficulty levels with different questio
 - Special question types (numeric-input, ranking, etc.) will define their own credence calculations
 - Each question type feature will document how answers map to credences
 - Heidegger difficulty may require many custom question types
-
----
-
-### 8. Reset Button
-**Category:** UI
-**Flag:** `ui.resetButton`
-**Dependencies:** None
-
-**Description:**
-Add a reset button to the results screen that clears all state and returns user to welcome screen. Works independently of difficulty selection feature.
-
-**Behavior:**
-- Button appears on results screen when flag is enabled
-- Clicking button:
-  - Shows confirmation dialog ("Are you sure? This will clear all your answers.")
-  - On confirm: Clears all state (credences, selected difficulty, etc.)
-  - Returns to welcome screen
-- Works with or without difficulty selection feature
-
-**UI Placement:**
-- Results screen, likely near top or in a settings/menu area
-- Clear visual distinction (secondary/warning button style)
-- Label: "Start Over" or "Reset Quiz"
-
-**State Cleared:**
-- All credence values (reset to defaults)
-- Selected difficulty (if difficulty feature enabled)
-- Any other quiz progress state
-- Does NOT clear: original credences (for comparison on results screen)
-
-**Implementation:**
-```js
-const handleReset = () => {
-  if (confirm('Are you sure? This will clear all your answers.')) {
-    // Clear all state
-    setAnimalCredences({ ...DEFAULT_CREDENCES });
-    setFutureCredences({ ...DEFAULT_CREDENCES });
-    // ... all other credences
-    setSelectedDifficulty(null);
-    setCurrentStep(STEPS.WELCOME);
-  }
-};
-```
-
-**Technical Notes:**
-- Simple feature, no complex dependencies
-- Independent of difficulty selection (works with single question set too)
-- May want to add analytics event for reset action
 
 ---
 
@@ -887,12 +681,79 @@ Developer tool for testing different calculation parameters without editing code
 
 ---
 
+### Question Configuration + Context API Refactor
+**Date:** 2026-01-19
+**Category:** Developer
+**Prototype:** N/A (infrastructure - no snapshot needed)
+**Dependencies:** None
+
+**Description:**
+Major architectural refactor combining two related features:
+1. **Question Configuration System** - Move question definitions from hardcoded React to JSON config
+2. **Context API** - Replace prop drilling (30+ props) with React Context
+
+**Config Files Created:**
+- `config/questions.json` - All question definitions with embedded `worldviewDimension` objects
+- `config/causes.json` - Cause definitions with points, colors, and boolean flags
+
+**Key Changes:**
+
+1. **Questions Config** (`config/questions.json`):
+   - Each question has `id`, `worldviewDimension`, UI text, and `options` array
+   - `worldviewDimension` specifies how the question affects calculations:
+     - `appliesWhen`: Boolean flag on causes (e.g., `"helpsAnimals"`)
+     - `appliesTo`: Cause property (e.g., `"scaleFactor"`)
+     - `applyAs`: `"multiplier"` or `"exponent"`
+     - `options`: Numeric values for each option key
+
+2. **Causes Config** (`config/causes.json`):
+   - Cause definitions with `name`, `color` (hex), `points`, `scaleFactor`
+   - Boolean flags: `helpsAnimals`, `helpsFutureHumans`, `isSpeculative`
+   - `defaultCredences` for initial slider values
+
+3. **Context API** (`src/context/QuizContext.jsx`):
+   - Single provider wraps entire app
+   - State: `currentStep`, `questions` (keyed by ID), `expandedPanel`, `debugConfig`
+   - Actions: `goToStep`, `setCredences`, `setInputMode`, `setLockedKey`, etc.
+   - Derived values: `calculationResults`, `hasChanged`, `progressPercentage`
+   - `stateMap` provides per-question state accessors for components
+
+4. **Validation** (runs on dev startup):
+   - `validateCauses.js` - Validates causes.json structure
+   - `validateQuestions.js` - Validates questions.json, cross-references with causes
+
+5. **Calculations** (`src/utils/calculations.js`):
+   - `buildDimensionsFromQuestions()` extracts dimensions from questions config
+   - `generateWorldviews()` yields all worldview combinations (cartesian product)
+   - All calculation functions use config-driven dimensions
+
+**Files Changed:**
+- `config/causes.json` - NEW
+- `config/questions.json` - NEW (updated structure)
+- `src/context/QuizContext.jsx` - NEW
+- `src/utils/validateCauses.js` - NEW
+- `src/utils/validateQuestions.js` - NEW (updated for worldviewDimension)
+- `src/utils/calculations.js` - Refactored to use config
+- `src/main.jsx` - Added validation on startup
+- `src/components/MoralParliamentQuiz.jsx` - Simplified, uses context
+- `src/components/ResultsScreen.jsx` - Uses context instead of 30+ props
+- `src/components/CalculationDebugger.jsx` - Updated imports
+
+**Benefits:**
+- Add/remove/reorder questions by editing JSON only
+- No more prop drilling (30+ props eliminated)
+- Centralized state management
+- Config validation catches errors early
+- Cleaner component code
+
+---
+
 ## 🗂️ Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down. General rule: keep the codebase readable as we go.
 
 ### Code Quality Polish
-- [ ] **Context API Refactor** - Replace prop drilling (30+ props) with React Context. Use single keyed context with question IDs to support future config-driven questions. Implement when Question Configuration System (#2) is built.
+- [x] **Context API Refactor** - Replaced prop drilling with React Context (completed with Question Configuration System)
 - [ ] Ensure consistent prop naming across components
 - [ ] Verify consistent error handling (if any)
 - [ ] Consider React.memo for frequently re-rendering components
@@ -947,9 +808,11 @@ These items are deprioritized but may be addressed when development pace slows d
 
 ## References
 
+- **config/causes.json** - Cause definitions (points, colors, flags)
+- **config/questions.json** - Question definitions and worldview dimensions
 - **config/features.json** - Feature flag configuration
+- **src/context/QuizContext.jsx** - React Context provider and state management
+- **src/utils/calculations.js** - Calculation functions and worldview generation
 - **scripts/snapshot.sh** - Prototype snapshot builder
 - **prototypes/index.html** - Index of all prototype builds
-- **REFACTORING_NOTES.md** - Details on what was fixed during refactor
-- **COMPONENT_BOUNDARIES.md** - Component architecture analysis
 - **README.md** - Full project documentation

@@ -1,0 +1,36 @@
+{
+  "causes": {
+    "globalHealth": {
+      "name": "Global Health",
+      "color": "#f2cc8f",
+      "points": 100,
+      "scaleFactor": 1,
+      "helpsAnimals": false,
+      "helpsFutureHumans": false,
+      "isSpeculative": false
+    },
+    "animalWelfare": {
+      "name": "Animal Welfare",
+      "color": "#81b29a",
+      "points": 100,
+      "scaleFactor": 10,
+      "helpsAnimals": true,
+      "helpsFutureHumans": false,
+      "isSpeculative": false
+    },
+    "gcr": {
+      "name": "GCR (Future)",
+      "color": "#3d5a80",
+      "points": 100,
+      "scaleFactor": 100,
+      "helpsAnimals": false,
+      "helpsFutureHumans": true,
+      "isSpeculative": true
+    }
+  },
+  "defaultCredences": {
+    "equal": 33,
+    "10x": 33,
+    "100x": 34
+  }
+}

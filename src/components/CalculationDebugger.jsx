@@ -1,27 +1,22 @@
 import { useState } from 'react';
-import {
-  CAUSES,
-  ANIMAL_MULTIPLIERS,
-  FUTURE_MULTIPLIERS,
-  SCALE_MULTIPLIERS,
-  CERTAINTY_MULTIPLIERS,
-} from '../constants/config';
+import causesConfig from '../../config/causes.json';
+import { buildDimensionsFromQuestions } from '../utils/calculations.js';
 import styles from '../styles/components/Debugger.module.css';
+
+const { causes: CAUSES } = causesConfig;
+const DIMENSIONS = buildDimensionsFromQuestions(true);
 
 /**
  * Developer tool for testing different calculation parameters
- * Allows runtime modification of multipliers, point values, and cause configurations
+ * Allows runtime modification of causes and dimension options
  */
 const CalculationDebugger = ({ onConfigChange }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Form state - initialized from current constants
+  // Form state - initialized from config
   const [formState, setFormState] = useState({
     causes: JSON.parse(JSON.stringify(CAUSES)),
-    animalMultipliers: { ...ANIMAL_MULTIPLIERS },
-    futureMultipliers: { ...FUTURE_MULTIPLIERS },
-    scaleMultipliers: { ...SCALE_MULTIPLIERS },
-    certaintyMultipliers: { ...CERTAINTY_MULTIPLIERS },
+    dimensions: JSON.parse(JSON.stringify(DIMENSIONS)),
   });
 
   const handleCauseChange = (causeKey, field, value) => {
@@ -31,18 +26,29 @@ const CalculationDebugger = ({ onConfigChange }) => {
         ...prev.causes,
         [causeKey]: {
           ...prev.causes[causeKey],
-          [field]: field === 'name' ? value : typeof value === 'boolean' ? value : Number(value),
+          [field]:
+            field === 'name' || field === 'color'
+              ? value
+              : typeof value === 'boolean'
+                ? value
+                : Number(value),
         },
       },
     }));
   };
 
-  const handleMultiplierChange = (multiplierType, key, value) => {
+  const handleDimensionOptionChange = (dimKey, optionKey, value) => {
     setFormState((prev) => ({
       ...prev,
-      [multiplierType]: {
-        ...prev[multiplierType],
-        [key]: Number(value),
+      dimensions: {
+        ...prev.dimensions,
+        [dimKey]: {
+          ...prev.dimensions[dimKey],
+          options: {
+            ...prev.dimensions[dimKey].options,
+            [optionKey]: Number(value),
+          },
+        },
       },
     }));
   };
@@ -132,163 +138,33 @@ const CalculationDebugger = ({ onConfigChange }) => {
               </section>
 
               <section className={styles.section}>
-                <h3>MULTIPLIERS</h3>
+                <h3>DIMENSIONS (from questions)</h3>
 
-                <div className={styles.multiplierGroup}>
-                  <h4>Animal</h4>
-                  <div className={styles.multiplierRow}>
-                    <label>
-                      Equal:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.animalMultipliers.equal}
-                        onChange={(e) =>
-                          handleMultiplierChange('animalMultipliers', 'equal', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      10x:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.animalMultipliers['10x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('animalMultipliers', '10x', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      100x:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.animalMultipliers['100x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('animalMultipliers', '100x', e.target.value)
-                        }
-                      />
-                    </label>
+                {Object.entries(formState.dimensions).map(([dimKey, dimension]) => (
+                  <div key={dimKey} className={styles.multiplierGroup}>
+                    <h4>{dimension.name}</h4>
+                    <p className={styles.dimInfo}>
+                      {dimension.applyAs === 'multiplier'
+                        ? `Multiplier when: ${dimension.appliesWhen}`
+                        : `Exponent on: ${dimension.appliesTo}`}
+                    </p>
+                    <div className={styles.multiplierRow}>
+                      {Object.entries(dimension.options).map(([optKey, optValue]) => (
+                        <label key={optKey}>
+                          {optKey}:
+                          <input
+                            type="number"
+                            step={dimension.applyAs === 'exponent' ? '0.1' : '0.01'}
+                            value={optValue}
+                            onChange={(e) =>
+                              handleDimensionOptionChange(dimKey, optKey, e.target.value)
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                <div className={styles.multiplierGroup}>
-                  <h4>Future</h4>
-                  <div className={styles.multiplierRow}>
-                    <label>
-                      Equal:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.futureMultipliers.equal}
-                        onChange={(e) =>
-                          handleMultiplierChange('futureMultipliers', 'equal', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      10x:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.futureMultipliers['10x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('futureMultipliers', '10x', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      100x:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.futureMultipliers['100x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('futureMultipliers', '100x', e.target.value)
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className={styles.multiplierGroup}>
-                  <h4>Scale (exponents)</h4>
-                  <div className={styles.multiplierRow}>
-                    <label>
-                      Equal:
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={formState.scaleMultipliers.equal}
-                        onChange={(e) =>
-                          handleMultiplierChange('scaleMultipliers', 'equal', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      10x:
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={formState.scaleMultipliers['10x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('scaleMultipliers', '10x', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      100x:
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={formState.scaleMultipliers['100x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('scaleMultipliers', '100x', e.target.value)
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className={styles.multiplierGroup}>
-                  <h4>Certainty</h4>
-                  <div className={styles.multiplierRow}>
-                    <label>
-                      Equal:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.certaintyMultipliers.equal}
-                        onChange={(e) =>
-                          handleMultiplierChange('certaintyMultipliers', 'equal', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      10x:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.certaintyMultipliers['10x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('certaintyMultipliers', '10x', e.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      100x:
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formState.certaintyMultipliers['100x']}
-                        onChange={(e) =>
-                          handleMultiplierChange('certaintyMultipliers', '100x', e.target.value)
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
+                ))}
               </section>
             </div>
 

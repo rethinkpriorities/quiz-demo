@@ -1,5 +1,6 @@
 import { createContext, useReducer, useMemo, useCallback } from 'react';
 import questionsConfig from '../../config/questions.json';
+import causesConfig from '../../config/causes.json';
 import { OPTION_COLORS, INPUT_MODES } from '../constants/config';
 import {
   calculateMaxEV,
@@ -8,7 +9,8 @@ import {
   calculateMaximin,
 } from '../utils/calculations';
 
-const { questions, defaultCredences } = questionsConfig;
+const { questions } = questionsConfig;
+const { causes: CAUSES, defaultCredences } = causesConfig;
 
 // Add color to each option based on index
 const questionsWithColors = questions.map((question) => ({
@@ -314,6 +316,7 @@ export function QuizProvider({ children }) {
 
       // Config (static)
       questionsConfig: questionsWithColors,
+      causesConfig: CAUSES,
       defaultCredences,
 
       // Actions

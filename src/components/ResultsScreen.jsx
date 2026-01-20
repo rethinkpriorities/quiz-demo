@@ -12,6 +12,7 @@ import features from '../../config/features.json';
 const ResultsScreen = () => {
   const {
     questionsConfig,
+    causesConfig,
     stateMap,
     expandedPanel,
     setExpandedPanel,
@@ -24,6 +25,7 @@ const ResultsScreen = () => {
   } = useQuiz();
 
   const { maxEV, parliament, mergedFavorites, maximin } = calculationResults;
+  const causeEntries = Object.entries(causesConfig);
 
   const handleResetClick = () => {
     if (
@@ -41,6 +43,19 @@ const ResultsScreen = () => {
       short: opt.panelShort,
       color: opt.color,
     }));
+
+  // Render cause bars for a given result set
+  const renderCauseBars = (results, originalResults) =>
+    causeEntries.map(([causeKey, cause]) => (
+      <CauseBar
+        key={causeKey}
+        name={cause.name}
+        percentage={results[causeKey]}
+        originalPercentage={originalResults?.[causeKey]}
+        color={cause.color}
+        hasChanged={hasChanged}
+      />
+    ));
 
   return (
     <div className={styles.resultsContainer}>
@@ -64,30 +79,12 @@ const ResultsScreen = () => {
                 <p className={styles.cardSubtitle}>100% to highest EV</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={maxEV.globalHealth}
-              originalPercentage={originalCalculationResults?.maxEV?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={maxEV.animalWelfare}
-              originalPercentage={originalCalculationResults?.maxEV?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={maxEV.gcr}
-              originalPercentage={originalCalculationResults?.maxEV?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
+            {renderCauseBars(maxEV, originalCalculationResults?.maxEV)}
             <div className={styles.cardFooter}>
-              EVs: GH {maxEV.evs.globalHealth.toFixed(0)} · AW {maxEV.evs.animalWelfare.toFixed(0)}{' '}
-              · GCR {maxEV.evs.gcr.toFixed(0)}
+              EVs:{' '}
+              {causeEntries
+                .map(([key, cause]) => `${cause.name.slice(0, 2)} ${maxEV.evs[key].toFixed(0)}`)
+                .join(' · ')}
             </div>
           </div>
 
@@ -100,28 +97,8 @@ const ResultsScreen = () => {
                 <p className={styles.cardSubtitle}>Weighted worldview votes</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={parliament.globalHealth}
-              originalPercentage={originalCalculationResults?.parliament?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={parliament.animalWelfare}
-              originalPercentage={originalCalculationResults?.parliament?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={parliament.gcr}
-              originalPercentage={originalCalculationResults?.parliament?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
-            <div className={styles.cardFooter}>81 worldviews vote for preferred cause</div>
+            {renderCauseBars(parliament, originalCalculationResults?.parliament)}
+            <div className={styles.cardFooter}>Each worldview votes for preferred cause</div>
           </div>
 
           {/* Merged Favorites */}
@@ -133,27 +110,7 @@ const ResultsScreen = () => {
                 <p className={styles.cardSubtitle}>Budget shares to favorites</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={mergedFavorites.globalHealth}
-              originalPercentage={originalCalculationResults?.mergedFavorites?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={mergedFavorites.animalWelfare}
-              originalPercentage={originalCalculationResults?.mergedFavorites?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={mergedFavorites.gcr}
-              originalPercentage={originalCalculationResults?.mergedFavorites?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
+            {renderCauseBars(mergedFavorites, originalCalculationResults?.mergedFavorites)}
             <div className={styles.cardFooter}>Each worldview allocates its budget share</div>
           </div>
 
@@ -166,27 +123,7 @@ const ResultsScreen = () => {
                 <p className={styles.cardSubtitle}>Fairest to all worldviews</p>
               </div>
             </div>
-            <CauseBar
-              name="Global Health"
-              percentage={maximin.globalHealth}
-              originalPercentage={originalCalculationResults?.maximin?.globalHealth}
-              color="var(--color-global-health)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="Animal Welfare"
-              percentage={maximin.animalWelfare}
-              originalPercentage={originalCalculationResults?.maximin?.animalWelfare}
-              color="var(--color-animal-welfare)"
-              hasChanged={hasChanged}
-            />
-            <CauseBar
-              name="GCR (Future)"
-              percentage={maximin.gcr}
-              originalPercentage={originalCalculationResults?.maximin?.gcr}
-              color="var(--color-gcr)"
-              hasChanged={hasChanged}
-            />
+            {renderCauseBars(maximin, originalCalculationResults?.maximin)}
             <div className={styles.cardFooter}>Maximizes minimum worldview utility</div>
           </div>
         </div>
