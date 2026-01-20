@@ -43,8 +43,12 @@ const ResultsScreen = () => {
       color: opt.color,
     }));
 
+  const useSideBySide = features.calculations?.sideBySideComparison === true;
+
   // Render cause bars for a given result set
-  const renderCauseBars = (results, originalResults) =>
+  // simpleMode: compact version for side-by-side comparison (no inline change indicators)
+  // When not in simpleMode, shows original percentage ghost bar and change arrows
+  const renderCauseBars = (results, originalResults = null, simpleMode = false) =>
     causeEntries.map(([causeKey, cause]) => (
       <CauseBar
         key={causeKey}
@@ -52,9 +56,69 @@ const ResultsScreen = () => {
         percentage={results[causeKey]}
         originalPercentage={originalResults?.[causeKey]}
         color={cause.color}
-        hasChanged={hasChanged}
+        hasChanged={!simpleMode && hasChanged}
+        simpleMode={simpleMode}
       />
     ));
+
+  // Render a single result card
+  // originalResults: for inline comparison mode (ghost bars + arrows)
+  // simpleMode: for side-by-side comparison mode (compact, no inline comparison)
+  const renderResultCard = (
+    methodKey,
+    results,
+    evs = null,
+    originalResults = null,
+    simpleMode = false
+  ) => {
+    const method = copy.results.methods[methodKey];
+    const iconClass = methodKey === 'mergedFavorites' ? 'merged' : methodKey;
+
+    return (
+      <div className={`${styles.resultCard} ${simpleMode ? styles.compactCard : ''}`}>
+        <div className={styles.cardHeader}>
+          <div className={`${styles.cardIcon} ${styles[iconClass]}`}>{method.icon}</div>
+          <div>
+            <h3 className={styles.cardTitle}>{method.title}</h3>
+            {!simpleMode && <p className={styles.cardSubtitle}>{method.subtitle}</p>}
+          </div>
+        </div>
+        {renderCauseBars(results, originalResults, simpleMode)}
+        {!simpleMode && (
+          <div className={styles.cardFooter}>
+            {evs
+              ? `${method.footerLabel} ${causeEntries.map(([key, cause]) => `${cause.name.slice(0, 2)} ${evs[key].toFixed(0)}`).join(' · ')}`
+              : method.footerText}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render the results grid for side-by-side comparison mode
+  const renderCompactResultsGrid = (results) => (
+    <div className={`${styles.resultsGrid} ${styles.compactGrid}`}>
+      {features.calculations?.showMaxEV === true &&
+        renderResultCard('maxEV', results.maxEV, results.maxEV.evs, null, true)}
+      {features.calculations?.showMergedFavorites === true &&
+        renderResultCard('mergedFavorites', results.mergedFavorites, null, null, true)}
+    </div>
+  );
+
+  // Render the standard results grid with inline comparison
+  const renderStandardResultsGrid = () => (
+    <div className={styles.resultsGrid}>
+      {features.calculations?.showMaxEV === true &&
+        renderResultCard('maxEV', maxEV, maxEV.evs, originalCalculationResults?.maxEV)}
+      {features.calculations?.showMergedFavorites === true &&
+        renderResultCard(
+          'mergedFavorites',
+          mergedFavorites,
+          null,
+          originalCalculationResults?.mergedFavorites
+        )}
+    </div>
+  );
 
   return (
     <div className={styles.resultsContainer}>
@@ -69,77 +133,22 @@ const ResultsScreen = () => {
           </h1>
         </div>
 
-        {/* Side-by-side results */}
-        <div className={styles.resultsGrid}>
-          {/* Max EV */}
-          <div className={styles.resultCard}>
-            <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.maxEV}`}>
-                {copy.results.methods.maxEV.icon}
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>{copy.results.methods.maxEV.title}</h3>
-                <p className={styles.cardSubtitle}>{copy.results.methods.maxEV.subtitle}</p>
-              </div>
+        {/* Results display - side-by-side comparison when flag enabled and changed */}
+        {useSideBySide && hasChanged ? (
+          <div className={styles.comparisonContainer}>
+            <div className={styles.originalResults}>
+              {renderCompactResultsGrid(originalCalculationResults)}
             </div>
-            {renderCauseBars(maxEV, originalCalculationResults?.maxEV)}
-            <div className={styles.cardFooter}>
-              {copy.results.methods.maxEV.footerLabel}{' '}
-              {causeEntries
-                .map(([key, cause]) => `${cause.name.slice(0, 2)} ${maxEV.evs[key].toFixed(0)}`)
-                .join(' · ')}
+            <div className={styles.comparisonDivider}>
+              <div className={styles.dividerLine} />
+              <div className={styles.dividerArrow}>→</div>
+              <div className={styles.dividerLine} />
             </div>
+            <div className={styles.newResults}>{renderCompactResultsGrid(calculationResults)}</div>
           </div>
-
-          {/* Variance Voting */}
-          <div className={styles.resultCard}>
-            <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.parliament}`}>
-                {copy.results.methods.parliament.icon}
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>{copy.results.methods.parliament.title}</h3>
-                <p className={styles.cardSubtitle}>{copy.results.methods.parliament.subtitle}</p>
-              </div>
-            </div>
-            {renderCauseBars(parliament, originalCalculationResults?.parliament)}
-            <div className={styles.cardFooter}>{copy.results.methods.parliament.footerText}</div>
-          </div>
-
-          {/* Merged Favorites */}
-          <div className={styles.resultCard}>
-            <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.merged}`}>
-                {copy.results.methods.mergedFavorites.icon}
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>{copy.results.methods.mergedFavorites.title}</h3>
-                <p className={styles.cardSubtitle}>
-                  {copy.results.methods.mergedFavorites.subtitle}
-                </p>
-              </div>
-            </div>
-            {renderCauseBars(mergedFavorites, originalCalculationResults?.mergedFavorites)}
-            <div className={styles.cardFooter}>
-              {copy.results.methods.mergedFavorites.footerText}
-            </div>
-          </div>
-
-          {/* Maximin */}
-          <div className={styles.resultCard}>
-            <div className={styles.cardHeader}>
-              <div className={`${styles.cardIcon} ${styles.maximin}`}>
-                {copy.results.methods.maximin.icon}
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>{copy.results.methods.maximin.title}</h3>
-                <p className={styles.cardSubtitle}>{copy.results.methods.maximin.subtitle}</p>
-              </div>
-            </div>
-            {renderCauseBars(maximin, originalCalculationResults?.maximin)}
-            <div className={styles.cardFooter}>{copy.results.methods.maximin.footerText}</div>
-          </div>
-        </div>
+        ) : (
+          renderStandardResultsGrid()
+        )}
 
         {/* Edit controls */}
         <div className={styles.adjustPanel}>

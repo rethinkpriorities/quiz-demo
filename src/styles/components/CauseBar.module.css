@@ -60,3 +60,20 @@
   font-size: var(--text-xs);
   font-weight: var(--font-bold);
 }
+
+/* Compact mode for comparison view */
+.compact {
+  margin-bottom: var(--spacing-2);
+}
+
+.compact .header {
+  font-size: var(--text-xs);
+}
+
+.compact .barTrack {
+  height: 16px;
+}
+
+.compact .barLabel {
+  font-size: 10px;
+}
