@@ -1,310 +1,112 @@
-import { useState } from 'react';
 import WelcomeScreen from './WelcomeScreen';
 import QuestionScreen from './QuestionScreen';
 import ResultsScreen from './ResultsScreen';
 import CalculationDebugger from './CalculationDebugger';
-import {
-  calculateMaxEV,
-  calculateVarianceVoting,
-  calculateMergedFavorites,
-  calculateMaximin,
-  adjustCredences,
-} from '../utils/calculations';
-import {
-  ANIMAL_QUESTION_OPTIONS,
-  FUTURE_QUESTION_OPTIONS,
-  SCALE_QUESTION_OPTIONS,
-  CERTAINTY_QUESTION_OPTIONS,
-  DEFAULT_CREDENCES,
-  STEPS,
-  INPUT_MODES,
-} from '../constants/config';
+import { useQuiz } from '../context/useQuiz';
 import features from '../../config/features.json';
 
 /**
  * Main quiz orchestrator component
- * Manages all state and navigation between screens
+ * Manages screen routing based on context state
  */
 const MoralParliamentQuiz = () => {
-  // Step navigation
-  const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
+  const {
+    currentStep,
+    questionsConfig,
+    stateMap,
+    expandedPanel,
+    setExpandedPanel,
+    goToStep,
+    saveOriginals,
+    resetToOriginal,
+    resetQuiz,
+    setDebugConfig,
+    getPrevStep,
+    getNextStep,
+    getQuestionIndex,
+    progressPercentage,
+    questionNumber,
+    hasChanged,
+    calculationResults,
+    originalCalculationResults,
+    adjustCredences,
+  } = useQuiz();
 
-  // Credence state
-  const [animalCredences, setAnimalCredences] = useState({ ...DEFAULT_CREDENCES });
-  const [futureCredences, setFutureCredences] = useState({ ...DEFAULT_CREDENCES });
-  const [scaleCredences, setScaleCredences] = useState({ ...DEFAULT_CREDENCES });
-  const [certaintyCredences, setCertaintyCredences] = useState({ ...DEFAULT_CREDENCES });
-
-  // Original credences for reset functionality
-  const [originalAnimalCredences, setOriginalAnimalCredences] = useState(null);
-  const [originalFutureCredences, setOriginalFutureCredences] = useState(null);
-  const [originalScaleCredences, setOriginalScaleCredences] = useState(null);
-  const [originalCertaintyCredences, setOriginalCertaintyCredences] = useState(null);
-
-  // UI state
-  const [expandedPanel, setExpandedPanel] = useState(null);
-  const [animalInputMode, setAnimalInputMode] = useState(INPUT_MODES.OPTIONS);
-  const [futureInputMode, setFutureInputMode] = useState(INPUT_MODES.OPTIONS);
-  const [scaleInputMode, setScaleInputMode] = useState(INPUT_MODES.OPTIONS);
-  const [certaintyInputMode, setCertaintyInputMode] = useState(INPUT_MODES.OPTIONS);
-
-  // Locked slider state (null = none locked, otherwise key name of locked slider)
-  const [animalLockedKey, setAnimalLockedKey] = useState(null);
-  const [futureLockedKey, setFutureLockedKey] = useState(null);
-  const [scaleLockedKey, setScaleLockedKey] = useState(null);
-  const [certaintyLockedKey, setCertaintyLockedKey] = useState(null);
-
-  // Debug config for calculation overrides (developer tool)
-  const [debugConfig, setDebugConfig] = useState(null);
-
-  // Calculate results (pass debugConfig for developer overrides)
-  const maxEVResults = calculateMaxEV(
-    animalCredences,
-    futureCredences,
-    scaleCredences,
-    certaintyCredences,
-    debugConfig
-  );
-  const parliamentResults = calculateVarianceVoting(
-    animalCredences,
-    futureCredences,
-    scaleCredences,
-    certaintyCredences,
-    debugConfig
-  );
-  const mergedFavoritesResults = calculateMergedFavorites(
-    animalCredences,
-    futureCredences,
-    scaleCredences,
-    certaintyCredences,
-    debugConfig
-  );
-  const maximinResults = calculateMaximin(
-    animalCredences,
-    futureCredences,
-    scaleCredences,
-    certaintyCredences,
-    debugConfig
-  );
-
-  const originalMaxEV = originalAnimalCredences
-    ? calculateMaxEV(
-        originalAnimalCredences,
-        originalFutureCredences,
-        originalScaleCredences,
-        originalCertaintyCredences,
-        debugConfig
-      )
-    : null;
-  const originalParliament = originalAnimalCredences
-    ? calculateVarianceVoting(
-        originalAnimalCredences,
-        originalFutureCredences,
-        originalScaleCredences,
-        originalCertaintyCredences,
-        debugConfig
-      )
-    : null;
-  const originalMergedFavorites = originalAnimalCredences
-    ? calculateMergedFavorites(
-        originalAnimalCredences,
-        originalFutureCredences,
-        originalScaleCredences,
-        originalCertaintyCredences,
-        debugConfig
-      )
-    : null;
-  const originalMaximin = originalAnimalCredences
-    ? calculateMaximin(
-        originalAnimalCredences,
-        originalFutureCredences,
-        originalScaleCredences,
-        originalCertaintyCredences,
-        debugConfig
-      )
-    : null;
-
-  // Check if credences have changed
-  const hasChanged =
-    originalAnimalCredences &&
-    (JSON.stringify(animalCredences) !== JSON.stringify(originalAnimalCredences) ||
-      JSON.stringify(futureCredences) !== JSON.stringify(originalFutureCredences) ||
-      JSON.stringify(scaleCredences) !== JSON.stringify(originalScaleCredences) ||
-      JSON.stringify(certaintyCredences) !== JSON.stringify(originalCertaintyCredences));
-
-  // Reset to original credences
-  const resetToOriginal = () => {
-    setAnimalCredences({ ...originalAnimalCredences });
-    setFutureCredences({ ...originalFutureCredences });
-    setScaleCredences({ ...originalScaleCredences });
-    setCertaintyCredences({ ...originalCertaintyCredences });
-  };
-
-  // Full quiz reset - returns to welcome screen
-  const handleResetQuiz = () => {
-    setAnimalCredences({ ...DEFAULT_CREDENCES });
-    setFutureCredences({ ...DEFAULT_CREDENCES });
-    setScaleCredences({ ...DEFAULT_CREDENCES });
-    setCertaintyCredences({ ...DEFAULT_CREDENCES });
-    setOriginalAnimalCredences(null);
-    setOriginalFutureCredences(null);
-    setOriginalScaleCredences(null);
-    setOriginalCertaintyCredences(null);
-    setAnimalInputMode(INPUT_MODES.OPTIONS);
-    setFutureInputMode(INPUT_MODES.OPTIONS);
-    setScaleInputMode(INPUT_MODES.OPTIONS);
-    setCertaintyInputMode(INPUT_MODES.OPTIONS);
-    setAnimalLockedKey(null);
-    setFutureLockedKey(null);
-    setScaleLockedKey(null);
-    setCertaintyLockedKey(null);
-    setExpandedPanel(null);
-    setCurrentStep(STEPS.WELCOME);
-  };
-
-  // Save original credences when entering results
+  // Handle continuing to results (save originals first time)
   const handleContinueToResults = () => {
-    if (!originalAnimalCredences) {
-      setOriginalAnimalCredences({ ...animalCredences });
-      setOriginalFutureCredences({ ...futureCredences });
-      setOriginalScaleCredences({ ...scaleCredences });
-      setOriginalCertaintyCredences({ ...certaintyCredences });
+    saveOriginals();
+    goToStep('results');
+  };
+
+  // Render question screen for a given question config
+  const renderQuestionScreen = (question, index) => {
+    const state = stateMap[question.id];
+    if (!state) {
+      console.error(`No state mapping found for question ID: ${question.id}`);
+      return null;
     }
-    setCurrentStep(STEPS.RESULTS);
+
+    const isLastQuestion = index === questionsConfig.length - 1;
+
+    return (
+      <QuestionScreen
+        key={question.id}
+        categoryLabel={question.categoryLabel}
+        questionNumber={questionNumber}
+        progressPercentage={progressPercentage}
+        heading={question.heading}
+        instructionsOptions={question.instructionsOptions}
+        instructionsSliders={question.instructionsSliders}
+        options={question.options}
+        credences={state.credences}
+        setCredences={state.setCredences}
+        inputMode={state.inputMode}
+        setInputMode={state.setInputMode}
+        lockedKey={state.lockedKey}
+        setLockedKey={state.setLockedKey}
+        onBack={() => goToStep(getPrevStep(question.id))}
+        onContinue={
+          isLastQuestion ? handleContinueToResults : () => goToStep(getNextStep(question.id))
+        }
+        adjustCredences={adjustCredences}
+      />
+    );
   };
 
   // Determine which screen to render
   let screenContent = null;
 
-  if (currentStep === STEPS.WELCOME) {
-    screenContent = <WelcomeScreen onStart={() => setCurrentStep(STEPS.ANIMALS)} />;
-  } else if (currentStep === STEPS.ANIMALS) {
+  if (currentStep === 'welcome') {
     screenContent = (
-      <QuestionScreen
-        categoryLabel="Moral Weights"
-        categoryColor="#81B29A"
-        questionNumber="Question 1 of 4"
-        progressPercentage={25}
-        heading="How do you value animal welfare relative to human welfare?"
-        instructionsOptions='Choose the view that best represents your position, or use "Custom Mix" to split your credence.'
-        instructionsSliders="Distribute your credence (confidence) across these views. Sliders auto-balance to 100%."
-        options={ANIMAL_QUESTION_OPTIONS}
-        credences={animalCredences}
-        setCredences={setAnimalCredences}
-        inputMode={animalInputMode}
-        setInputMode={setAnimalInputMode}
-        lockedKey={animalLockedKey}
-        setLockedKey={setAnimalLockedKey}
-        onBack={() => setCurrentStep(STEPS.WELCOME)}
-        onContinue={() => setCurrentStep(STEPS.FUTURE)}
-        adjustCredences={adjustCredences}
-      />
+      <WelcomeScreen questions={questionsConfig} onStart={() => goToStep(questionsConfig[0].id)} />
     );
-  } else if (currentStep === STEPS.FUTURE) {
-    screenContent = (
-      <QuestionScreen
-        categoryLabel="Time Preference"
-        categoryColor="#81B29A"
-        questionNumber="Question 2 of 4"
-        progressPercentage={50}
-        heading="How do you value future human welfare relative to current human welfare?"
-        instructionsOptions='Choose the view that best represents your position, or use "Custom Mix" to split your credence.'
-        instructionsSliders="Distribute your credence across these views. Sliders auto-balance to 100%."
-        options={FUTURE_QUESTION_OPTIONS}
-        credences={futureCredences}
-        setCredences={setFutureCredences}
-        inputMode={futureInputMode}
-        setInputMode={setFutureInputMode}
-        lockedKey={futureLockedKey}
-        setLockedKey={setFutureLockedKey}
-        onBack={() => setCurrentStep(STEPS.ANIMALS)}
-        onContinue={() => setCurrentStep(STEPS.SCALE)}
-        adjustCredences={adjustCredences}
-      />
-    );
-  } else if (currentStep === STEPS.SCALE) {
-    screenContent = (
-      <QuestionScreen
-        categoryLabel="Scale Sensitivity"
-        categoryColor="#98C1D9"
-        questionNumber="Question 3 of 4"
-        progressPercentage={75}
-        heading="How much does the scale of impact matter?"
-        instructionsOptions='Choose the view that best represents your position, or use "Custom Mix" to split your credence.'
-        instructionsSliders="Distribute your credence across these views. Sliders auto-balance to 100%."
-        options={SCALE_QUESTION_OPTIONS}
-        credences={scaleCredences}
-        setCredences={setScaleCredences}
-        inputMode={scaleInputMode}
-        setInputMode={setScaleInputMode}
-        lockedKey={scaleLockedKey}
-        setLockedKey={setScaleLockedKey}
-        onBack={() => setCurrentStep(STEPS.FUTURE)}
-        onContinue={() => setCurrentStep(STEPS.CERTAINTY)}
-        adjustCredences={adjustCredences}
-      />
-    );
-  } else if (currentStep === STEPS.CERTAINTY) {
-    screenContent = (
-      <QuestionScreen
-        categoryLabel="Evidence Preference"
-        categoryColor="#E07A5F"
-        questionNumber="Question 4 of 4"
-        progressPercentage={100}
-        heading="How much do you value proven interventions over speculative ones?"
-        instructionsOptions='Choose the view that best represents your position, or use "Custom Mix" to split your credence.'
-        instructionsSliders="Distribute your credence across these views. Sliders auto-balance to 100%."
-        options={CERTAINTY_QUESTION_OPTIONS}
-        credences={certaintyCredences}
-        setCredences={setCertaintyCredences}
-        inputMode={certaintyInputMode}
-        setInputMode={setCertaintyInputMode}
-        lockedKey={certaintyLockedKey}
-        setLockedKey={setCertaintyLockedKey}
-        onBack={() => setCurrentStep(STEPS.SCALE)}
-        onContinue={handleContinueToResults}
-        adjustCredences={adjustCredences}
-      />
-    );
-  } else if (currentStep === STEPS.RESULTS) {
+  } else if (currentStep === 'results') {
     screenContent = (
       <ResultsScreen
-        animalCredences={animalCredences}
-        setAnimalCredences={setAnimalCredences}
-        futureCredences={futureCredences}
-        setFutureCredences={setFutureCredences}
-        scaleCredences={scaleCredences}
-        setScaleCredences={setScaleCredences}
-        certaintyCredences={certaintyCredences}
-        setCertaintyCredences={setCertaintyCredences}
-        originalAnimalCredences={originalAnimalCredences}
-        originalFutureCredences={originalFutureCredences}
-        originalScaleCredences={originalScaleCredences}
-        originalCertaintyCredences={originalCertaintyCredences}
-        animalLockedKey={animalLockedKey}
-        setAnimalLockedKey={setAnimalLockedKey}
-        futureLockedKey={futureLockedKey}
-        setFutureLockedKey={setFutureLockedKey}
-        scaleLockedKey={scaleLockedKey}
-        setScaleLockedKey={setScaleLockedKey}
-        certaintyLockedKey={certaintyLockedKey}
-        setCertaintyLockedKey={setCertaintyLockedKey}
+        questions={questionsConfig}
+        stateMap={stateMap}
         expandedPanel={expandedPanel}
         setExpandedPanel={setExpandedPanel}
-        maxEVResults={maxEVResults}
-        parliamentResults={parliamentResults}
-        mergedFavoritesResults={mergedFavoritesResults}
-        maximinResults={maximinResults}
-        originalMaxEV={originalMaxEV}
-        originalParliament={originalParliament}
-        originalMergedFavorites={originalMergedFavorites}
-        originalMaximin={originalMaximin}
+        maxEVResults={calculationResults.maxEV}
+        parliamentResults={calculationResults.parliament}
+        mergedFavoritesResults={calculationResults.mergedFavorites}
+        maximinResults={calculationResults.maximin}
+        originalMaxEV={originalCalculationResults?.maxEV}
+        originalParliament={originalCalculationResults?.parliament}
+        originalMergedFavorites={originalCalculationResults?.mergedFavorites}
+        originalMaximin={originalCalculationResults?.maximin}
         hasChanged={hasChanged}
         onResetAll={resetToOriginal}
-        onResetQuiz={handleResetQuiz}
-        onBack={() => setCurrentStep(STEPS.CERTAINTY)}
+        onResetQuiz={resetQuiz}
+        onBack={() => goToStep(questionsConfig[questionsConfig.length - 1].id)}
       />
     );
+  } else {
+    // Find the question for this step
+    const questionIndex = getQuestionIndex(currentStep);
+    if (questionIndex !== -1) {
+      screenContent = renderQuestionScreen(questionsConfig[questionIndex], questionIndex);
+    }
   }
 
   return (

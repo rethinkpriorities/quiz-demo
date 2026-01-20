@@ -4,6 +4,7 @@ import ModeToggle from './ui/ModeToggle';
 import OptionButton from './ui/OptionButton';
 import CredenceSlider from './ui/CredenceSlider';
 import { roundCredences } from '../utils/calculations';
+import { CATEGORY_LABEL_COLOR } from '../constants/config';
 import styles from '../styles/components/QuestionScreen.module.css';
 
 /**
@@ -12,7 +13,6 @@ import styles from '../styles/components/QuestionScreen.module.css';
  */
 const QuestionScreen = ({
   categoryLabel,
-  categoryColor,
   questionNumber,
   progressPercentage,
   heading,
@@ -29,8 +29,6 @@ const QuestionScreen = ({
   onContinue,
   adjustCredences,
 }) => {
-  // const total = Math.round(Object.values(credences).reduce((sum, val) => sum + val, 0));
-
   return (
     <div className="screen">
       <Header subtitle={questionNumber} />
@@ -38,7 +36,7 @@ const QuestionScreen = ({
 
       <main className="screen-main">
         <div className={styles.container}>
-          <div className={styles.categoryLabel} style={{ color: categoryColor }}>
+          <div className={styles.categoryLabel} style={{ color: CATEGORY_LABEL_COLOR }}>
             {categoryLabel}
           </div>
 
@@ -91,7 +89,6 @@ const QuestionScreen = ({
                     setLockedKey={setLockedKey}
                   />
                 ))}
-                {/* <div className="total">Total: {total}% ✓</div> */}
               </>
             )}
           </div>

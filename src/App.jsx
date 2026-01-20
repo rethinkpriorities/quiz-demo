@@ -1,12 +1,17 @@
+import { QuizProvider } from './context/QuizContext';
 import MoralParliamentQuiz from './components/MoralParliamentQuiz';
 import './styles/global.css';
 
 /**
  * Main app wrapper component
- * Renders the Moral Parliament Quiz
+ * Provides quiz context and renders the Moral Parliament Quiz
  */
 function App() {
-  return <MoralParliamentQuiz />;
+  return (
+    <QuizProvider>
+      <MoralParliamentQuiz />
+    </QuizProvider>
+  );
 }
 
 export default App;

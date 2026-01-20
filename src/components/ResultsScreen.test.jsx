@@ -26,19 +26,85 @@ const mockResults = {
   evs: { globalHealth: 100, animalWelfare: 50, gcr: 75 },
 };
 
+// Mock questions matching the new config structure
+const mockQuestions = [
+  {
+    id: 'animal',
+    editPanelTitle: 'Animal Values',
+    emoji: '🐾',
+    options: [
+      { key: 'equal', panelLabel: 'Equal weight', panelShort: 'Eq', color: '#81B29A' },
+      { key: '10x', panelLabel: '10× less', panelShort: '10×', color: '#98C1D9' },
+      { key: '100x', panelLabel: '100× less', panelShort: '100×', color: '#E07A5F' },
+    ],
+  },
+  {
+    id: 'future',
+    editPanelTitle: 'Future Values',
+    emoji: '⏳',
+    options: [
+      { key: 'equal', panelLabel: 'Equal weight', panelShort: 'Eq', color: '#81B29A' },
+      { key: '10x', panelLabel: '10× less', panelShort: '10×', color: '#98C1D9' },
+      { key: '100x', panelLabel: '100× less', panelShort: '100×', color: '#E07A5F' },
+    ],
+  },
+  {
+    id: 'scale',
+    editPanelTitle: 'Scale Sensitivity',
+    emoji: '📊',
+    options: [
+      { key: 'equal', panelLabel: 'Irrelevant', panelShort: 'Eq', color: '#81B29A' },
+      { key: '10x', panelLabel: 'Matters', panelShort: '10×', color: '#98C1D9' },
+      { key: '100x', panelLabel: 'Dominates', panelShort: '100×', color: '#E07A5F' },
+    ],
+  },
+  {
+    id: 'certainty',
+    editPanelTitle: 'Evidence Preference',
+    emoji: '🔬',
+    options: [
+      { key: 'equal', panelLabel: 'Equal weight', panelShort: 'Eq', color: '#81B29A' },
+      { key: '10x', panelLabel: '10× less', panelShort: '10×', color: '#98C1D9' },
+      { key: '100x', panelLabel: '100× less', panelShort: '100×', color: '#E07A5F' },
+    ],
+  },
+];
+
+// Mock stateMap matching the new structure
+const mockStateMap = {
+  animal: {
+    credences: mockCredences,
+    setCredences: vi.fn(),
+    originalCredences: mockCredences,
+    lockedKey: null,
+    setLockedKey: vi.fn(),
+  },
+  future: {
+    credences: mockCredences,
+    setCredences: vi.fn(),
+    originalCredences: mockCredences,
+    lockedKey: null,
+    setLockedKey: vi.fn(),
+  },
+  scale: {
+    credences: mockCredences,
+    setCredences: vi.fn(),
+    originalCredences: mockCredences,
+    lockedKey: null,
+    setLockedKey: vi.fn(),
+  },
+  certainty: {
+    credences: mockCredences,
+    setCredences: vi.fn(),
+    originalCredences: mockCredences,
+    lockedKey: null,
+    setLockedKey: vi.fn(),
+  },
+};
+
 const mockProps = {
-  animalCredences: mockCredences,
-  setAnimalCredences: vi.fn(),
-  futureCredences: mockCredences,
-  setFutureCredences: vi.fn(),
-  scaleCredences: mockCredences,
-  setScaleCredences: vi.fn(),
-  certaintyCredences: mockCredences,
-  setCertaintyCredences: vi.fn(),
-  originalAnimalCredences: mockCredences,
-  originalFutureCredences: mockCredences,
-  originalScaleCredences: mockCredences,
-  originalCertaintyCredences: mockCredences,
+  questions: mockQuestions,
+  stateMap: mockStateMap,
   expandedPanel: null,
   setExpandedPanel: vi.fn(),
   maxEVResults: mockResults,

@@ -1,0 +1,149 @@
+{
+  "defaultCredences": { "equal": 33, "10x": 33, "100x": 34 },
+  "questions": [
+    {
+      "id": "animal",
+      "categoryLabel": "Moral Weights",
+      "emoji": "🐾",
+      "previewText": "Animal vs. Human welfare",
+      "heading": "How do you value animal welfare relative to human welfare?",
+      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
+      "instructionsSliders": "Distribute your credence (confidence) across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Animal Values",
+      "options": [
+        {
+          "key": "equal",
+          "label": "Animals and humans matter equally",
+          "description": "Equal weight to equivalent experiences",
+          "panelLabel": "Equal weight",
+          "panelShort": "Eq",
+          "multiplier": 1
+        },
+        {
+          "key": "10x",
+          "label": "Animals matter 10× less than humans",
+          "description": "Moderate speciesist view",
+          "panelLabel": "10× less",
+          "panelShort": "10×",
+          "multiplier": 0.1
+        },
+        {
+          "key": "100x",
+          "label": "Animals matter 100× less than humans",
+          "description": "Strong speciesist view",
+          "panelLabel": "100× less",
+          "panelShort": "100×",
+          "multiplier": 0.01
+        }
+      ]
+    },
+    {
+      "id": "future",
+      "categoryLabel": "Time Preference",
+      "emoji": "⏳",
+      "previewText": "Current vs. Future generations",
+      "heading": "How do you value future human welfare relative to current human welfare?",
+      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Future Values",
+      "options": [
+        {
+          "key": "equal",
+          "label": "Future and current humans matter equally",
+          "description": "No time discounting",
+          "panelLabel": "Equal weight",
+          "panelShort": "Eq",
+          "multiplier": 1
+        },
+        {
+          "key": "10x",
+          "label": "Future humans matter 10× less",
+          "description": "Moderate time preference",
+          "panelLabel": "10× less",
+          "panelShort": "10×",
+          "multiplier": 0.1
+        },
+        {
+          "key": "100x",
+          "label": "Future humans matter 100× less",
+          "description": "Strong present focus",
+          "panelLabel": "100× less",
+          "panelShort": "100×",
+          "multiplier": 0.01
+        }
+      ]
+    },
+    {
+      "id": "scale",
+      "categoryLabel": "Scale Sensitivity",
+      "emoji": "📊",
+      "previewText": "Helping one vs. helping millions",
+      "heading": "How much does the scale of impact matter?",
+      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Scale Sensitivity",
+      "options": [
+        {
+          "key": "equal",
+          "label": "Helping one person matters as much as helping millions",
+          "description": "Numbers don't multiply moral value",
+          "panelLabel": "Irrelevant",
+          "panelShort": "Eq",
+          "multiplier": 0
+        },
+        {
+          "key": "10x",
+          "label": "Helping 10× more beings is significantly better",
+          "description": "Scale matters, but not linearly",
+          "panelLabel": "Matters",
+          "panelShort": "10×",
+          "multiplier": 0.5
+        },
+        {
+          "key": "100x",
+          "label": "Helping 10× more beings is 10× better",
+          "description": "Full utilitarian aggregation",
+          "panelLabel": "Dominates",
+          "panelShort": "100×",
+          "multiplier": 1
+        }
+      ]
+    },
+    {
+      "id": "certainty",
+      "categoryLabel": "Evidence Preference",
+      "emoji": "🔬",
+      "previewText": "Proven vs. speculative interventions",
+      "heading": "How much do you value proven interventions over speculative ones?",
+      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Evidence Preference",
+      "options": [
+        {
+          "key": "equal",
+          "label": "Speculative and proven interventions matter equally",
+          "description": "Expected value is all that matters",
+          "panelLabel": "Equal weight",
+          "panelShort": "Eq",
+          "multiplier": 1
+        },
+        {
+          "key": "10x",
+          "label": "Proven interventions are worth 10× more",
+          "description": "Moderate certainty preference",
+          "panelLabel": "10× less",
+          "panelShort": "10×",
+          "multiplier": 0.1
+        },
+        {
+          "key": "100x",
+          "label": "Proven interventions are worth 100× more",
+          "description": "Strong evidence focus",
+          "panelLabel": "100× less",
+          "panelShort": "100×",
+          "multiplier": 0.01
+        }
+      ]
+    }
+  ]
+}

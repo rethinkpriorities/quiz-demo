@@ -3,38 +3,14 @@ import CauseBar from './ui/CauseBar';
 import EditPanel from './ui/EditPanel';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
-import {
-  ANIMAL_PANEL_CONFIG,
-  FUTURE_PANEL_CONFIG,
-  SCALE_PANEL_CONFIG,
-  CERTAINTY_PANEL_CONFIG,
-} from '../constants/config';
 
 /**
  * Results screen showing all 4 allocation methods
  * Allows editing credences and seeing live recalculation
  */
 const ResultsScreen = ({
-  animalCredences,
-  setAnimalCredences,
-  futureCredences,
-  setFutureCredences,
-  scaleCredences,
-  setScaleCredences,
-  certaintyCredences,
-  setCertaintyCredences,
-  originalAnimalCredences,
-  originalFutureCredences,
-  originalScaleCredences,
-  originalCertaintyCredences,
-  animalLockedKey,
-  setAnimalLockedKey,
-  futureLockedKey,
-  setFutureLockedKey,
-  scaleLockedKey,
-  setScaleLockedKey,
-  certaintyLockedKey,
-  setCertaintyLockedKey,
+  questions,
+  stateMap,
   expandedPanel,
   setExpandedPanel,
   maxEVResults,
@@ -57,6 +33,16 @@ const ResultsScreen = ({
       onResetQuiz();
     }
   };
+
+  // Build panel configs from question options
+  const getPanelConfigs = (question) =>
+    question.options.map((opt) => ({
+      key: opt.key,
+      label: opt.panelLabel,
+      short: opt.panelShort,
+      color: opt.color,
+    }));
+
   return (
     <div className={styles.resultsContainer}>
       <div className={styles.inner}>
@@ -217,54 +203,28 @@ const ResultsScreen = ({
             )}
           </div>
           <div className={styles.panelList}>
-            <EditPanel
-              title="Animal Values"
-              icon="🐾"
-              credences={animalCredences}
-              setCredences={setAnimalCredences}
-              originalCredences={originalAnimalCredences}
-              configs={ANIMAL_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'animals'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'animals' ? null : 'animals')}
-              lockedKey={animalLockedKey}
-              setLockedKey={setAnimalLockedKey}
-            />
-            <EditPanel
-              title="Future Values"
-              icon="⏳"
-              credences={futureCredences}
-              setCredences={setFutureCredences}
-              originalCredences={originalFutureCredences}
-              configs={FUTURE_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'future'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'future' ? null : 'future')}
-              lockedKey={futureLockedKey}
-              setLockedKey={setFutureLockedKey}
-            />
-            <EditPanel
-              title="Scale Sensitivity"
-              icon="📊"
-              credences={scaleCredences}
-              setCredences={setScaleCredences}
-              originalCredences={originalScaleCredences}
-              configs={SCALE_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'scale'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'scale' ? null : 'scale')}
-              lockedKey={scaleLockedKey}
-              setLockedKey={setScaleLockedKey}
-            />
-            <EditPanel
-              title="Evidence Preference"
-              icon="🔬"
-              credences={certaintyCredences}
-              setCredences={setCertaintyCredences}
-              originalCredences={originalCertaintyCredences}
-              configs={CERTAINTY_PANEL_CONFIG}
-              isExpanded={expandedPanel === 'certainty'}
-              onToggle={() => setExpandedPanel(expandedPanel === 'certainty' ? null : 'certainty')}
-              lockedKey={certaintyLockedKey}
-              setLockedKey={setCertaintyLockedKey}
-            />
+            {questions.map((question) => {
+              const state = stateMap[question.id];
+              if (!state) return null;
+
+              return (
+                <EditPanel
+                  key={question.id}
+                  title={question.editPanelTitle}
+                  icon={question.emoji}
+                  credences={state.credences}
+                  setCredences={state.setCredences}
+                  originalCredences={state.originalCredences}
+                  configs={getPanelConfigs(question)}
+                  isExpanded={expandedPanel === question.id}
+                  onToggle={() =>
+                    setExpandedPanel(expandedPanel === question.id ? null : question.id)
+                  }
+                  lockedKey={state.lockedKey}
+                  setLockedKey={state.setLockedKey}
+                />
+              );
+            })}
           </div>
         </div>
 

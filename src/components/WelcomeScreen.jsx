@@ -5,7 +5,7 @@ import styles from '../styles/components/WelcomeScreen.module.css';
  * Welcome/landing screen
  * Introduces the quiz and provides a start button
  */
-const WelcomeScreen = ({ onStart }) => {
+const WelcomeScreen = ({ questions, onStart }) => {
   return (
     <div className="screen">
       <Header subtitle="~3 minutes" />
@@ -31,8 +31,11 @@ const WelcomeScreen = ({ onStart }) => {
           <div className={styles.infoBox}>
             <div className={styles.infoBoxLabel}>You'll be asked about:</div>
             <div className={styles.infoBoxGrid}>
-              <div className={styles.infoBoxItem}>🐾 Animal vs. Human welfare</div>
-              <div className={styles.infoBoxItem}>⏳ Current vs. Future generations</div>
+              {questions.map((question) => (
+                <div key={question.id} className={styles.infoBoxItem}>
+                  {question.emoji} {question.previewText}
+                </div>
+              ))}
             </div>
           </div>
         </div>
