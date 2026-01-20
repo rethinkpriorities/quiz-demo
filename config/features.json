@@ -12,7 +12,7 @@
     "showParliament": false,
     "showMergedFavorites": true,
     "showMaximin": false,
-    "sideBySideComparison": true
+    "sideBySideComparison": false
   },
 
   "developer": {
