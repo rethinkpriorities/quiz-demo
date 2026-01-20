@@ -25,11 +25,24 @@ const REQUIRED_OPTION_FIELDS = [
 ];
 
 /**
+ * Checks for missing required fields in an object
+ * @param {Object} obj - Object to check
+ * @param {string[]} requiredFields - Array of required field names
+ * @param {string} prefix - Prefix for error messages
+ * @returns {string[]} Array of error messages
+ */
+function checkRequiredFields(obj, requiredFields, prefix) {
+  return requiredFields
+    .filter((field) => obj[field] === undefined || obj[field] === null)
+    .map((field) => `${prefix}: Missing required field '${field}'`);
+}
+
+/**
  * Validates the questions configuration
  * @param {Object} config - The questions configuration object
  * @throws {Error} If validation fails
  */
-export const validateQuestionsConfig = (config) => {
+export function validateQuestionsConfig(config) {
   const errors = [];
 
   // Check top-level structure
@@ -62,11 +75,7 @@ export const validateQuestionsConfig = (config) => {
       const qPrefix = `Question[${qIndex}]`;
 
       // Check required fields
-      REQUIRED_QUESTION_FIELDS.forEach((field) => {
-        if (question[field] === undefined || question[field] === null) {
-          errors.push(`${qPrefix}: Missing required field '${field}'`);
-        }
-      });
+      errors.push(...checkRequiredFields(question, REQUIRED_QUESTION_FIELDS, qPrefix));
 
       // Check unique ID
       if (question.id) {
@@ -96,11 +105,7 @@ export const validateQuestionsConfig = (config) => {
             const oPrefix = `${qPrefix}.options[${oIndex}]`;
 
             // Check required option fields
-            REQUIRED_OPTION_FIELDS.forEach((field) => {
-              if (option[field] === undefined || option[field] === null) {
-                errors.push(`${oPrefix}: Missing required field '${field}'`);
-              }
-            });
+            errors.push(...checkRequiredFields(option, REQUIRED_OPTION_FIELDS, oPrefix));
 
             // Check unique option key within question
             if (option.key) {
@@ -144,6 +149,6 @@ export const validateQuestionsConfig = (config) => {
   }
 
   return true;
-};
+}
 
 export default validateQuestionsConfig;

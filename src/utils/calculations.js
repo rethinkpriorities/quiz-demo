@@ -75,14 +75,13 @@ export const calculateCauseValue = (cause, animalMult, futureMult, scaleExp, cer
 /**
  * Calculate max expected value allocation across all causes
  * Determines which cause has highest EV and allocates 100% to it
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} credences - All credences { animal, future, scale, certainty }
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages and EVs for each cause
  */
-export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCreds, config) => {
+export const calculateMaxEV = (credences, config) => {
+  const { animal, future, scale, certainty } = credences;
+
   // Use config values if provided, otherwise use defaults
   const causes = config?.causes || CAUSES;
   const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
@@ -96,10 +95,10 @@ export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCr
   Object.entries(causes).forEach(([causeKey, cause]) => {
     let ev = 0;
 
-    Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-      Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-        Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-          Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+    Object.entries(animal).forEach(([animalKey, animalProb]) => {
+      Object.entries(future).forEach(([futureKey, futureProb]) => {
+        Object.entries(scale).forEach(([scaleKey, scaleProb]) => {
+          Object.entries(certainty).forEach(([certaintyKey, certaintyProb]) => {
             const animalMult = animalMults[animalKey];
             const futureMult = futureMults[futureKey];
             const scaleExp = scaleMults[scaleKey];
@@ -138,20 +137,13 @@ export const calculateMaxEV = (animalCreds, futureCreds, scaleCreds, certaintyCr
 /**
  * Calculate variance voting allocation (moral parliament approach)
  * Each worldview votes for its preferred cause(s), votes weighted by credence
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} credences - All credences { animal, future, scale, certainty }
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateVarianceVoting = (
-  animalCreds,
-  futureCreds,
-  scaleCreds,
-  certaintyCreds,
-  config
-) => {
+export const calculateVarianceVoting = (credences, config) => {
+  const { animal, future, scale, certainty } = credences;
+
   // Use config values if provided, otherwise use defaults
   const causes = config?.causes || CAUSES;
   const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
@@ -162,10 +154,10 @@ export const calculateVarianceVoting = (
   const votes = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
 
   // Each worldview combination casts votes
-  Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-    Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-      Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-        Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+  Object.entries(animal).forEach(([animalKey, animalProb]) => {
+    Object.entries(future).forEach(([futureKey, futureProb]) => {
+      Object.entries(scale).forEach(([scaleKey, scaleProb]) => {
+        Object.entries(certainty).forEach(([certaintyKey, certaintyProb]) => {
           const worldviewWeight =
             (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
 
@@ -213,20 +205,13 @@ export const calculateVarianceVoting = (
 /**
  * Calculate merged favorites allocation
  * Each worldview allocates its probability share to its favorite cause
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} credences - All credences { animal, future, scale, certainty }
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateMergedFavorites = (
-  animalCreds,
-  futureCreds,
-  scaleCreds,
-  certaintyCreds,
-  config
-) => {
+export const calculateMergedFavorites = (credences, config) => {
+  const { animal, future, scale, certainty } = credences;
+
   // Use config values if provided, otherwise use defaults
   const causes = config?.causes || CAUSES;
   const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
@@ -237,10 +222,10 @@ export const calculateMergedFavorites = (
   const allocation = { globalHealth: 0, animalWelfare: 0, gcr: 0 };
 
   // Each worldview combination allocates its share
-  Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-    Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-      Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-        Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+  Object.entries(animal).forEach(([animalKey, animalProb]) => {
+    Object.entries(future).forEach(([futureKey, futureProb]) => {
+      Object.entries(scale).forEach(([scaleKey, scaleProb]) => {
+        Object.entries(certainty).forEach(([certaintyKey, certaintyProb]) => {
           // This worldview gets (probability * 100) percent of the budget
           const worldviewShare =
             (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
@@ -288,14 +273,13 @@ export const calculateMergedFavorites = (
 /**
  * Calculate maximin allocation
  * Find allocation that maximizes the minimum utility any worldview receives
- * @param {Object} animalCreds - Animal credences { equal, 10x, 100x }
- * @param {Object} futureCreds - Future credences { equal, 10x, 100x }
- * @param {Object} scaleCreds - Scale credences { equal, 10x, 100x }
- * @param {Object} certaintyCreds - Certainty credences { equal, 10x, 100x }
+ * @param {Object} credences - All credences { animal, future, scale, certainty }
  * @param {Object} config - Optional config override for debug purposes
  * @returns {Object} Allocation percentages for each cause
  */
-export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certaintyCreds, config) => {
+export const calculateMaximin = (credences, config) => {
+  const { animal, future, scale, certainty } = credences;
+
   // Use config values if provided, otherwise use defaults
   const causes = config?.causes || CAUSES;
   const animalMults = config?.animalMultipliers || ANIMAL_MULTIPLIERS;
@@ -330,10 +314,10 @@ export const calculateMaximin = (animalCreds, futureCreds, scaleCreds, certainty
     let minUtility = Infinity;
 
     // Check minimum utility across all worldviews
-    Object.entries(animalCreds).forEach(([animalKey, animalProb]) => {
-      Object.entries(futureCreds).forEach(([futureKey, futureProb]) => {
-        Object.entries(scaleCreds).forEach(([scaleKey, scaleProb]) => {
-          Object.entries(certaintyCreds).forEach(([certaintyKey, certaintyProb]) => {
+    Object.entries(animal).forEach(([animalKey, animalProb]) => {
+      Object.entries(future).forEach(([futureKey, futureProb]) => {
+        Object.entries(scale).forEach(([scaleKey, scaleProb]) => {
+          Object.entries(certainty).forEach(([certaintyKey, certaintyProb]) => {
             const probability =
               (animalProb / 100) * (futureProb / 100) * (scaleProb / 100) * (certaintyProb / 100);
 

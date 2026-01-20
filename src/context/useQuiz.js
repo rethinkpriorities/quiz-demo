@@ -35,8 +35,6 @@ export function useQuestion(questionId) {
     setInputMode: (mode) => context.setInputMode(questionId, mode),
     lockedKey: questionState.lockedKey,
     setLockedKey: (key) => context.setLockedKey(questionId, key),
-    adjustCredences: context.adjustCredences,
-    roundCredences: context.roundCredences,
   };
 }
 

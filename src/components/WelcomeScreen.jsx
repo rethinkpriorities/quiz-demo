@@ -1,11 +1,14 @@
 import Header from './layout/Header';
+import { useQuiz } from '../context/useQuiz';
 import styles from '../styles/components/WelcomeScreen.module.css';
 
 /**
  * Welcome/landing screen
  * Introduces the quiz and provides a start button
  */
-const WelcomeScreen = ({ questions, onStart }) => {
+const WelcomeScreen = () => {
+  const { questionsConfig, startQuiz } = useQuiz();
+
   return (
     <div className="screen">
       <Header subtitle="~3 minutes" />
@@ -24,14 +27,14 @@ const WelcomeScreen = ({ questions, onStart }) => {
             ethical perspectives.
           </p>
 
-          <button onClick={onStart} className="btn btn-primary">
+          <button onClick={startQuiz} className="btn btn-primary">
             Start Quiz →
           </button>
 
           <div className={styles.infoBox}>
             <div className={styles.infoBoxLabel}>You'll be asked about:</div>
             <div className={styles.infoBoxGrid}>
-              {questions.map((question) => (
+              {questionsConfig.map((question) => (
                 <div key={question.id} className={styles.infoBoxItem}>
                   {question.emoji} {question.previewText}
                 </div>

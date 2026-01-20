@@ -6,8 +6,6 @@ import {
   calculateVarianceVoting,
   calculateMergedFavorites,
   calculateMaximin,
-  adjustCredences,
-  roundCredences,
 } from '../utils/calculations';
 
 const { questions, defaultCredences } = questionsConfig;
@@ -22,17 +20,23 @@ const questionsWithColors = questions.map((question) => ({
 }));
 
 // Initial state for each question
-const createQuestionState = () => ({
-  credences: { ...defaultCredences },
-  originalCredences: null,
-  inputMode: INPUT_MODES.OPTIONS,
-  lockedKey: null,
-});
+function createQuestionState() {
+  return {
+    credences: { ...defaultCredences },
+    originalCredences: null,
+    inputMode: INPUT_MODES.OPTIONS,
+    lockedKey: null,
+  };
+}
+
+function createInitialQuestionsState() {
+  return Object.fromEntries(questions.map((q) => [q.id, createQuestionState()]));
+}
 
 // Initial state
 const initialState = {
   currentStep: 'welcome',
-  questions: Object.fromEntries(questions.map((q) => [q.id, createQuestionState()])),
+  questions: createInitialQuestionsState(),
   expandedPanel: null,
   debugConfig: null,
 };
@@ -40,9 +44,7 @@ const initialState = {
 // Action types
 const ACTIONS = {
   GO_TO_STEP: 'GO_TO_STEP',
-  SET_CREDENCES: 'SET_CREDENCES',
-  SET_INPUT_MODE: 'SET_INPUT_MODE',
-  SET_LOCKED_KEY: 'SET_LOCKED_KEY',
+  UPDATE_QUESTION: 'UPDATE_QUESTION',
   SET_EXPANDED_PANEL: 'SET_EXPANDED_PANEL',
   SAVE_ORIGINALS: 'SAVE_ORIGINALS',
   RESET_TO_ORIGINAL: 'RESET_TO_ORIGINAL',
@@ -50,47 +52,28 @@ const ACTIONS = {
   SET_DEBUG_CONFIG: 'SET_DEBUG_CONFIG',
 };
 
+// Helper to update a single question's state
+function updateQuestion(state, questionId, updates) {
+  return {
+    ...state,
+    questions: {
+      ...state.questions,
+      [questionId]: {
+        ...state.questions[questionId],
+        ...updates,
+      },
+    },
+  };
+}
+
 // Reducer
 function quizReducer(state, action) {
   switch (action.type) {
     case ACTIONS.GO_TO_STEP:
       return { ...state, currentStep: action.payload };
 
-    case ACTIONS.SET_CREDENCES:
-      return {
-        ...state,
-        questions: {
-          ...state.questions,
-          [action.payload.questionId]: {
-            ...state.questions[action.payload.questionId],
-            credences: action.payload.credences,
-          },
-        },
-      };
-
-    case ACTIONS.SET_INPUT_MODE:
-      return {
-        ...state,
-        questions: {
-          ...state.questions,
-          [action.payload.questionId]: {
-            ...state.questions[action.payload.questionId],
-            inputMode: action.payload.inputMode,
-          },
-        },
-      };
-
-    case ACTIONS.SET_LOCKED_KEY:
-      return {
-        ...state,
-        questions: {
-          ...state.questions,
-          [action.payload.questionId]: {
-            ...state.questions[action.payload.questionId],
-            lockedKey: action.payload.lockedKey,
-          },
-        },
-      };
+    case ACTIONS.UPDATE_QUESTION:
+      return updateQuestion(state, action.payload.questionId, action.payload.updates);
 
     case ACTIONS.SET_EXPANDED_PANEL:
       return { ...state, expandedPanel: action.payload };
@@ -124,10 +107,7 @@ function quizReducer(state, action) {
       };
 
     case ACTIONS.RESET_QUIZ:
-      return {
-        ...initialState,
-        questions: Object.fromEntries(questions.map((q) => [q.id, createQuestionState()])),
-      };
+      return { ...initialState, questions: createInitialQuestionsState() };
 
     case ACTIONS.SET_DEBUG_CONFIG:
       return { ...state, debugConfig: action.payload };
@@ -149,17 +129,24 @@ export function QuizProvider({ children }) {
     dispatch({ type: ACTIONS.GO_TO_STEP, payload: step });
   }, []);
 
-  const setCredences = useCallback((questionId, credences) => {
-    dispatch({ type: ACTIONS.SET_CREDENCES, payload: { questionId, credences } });
+  const updateQuestionState = useCallback((questionId, updates) => {
+    dispatch({ type: ACTIONS.UPDATE_QUESTION, payload: { questionId, updates } });
   }, []);
 
-  const setInputMode = useCallback((questionId, inputMode) => {
-    dispatch({ type: ACTIONS.SET_INPUT_MODE, payload: { questionId, inputMode } });
-  }, []);
+  const setCredences = useCallback(
+    (questionId, credences) => updateQuestionState(questionId, { credences }),
+    [updateQuestionState]
+  );
 
-  const setLockedKey = useCallback((questionId, lockedKey) => {
-    dispatch({ type: ACTIONS.SET_LOCKED_KEY, payload: { questionId, lockedKey } });
-  }, []);
+  const setInputMode = useCallback(
+    (questionId, inputMode) => updateQuestionState(questionId, { inputMode }),
+    [updateQuestionState]
+  );
+
+  const setLockedKey = useCallback(
+    (questionId, lockedKey) => updateQuestionState(questionId, { lockedKey }),
+    [updateQuestionState]
+  );
 
   const setExpandedPanel = useCallback((panel) => {
     dispatch({ type: ACTIONS.SET_EXPANDED_PANEL, payload: panel });
@@ -205,112 +192,76 @@ export function QuizProvider({ children }) {
     [getQuestionIndex]
   );
 
-  // Extract credences for calculation functions (adapter for existing 4-argument signatures)
-  const getCredencesForCalculations = useCallback(() => {
-    return {
-      animalCredences: state.questions.animal?.credences || defaultCredences,
-      futureCredences: state.questions.future?.credences || defaultCredences,
-      scaleCredences: state.questions.scale?.credences || defaultCredences,
-      certaintyCredences: state.questions.certainty?.credences || defaultCredences,
-    };
-  }, [state.questions]);
+  // Navigation actions
+  const startQuiz = useCallback(() => {
+    goToStep(questions[0].id);
+  }, [goToStep]);
 
-  const getOriginalCredencesForCalculations = useCallback(() => {
-    const animal = state.questions.animal;
-    if (!animal?.originalCredences) return null;
+  const goBack = useCallback(() => {
+    if (state.currentStep === 'results') {
+      goToStep(questions[questions.length - 1].id);
+    } else {
+      const prevStep = getPrevStep(state.currentStep);
+      goToStep(prevStep);
+    }
+  }, [state.currentStep, goToStep, getPrevStep]);
+
+  const goForward = useCallback(() => {
+    const nextStep = getNextStep(state.currentStep);
+    if (nextStep === 'results') {
+      saveOriginals();
+    }
+    goToStep(nextStep);
+  }, [state.currentStep, goToStep, getNextStep, saveOriginals]);
+
+  // Extract credences for calculation functions (dynamic, based on question IDs in config)
+  const extractCredences = useCallback(
+    (credenceType) => {
+      const getter = credenceType === 'original' ? 'originalCredences' : 'credences';
+
+      // For original credences, return null if none have been saved yet
+      const firstQuestion = state.questions[questions[0]?.id];
+      if (credenceType === 'original' && !firstQuestion?.originalCredences) {
+        return null;
+      }
+
+      // Build credences object dynamically from question IDs
+      return Object.fromEntries(
+        questions.map((q) => [q.id, state.questions[q.id]?.[getter] || defaultCredences])
+      );
+    },
+    [state.questions]
+  );
+
+  // Helper to calculate all results from a set of credences
+  const computeAllResults = useCallback((credences, debugConfig) => {
+    if (!credences) return null;
     return {
-      animalCredences: animal.originalCredences,
-      futureCredences: state.questions.future?.originalCredences || defaultCredences,
-      scaleCredences: state.questions.scale?.originalCredences || defaultCredences,
-      certaintyCredences: state.questions.certainty?.originalCredences || defaultCredences,
+      maxEV: calculateMaxEV(credences, debugConfig),
+      parliament: calculateVarianceVoting(credences, debugConfig),
+      mergedFavorites: calculateMergedFavorites(credences, debugConfig),
+      maximin: calculateMaximin(credences, debugConfig),
     };
-  }, [state.questions]);
+  }, []);
 
   // Calculation results (memoized)
-  const calculationResults = useMemo(() => {
-    const creds = getCredencesForCalculations();
-    const { animalCredences, futureCredences, scaleCredences, certaintyCredences } = creds;
+  const calculationResults = useMemo(
+    () => computeAllResults(extractCredences('current'), state.debugConfig),
+    [extractCredences, computeAllResults, state.debugConfig]
+  );
 
-    return {
-      maxEV: calculateMaxEV(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-      parliament: calculateVarianceVoting(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-      mergedFavorites: calculateMergedFavorites(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-      maximin: calculateMaximin(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-    };
-  }, [getCredencesForCalculations, state.debugConfig]);
-
-  const originalCalculationResults = useMemo(() => {
-    const origCreds = getOriginalCredencesForCalculations();
-    if (!origCreds) return null;
-
-    const { animalCredences, futureCredences, scaleCredences, certaintyCredences } = origCreds;
-
-    return {
-      maxEV: calculateMaxEV(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-      parliament: calculateVarianceVoting(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-      mergedFavorites: calculateMergedFavorites(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-      maximin: calculateMaximin(
-        animalCredences,
-        futureCredences,
-        scaleCredences,
-        certaintyCredences,
-        state.debugConfig
-      ),
-    };
-  }, [getOriginalCredencesForCalculations, state.debugConfig]);
+  const originalCalculationResults = useMemo(
+    () => computeAllResults(extractCredences('original'), state.debugConfig),
+    [extractCredences, computeAllResults, state.debugConfig]
+  );
 
   // Check if any credences have changed from originals
   const hasChanged = useMemo(() => {
-    const origCreds = getOriginalCredencesForCalculations();
-    if (!origCreds) return false;
-
-    return Object.entries(state.questions).some(
-      ([, q]) =>
+    return Object.values(state.questions).some(
+      (q) =>
         q.originalCredences && JSON.stringify(q.credences) !== JSON.stringify(q.originalCredences)
     );
-  }, [state.questions, getOriginalCredencesForCalculations]);
+  }, [state.questions]);
 
   // Derived values
   const currentQuestionIndex = useMemo(() => {
@@ -381,6 +332,11 @@ export function QuizProvider({ children }) {
       getPrevStep,
       getNextStep,
 
+      // Navigation actions
+      startQuiz,
+      goBack,
+      goForward,
+
       // Derived values
       currentQuestion,
       currentQuestionIndex,
@@ -395,8 +351,6 @@ export function QuizProvider({ children }) {
 
       // Compatibility helpers
       stateMap,
-      adjustCredences,
-      roundCredences,
     }),
     [
       state.currentStep,
@@ -415,6 +369,9 @@ export function QuizProvider({ children }) {
       getQuestionIndex,
       getPrevStep,
       getNextStep,
+      startQuiz,
+      goBack,
+      goForward,
       currentQuestion,
       currentQuestionIndex,
       totalQuestions,

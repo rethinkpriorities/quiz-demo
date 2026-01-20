@@ -1,6 +1,7 @@
 import { RotateCcw } from 'lucide-react';
 import CauseBar from './ui/CauseBar';
 import EditPanel from './ui/EditPanel';
+import { useQuiz } from '../context/useQuiz';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
 
@@ -8,29 +9,27 @@ import features from '../../config/features.json';
  * Results screen showing all 4 allocation methods
  * Allows editing credences and seeing live recalculation
  */
-const ResultsScreen = ({
-  questions,
-  stateMap,
-  expandedPanel,
-  setExpandedPanel,
-  maxEVResults,
-  parliamentResults,
-  mergedFavoritesResults,
-  maximinResults,
-  originalMaxEV,
-  originalParliament,
-  originalMergedFavorites,
-  originalMaximin,
-  hasChanged,
-  onResetAll,
-  onResetQuiz,
-  onBack,
-}) => {
+const ResultsScreen = () => {
+  const {
+    questionsConfig,
+    stateMap,
+    expandedPanel,
+    setExpandedPanel,
+    calculationResults,
+    originalCalculationResults,
+    hasChanged,
+    resetToOriginal,
+    resetQuiz,
+    goBack,
+  } = useQuiz();
+
+  const { maxEV, parliament, mergedFavorites, maximin } = calculationResults;
+
   const handleResetClick = () => {
     if (
       window.confirm('Are you sure? This will clear all your answers and return to the beginning.')
     ) {
-      onResetQuiz();
+      resetQuiz();
     }
   };
 
@@ -67,28 +66,28 @@ const ResultsScreen = ({
             </div>
             <CauseBar
               name="Global Health"
-              percentage={maxEVResults.globalHealth}
-              originalPercentage={originalMaxEV?.globalHealth}
+              percentage={maxEV.globalHealth}
+              originalPercentage={originalCalculationResults?.maxEV?.globalHealth}
               color="var(--color-global-health)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="Animal Welfare"
-              percentage={maxEVResults.animalWelfare}
-              originalPercentage={originalMaxEV?.animalWelfare}
+              percentage={maxEV.animalWelfare}
+              originalPercentage={originalCalculationResults?.maxEV?.animalWelfare}
               color="var(--color-animal-welfare)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="GCR (Future)"
-              percentage={maxEVResults.gcr}
-              originalPercentage={originalMaxEV?.gcr}
+              percentage={maxEV.gcr}
+              originalPercentage={originalCalculationResults?.maxEV?.gcr}
               color="var(--color-gcr)"
               hasChanged={hasChanged}
             />
             <div className={styles.cardFooter}>
-              EVs: GH {maxEVResults.evs.globalHealth.toFixed(0)} · AW{' '}
-              {maxEVResults.evs.animalWelfare.toFixed(0)} · GCR {maxEVResults.evs.gcr.toFixed(0)}
+              EVs: GH {maxEV.evs.globalHealth.toFixed(0)} · AW {maxEV.evs.animalWelfare.toFixed(0)}{' '}
+              · GCR {maxEV.evs.gcr.toFixed(0)}
             </div>
           </div>
 
@@ -103,22 +102,22 @@ const ResultsScreen = ({
             </div>
             <CauseBar
               name="Global Health"
-              percentage={parliamentResults.globalHealth}
-              originalPercentage={originalParliament?.globalHealth}
+              percentage={parliament.globalHealth}
+              originalPercentage={originalCalculationResults?.parliament?.globalHealth}
               color="var(--color-global-health)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="Animal Welfare"
-              percentage={parliamentResults.animalWelfare}
-              originalPercentage={originalParliament?.animalWelfare}
+              percentage={parliament.animalWelfare}
+              originalPercentage={originalCalculationResults?.parliament?.animalWelfare}
               color="var(--color-animal-welfare)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="GCR (Future)"
-              percentage={parliamentResults.gcr}
-              originalPercentage={originalParliament?.gcr}
+              percentage={parliament.gcr}
+              originalPercentage={originalCalculationResults?.parliament?.gcr}
               color="var(--color-gcr)"
               hasChanged={hasChanged}
             />
@@ -136,22 +135,22 @@ const ResultsScreen = ({
             </div>
             <CauseBar
               name="Global Health"
-              percentage={mergedFavoritesResults.globalHealth}
-              originalPercentage={originalMergedFavorites?.globalHealth}
+              percentage={mergedFavorites.globalHealth}
+              originalPercentage={originalCalculationResults?.mergedFavorites?.globalHealth}
               color="var(--color-global-health)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="Animal Welfare"
-              percentage={mergedFavoritesResults.animalWelfare}
-              originalPercentage={originalMergedFavorites?.animalWelfare}
+              percentage={mergedFavorites.animalWelfare}
+              originalPercentage={originalCalculationResults?.mergedFavorites?.animalWelfare}
               color="var(--color-animal-welfare)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="GCR (Future)"
-              percentage={mergedFavoritesResults.gcr}
-              originalPercentage={originalMergedFavorites?.gcr}
+              percentage={mergedFavorites.gcr}
+              originalPercentage={originalCalculationResults?.mergedFavorites?.gcr}
               color="var(--color-gcr)"
               hasChanged={hasChanged}
             />
@@ -169,22 +168,22 @@ const ResultsScreen = ({
             </div>
             <CauseBar
               name="Global Health"
-              percentage={maximinResults.globalHealth}
-              originalPercentage={originalMaximin?.globalHealth}
+              percentage={maximin.globalHealth}
+              originalPercentage={originalCalculationResults?.maximin?.globalHealth}
               color="var(--color-global-health)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="Animal Welfare"
-              percentage={maximinResults.animalWelfare}
-              originalPercentage={originalMaximin?.animalWelfare}
+              percentage={maximin.animalWelfare}
+              originalPercentage={originalCalculationResults?.maximin?.animalWelfare}
               color="var(--color-animal-welfare)"
               hasChanged={hasChanged}
             />
             <CauseBar
               name="GCR (Future)"
-              percentage={maximinResults.gcr}
-              originalPercentage={originalMaximin?.gcr}
+              percentage={maximin.gcr}
+              originalPercentage={originalCalculationResults?.maximin?.gcr}
               color="var(--color-gcr)"
               hasChanged={hasChanged}
             />
@@ -197,13 +196,13 @@ const ResultsScreen = ({
           <div className={styles.adjustHeader}>
             <span className={styles.adjustTitle}>🎛️ Adjust Your Credences</span>
             {hasChanged && (
-              <button onClick={onResetAll} className={styles.resetAllButton}>
+              <button onClick={resetToOriginal} className={styles.resetAllButton}>
                 <RotateCcw size={10} /> Reset All
               </button>
             )}
           </div>
           <div className={styles.panelList}>
-            {questions.map((question) => {
+            {questionsConfig.map((question) => {
               const state = stateMap[question.id];
               if (!state) return null;
 
@@ -230,7 +229,7 @@ const ResultsScreen = ({
 
         {/* Back button */}
         <div className={styles.backButtonContainer}>
-          <button onClick={onBack} className={styles.backButton}>
+          <button onClick={goBack} className={styles.backButton}>
             ← Back to Quiz
           </button>
           {features.ui?.resetButton && (
