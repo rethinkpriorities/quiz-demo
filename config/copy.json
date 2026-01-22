@@ -28,6 +28,8 @@
     "adjustCredencesHeading": "🎛️ Adjust Your Credences",
     "resetAllButton": "Reset All",
     "resetConfirmation": "Are you sure? This will clear all your answers and return to the beginning.",
+    "shareButton": "Share Results",
+    "shareCopied": "Link copied!",
     "methods": {
       "maxEV": {
         "icon": "🎯",
