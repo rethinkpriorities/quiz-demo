@@ -50,9 +50,9 @@ echo "Updating prototypes index..."
 if grep -q "href=\"./${PROTO_NAME}/\"" "$INDEX_FILE"; then
     # Update existing entry with new version/date
     echo "Prototype '${PROTO_NAME}' already in index (updating timestamp)"
-    DATE=$(date "+%Y-%m-%d %H:%M")
+    DATE_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     # Update the date in the existing entry using a temp file for compatibility
-    sed "s|<span class=\"version\" data-proto=\"${PROTO_NAME}\">.*</span>|<span class=\"version\" data-proto=\"${PROTO_NAME}\">Updated: ${DATE} (${TAG_NAME})</span>|" "$INDEX_FILE" > "${INDEX_FILE}.tmp"
+    sed "s|<span class=\"version\" data-proto=\"${PROTO_NAME}\" data-utc=\"[^\"]*\">.*</span>|<span class=\"version\" data-proto=\"${PROTO_NAME}\" data-utc=\"${DATE_UTC}\">Updated: ${DATE_UTC} (${TAG_NAME})</span>|" "$INDEX_FILE" > "${INDEX_FILE}.tmp"
     mv "${INDEX_FILE}.tmp" "$INDEX_FILE"
 else
     # Add new entry
@@ -61,13 +61,13 @@ else
         read DESCRIPTION
     fi
 
-    DATE=$(date "+%Y-%m-%d %H:%M")
+    DATE_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
     # Create the new entry HTML
     NEW_ENTRY="    <li class=\"prototype-item\">\\
       <h2>Prototype ${PROTO_NAME}</h2>\\
       <p>${DESCRIPTION}</p>\\
-      <p><span class=\"version\" data-proto=\"${PROTO_NAME}\">Created: ${DATE} (${TAG_NAME})</span></p>\\
+      <p><span class=\"version\" data-proto=\"${PROTO_NAME}\" data-utc=\"${DATE_UTC}\">Created: ${DATE_UTC} (${TAG_NAME})</span></p>\\
       <a href=\"./${PROTO_NAME}/\">View Prototype</a>\\
     </li>\\
 "

@@ -63,49 +63,49 @@
     <li class="prototype-item">
       <h2>Prototype intermission</h2>
       <p>Intermission question type with partial results display</p>
-      <p><span class="version" data-proto="intermission">Created: 2026-01-21 20:32 (prototype-intermission-v1)</span></p>
+      <p><span class="version" data-proto="intermission" data-utc="2026-01-22T04:32:00Z">Created: 2026-01-22T04:32:00Z (prototype-intermission-v1)</span></p>
       <a href="./intermission/">View Prototype</a>
     </li>
 
     <li class="prototype-item">
       <h2>Prototype question-types</h2>
       <p>Question types system: default, selection, credence modes</p>
-      <p><span class="version" data-proto="question-types">Created: 2026-01-21 19:48 (prototype-question-types-v1)</span></p>
+      <p><span class="version" data-proto="question-types" data-utc="2026-01-22T03:48:00Z">Created: 2026-01-22T03:48:00Z (prototype-question-types-v1)</span></p>
       <a href="./question-types/">View Prototype</a>
     </li>
 
     <li class="prototype-item">
       <h2>Prototype side-by-side-comparison</h2>
       <p>Side-by-side before/after view when credences edited</p>
-      <p><span class="version" data-proto="side-by-side-comparison">Created: 2026-01-20 09:02 (prototype-side-by-side-comparison-v2)</span></p>
+      <p><span class="version" data-proto="side-by-side-comparison" data-utc="2026-01-20T17:02:00Z">Created: 2026-01-20T17:02:00Z (prototype-side-by-side-comparison-v2)</span></p>
       <a href="./side-by-side-comparison/">View Prototype</a>
     </li>
 
     <li class="prototype-item">
       <h2>Prototype prototype-calculation-debugger</h2>
       <p>Developer tool for testing calculation parameters at runtime</p>
-      <p><span class="version" data-proto="prototype-calculation-debugger">Created: 2026-01-19 18:56 (prototype-prototype-calculation-debugger-v2)</span></p>
+      <p><span class="version" data-proto="prototype-calculation-debugger" data-utc="2026-01-20T02:56:00Z">Created: 2026-01-20T02:56:00Z (prototype-prototype-calculation-debugger-v2)</span></p>
       <a href="./prototype-calculation-debugger/">View Prototype</a>
     </li>
 
     <li class="prototype-item">
       <h2>Prototype slider-lock</h2>
       <p>Slider lock feature: Lock any slider to prevent it from moving, other sliders adjust proportionally. Visual indicator shows maximum reach for unlocked sliders.</p>
-      <p><span class="version" data-proto="slider-lock">Created: 2026-01-19 18:30 (prototype-slider-lock-v2)</span></p>
+      <p><span class="version" data-proto="slider-lock" data-utc="2026-01-20T02:30:00Z">Created: 2026-01-20T02:30:00Z (prototype-slider-lock-v2)</span></p>
       <a href="./slider-lock/">View Prototype</a>
     </li>
 
     <li class="prototype-item">
       <h2>Prototype reset-button</h2>
       <p>Reset Button: Adds 'Start Over' button on results screen to clear all state and return to welcome</p>
-      <p><span class="version" data-proto="reset-button">Created: 2026-01-19 17:21 (prototype-reset-button-v1)</span></p>
+      <p><span class="version" data-proto="reset-button" data-utc="2026-01-20T01:21:00Z">Created: 2026-01-20T01:21:00Z (prototype-reset-button-v1)</span></p>
       <a href="./reset-button/">View Prototype</a>
     </li>
 
     <li class="prototype-item">
       <h2>Prototype jan-19</h2>
       <p>Baseline 4 question 4 model with slider behavior</p>
-      <p><span class="version" data-proto="jan-19">Created: 2026-01-19 09:53 (prototype-jan-19-v1)</span></p>
+      <p><span class="version" data-proto="jan-19" data-utc="2026-01-19T17:53:00Z">Created: 2026-01-19T17:53:00Z (prototype-jan-19-v1)</span></p>
       <a href="./jan-19/">View Prototype</a>
     </li>
 
@@ -114,5 +114,22 @@
   <p style="color: #999; font-size: 0.875rem; margin-top: 2rem;">
     To add a prototype: <code>npm run snapshot [name]</code>
   </p>
+
+  <script>
+    // Convert UTC timestamps to viewer's local timezone
+    document.querySelectorAll('.version[data-utc]').forEach(el => {
+      const utc = el.dataset.utc;
+      const date = new Date(utc);
+      const local = date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      });
+      el.textContent = el.textContent.replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, local);
+    });
+  </script>
 </body>
 </html>
