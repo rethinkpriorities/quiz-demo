@@ -98,3 +98,9 @@
   color: var(--text-white);
   border-color: var(--border-bright);
 }
+
+/* Selection type - horizontal button row */
+.selectionRow {
+  display: flex;
+  gap: var(--spacing-2);
+}

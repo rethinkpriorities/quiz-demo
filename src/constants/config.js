@@ -2,6 +2,14 @@
 // Option 0 = green, Option 1 = blue, Option 2 = coral
 export const OPTION_COLORS = ['#81B29A', '#98C1D9', '#E07A5F'];
 
+// Question type colors - placeholder, same colors for now
+// Design decisions are handled by UX team, not implementation
+export const QUESTION_TYPE_COLORS = {
+  default: ['#81B29A', '#98C1D9', '#E07A5F'],
+  selection: ['#81B29A', '#98C1D9', '#E07A5F'],
+  credence: ['#81B29A', '#98C1D9', '#E07A5F'],
+};
+
 // Category label color (appears above question heading)
 export const CATEGORY_LABEL_COLOR = '#81B29A';
 
@@ -108,4 +116,11 @@ export const FONT_WEIGHTS = {
 export const INPUT_MODES = {
   OPTIONS: 'options',
   SLIDERS: 'sliders',
+};
+
+// Question types
+export const QUESTION_TYPES = {
+  DEFAULT: 'default',
+  SELECTION: 'selection',
+  CREDENCE: 'credence',
 };

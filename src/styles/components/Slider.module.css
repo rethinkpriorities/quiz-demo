@@ -164,6 +164,58 @@
   transition: none;
 }
 
+/* Compact Selection (for results page, selection-type questions) */
+.compactSelection {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.compactSelection:hover {
+  border-color: var(--selection-color, var(--border-bright));
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.compactSelection.selected {
+  border-color: var(--selection-color);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.compactSelection .selectionLabel {
+  font-size: var(--text-md);
+  color: var(--text-gray-medium);
+  text-align: left;
+}
+
+.compactSelection.selected .selectionLabel {
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+
+.compactSelection .selectionIndicator {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-circle);
+  border: 2px solid var(--border-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+  color: var(--text-white);
+}
+
+.compactSelection:hover .selectionIndicator {
+  border-color: var(--selection-color, var(--border-bright));
+}
+
 /* Total indicator */
 .total {
   margin-top: var(--spacing-8);

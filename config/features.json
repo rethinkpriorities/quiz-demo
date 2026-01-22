@@ -4,7 +4,8 @@
 
   "ui": {
     "resetButton": false,
-    "sliderLock": false
+    "sliderLock": false,
+    "questionTypes": true
   },
 
   "calculations": {
