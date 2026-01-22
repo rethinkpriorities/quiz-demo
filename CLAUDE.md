@@ -51,6 +51,7 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Calculation Display | `calculations.show*`, `calculations.sideBySideComparison` | Control which calculation cards appear and comparison mode |
 | Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
+| Share Results | `ui.shareResults` | Share quiz results via URL. Copies link to clipboard; opening link restores credences and shows results. |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
@@ -172,39 +173,31 @@ Save quiz results as a named worldview and retake the quiz to compare different 
 
 ---
 
-### 5. Share Results via URL
-**Flag:** `ui.shareResults`
+### 5. Stale URL Recovery (Share Results Layer 2)
+**Flag:** `ui.shareResults` (extends existing feature)
 
-Generate a shareable URL containing the user's quiz answers. No backend required — data encoded in the URL itself.
+Graceful handling when a shared URL references a quiz configuration that has changed.
 
-**Behavior:**
-- Results screen shows "Share Results" button
-- Click copies URL to clipboard with "Copied!" feedback
-- URL uses hash fragment: `https://.../#results=compressed_data`
+**Current behavior (Layer 1):**
+- If URL is valid and all questions/options match: restore and show results
+- If URL is invalid or config changed: show error toast, start fresh quiz
 
-**Data Format:**
-- Encode credences by question ID + option names
-- If 100% credence on one option, store only that option
-- Compress with lz-string for shorter URLs
-
-**Loading from URL:**
-- On page load, check for `#results=` hash
-- Decompress and validate data
-- Compare question IDs and option names against current quiz config
-
-**Stale URL Handling:**
-- If all questions/options match: go directly to results screen
+**Layer 2 behavior:**
 - If some questions missing or options changed: show dialog explaining quiz has changed
 - User clicks through quiz to answer only the missing/changed questions
 - Pre-populate matching questions from URL data
 - Answers to removed questions are ignored
 
-**Error Handling:**
-- Malformed/truncated URLs: graceful fallback to fresh quiz
-- Optional subtle message: "Couldn't restore your results"
+**Implementation notes:**
+- Detect which questions exist in URL but not in config (removed)
+- Detect which questions exist in config but not in URL (new)
+- Detect which options changed for existing questions
+- Dialog component explaining the situation
+- Modified quiz flow: skip pre-populated questions, show only new/changed
+- Navigation logic to handle partial completion
 
 **Dependencies:**
-- `lz-string` package
+- Requires `ui.shareResults` Layer 1 (completed)
 
 ---
 
@@ -369,5 +362,6 @@ Show an "Explain Results" button that generates a personalized explanation of wh
 | `config/causes.json` | Cause definitions (points, colors, flags) |
 | `src/context/QuizContext.jsx` | React Context state management |
 | `src/utils/calculations.js` | Calculation functions |
+| `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |
 | `scripts/snapshot.sh` | Prototype builder |
 | `CLAUDE-ARCHIVE.md` | Detailed implementation notes for completed features |

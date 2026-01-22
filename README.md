@@ -155,6 +155,7 @@ quiz-demo/
 │   │
 │   ├── utils/                      # Pure utility functions
 │   │   ├── calculations.js         # All calculation logic
+│   │   ├── shareUrl.js             # URL encoding/decoding for sharing results
 │   │   ├── validateCauses.js       # Validates causes.json on startup
 │   │   └── validateQuestions.js    # Validates questions.json on startup
 │   │

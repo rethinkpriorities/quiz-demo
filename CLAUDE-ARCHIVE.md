@@ -407,6 +407,87 @@ Conditional copy variants based on user answers:
 
 ---
 
+## Share Results Feature (Layer 1)
+**Date:** 2026-01-21
+**Category:** UI
+**Flag:** `ui.shareResults`
+**Prototype:** `prototype-share-results-v1` (2026-01-21)
+**Dependencies:** lz-string
+
+**Description:**
+Share quiz results via URL. Clicking "Share Results" copies a link that restores the user's credences when opened.
+
+**Behavior:**
+- Results screen shows "Share Results" button (when flag enabled)
+- Click copies URL to clipboard with "Link copied!" feedback (2 second duration)
+- URL format: `https://.../#results=compressed_data`
+- Opening a share URL restores credences and goes directly to results
+- Invalid/stale URLs show error toast and start fresh quiz
+
+**Data Format (Compact Encoding):**
+- Questions separated by `|`
+- 100% picks: `questionId:optionKey` (e.g., `animal:equal`)
+- Custom mixes: `questionId:key=val,key=val` (e.g., `animal:equal=33,10x=34,100x=33`)
+- Only non-zero values stored for custom mixes
+- Compressed with lz-string for obfuscation and tamper-resistance
+
+**URL Length:**
+- Best case (all 100% picks): ~64 characters
+- Worst case (all custom mixes): ~121 characters
+- URLs are obfuscated (not human-readable)
+
+**Validation:**
+- Decompresses and parses compact format
+- Validates all question IDs exist in current config
+- Validates all option keys exist for each question
+- Validates credences sum to 100 (±1 tolerance for rounding)
+- On any mismatch: shows error, starts fresh quiz
+
+**Implementation:**
+
+1. **shareUrl.js** (`src/utils/shareUrl.js`):
+   - `encodeCredences(credences)` - Compact format + lz-string compression
+   - `decodeCredences(compressed)` - Decompress + parse compact format
+   - `validateCredences(credences)` - Check against current quiz config
+   - `generateShareUrl(credences)` - Build full URL with hash
+   - `parseShareUrl()` - Extract and validate from current URL
+   - `clearShareHash()` - Remove hash without navigation
+
+2. **QuizContext.jsx**:
+   - Added `RESTORE_FROM_URL` action to reducer
+   - useEffect on mount checks for `#results=` hash
+   - Valid URL: dispatches restore action, clears hash
+   - Invalid URL: sets error state, clears hash after 5 seconds
+
+3. **ResultsScreen.jsx**:
+   - Share button with Share2/Check icons from lucide-react
+   - `handleShareClick()` builds credences, generates URL, copies to clipboard
+   - Fallback for older browsers (textarea + execCommand)
+   - "copied" state for visual feedback
+
+4. **MoralParliamentQuiz.jsx**:
+   - Error toast for share URL errors (fixed position, auto-dismiss)
+
+**Files Changed:**
+- `package.json` - Added lz-string dependency
+- `config/features.json` - Added `ui.shareResults` flag
+- `config/copy.json` - Added share button copy text
+- `src/utils/shareUrl.js` - NEW: Encode/decode utilities
+- `src/context/QuizContext.jsx` - URL detection on mount, restore action
+- `src/components/ResultsScreen.jsx` - Share button with clipboard copy
+- `src/components/MoralParliamentQuiz.jsx` - Error toast display
+- `src/styles/components/Results.module.css` - Share button styles
+
+**Prototype-Specific URLs:**
+URLs include the full pathname, so prototypes generate links back to themselves:
+- Main app: `https://...github.io/quiz-demo/#results=...`
+- Prototype: `https://...github.io/quiz-demo/prototypes/share-results/#results=...`
+
+**Future Enhancement (Layer 2):**
+Graceful handling of stale URLs where quiz config has changed. See CLAUDE.md Planned Features.
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.
@@ -455,7 +536,7 @@ These items are deprioritized but may be addressed when development pace slows d
 - [ ] Consider dark mode support
 
 ### Feature Ideas
-- [ ] Add ability to save/share results
+- [x] Add ability to save/share results
 - [ ] Add more cause categories
 - [ ] Add more moral dimensions to evaluate
 - [ ] Export results as PDF or image
