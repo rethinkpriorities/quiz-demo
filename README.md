@@ -43,7 +43,7 @@ Uncertain about your ethical views? This quiz helps you navigate moral uncertain
 
 ```bash
 # Clone the repository (or navigate to your project directory)
-cd quiz-prototype
+cd quiz-demo
 
 # Install dependencies
 npm install
@@ -116,11 +116,12 @@ npm run snapshot a               # Rebuilds, tags as v2
 ## 📁 Project Structure
 
 ```
-quiz-prototype/
+quiz-demo/
 ├── config/                         # JSON configuration files
 │   ├── causes.json                 # Cause definitions (points, colors, flags)
-│   ├── questions.json              # Question definitions and worldview dimensions
-│   └── features.json               # Feature flags for toggling functionality
+│   ├── copy.json                   # UI copy/text content
+│   ├── features.json               # Feature flags for toggling functionality
+│   └── questions.json              # Question definitions and worldview dimensions
 │
 ├── src/
 │   ├── main.jsx                    # React entry point + config validation
@@ -149,7 +150,8 @@ quiz-prototype/
 │   │       └── ProgressBar.jsx     # Progress indicator
 │   │
 │   ├── context/                    # React Context for state management
-│   │   └── QuizContext.jsx         # Quiz state provider and hooks
+│   │   ├── QuizContext.jsx         # Quiz state provider and hooks
+│   │   └── useQuiz.js              # Custom hook for consuming quiz context
 │   │
 │   ├── utils/                      # Pure utility functions
 │   │   ├── calculations.js         # All calculation logic
@@ -163,13 +165,24 @@ quiz-prototype/
 │       ├── variables.css           # CSS custom properties (design system)
 │       ├── global.css              # Global styles and utilities
 │       └── components/             # Component-specific CSS modules
+│           ├── CauseBar.module.css
+│           ├── Debugger.module.css
+│           ├── EditPanel.module.css
+│           ├── Intermission.module.css
+│           ├── ModeToggle.module.css
+│           ├── OptionButton.module.css
+│           ├── QuestionScreen.module.css
+│           ├── Results.module.css
+│           ├── Slider.module.css
+│           └── WelcomeScreen.module.css
 │
 ├── index.html                      # HTML entry point
 ├── vite.config.js                  # Vite configuration (base: /quiz-demo/)
 ├── vitest.config.js                # Test configuration
 ├── package.json                    # Dependencies and scripts
 ├── scripts/
-│   └── snapshot.sh                 # Prototype snapshot script
+│   ├── snapshot.sh                 # Prototype snapshot script
+│   └── validate-config.js          # Config validation for CI
 ├── prototypes/                     # Committed prototype builds
 │   └── index.html                  # Prototype listing page
 └── CLAUDE.md                       # Development guide and feature tracking
@@ -295,7 +308,7 @@ npm test
 npm run test:run
 ```
 
-**Test coverage (34 tests):**
+**Test coverage (34 tests across 5 files):**
 - `ResultsScreen.test.jsx` - Reset button functionality (5 tests)
 - `CredenceSlider.test.jsx` - Slider lock feature (7 tests)
 - `QuestionScreen.test.jsx` - Question types mode toggle (6 tests)
@@ -402,7 +415,7 @@ Questions are defined in `config/questions.json`. To add a new question:
 ### Planned Improvements
 
 - [x] Refine slider recalculation UX during drag operations (completed with ratio preservation and smooth animations)
-- [x] Add component tests with React Testing Library (26 tests across 4 test files)
+- [x] Add component tests with React Testing Library (34 tests across 5 test files)
 - [ ] Add TypeScript for type safety
 - [ ] Add unit tests for calculation functions
 - [ ] Improve accessibility (ARIA labels, keyboard navigation)
@@ -415,7 +428,7 @@ See **REFACTORING_NOTES.md** for details on bug fixes and architectural decision
 
 ## 🤝 Contributing
 
-This project was refactored from a single-file prototype (816 lines) into a modular architecture (26 files). The original source is preserved in git history (commit dd5499b).
+This project was refactored from a single-file prototype (816 lines) into a modular architecture. The original source is preserved in git history (commit dd5499b).
 
 When contributing:
 1. Follow existing component patterns
