@@ -1,7 +1,8 @@
-import { createContext, useReducer, useMemo, useCallback } from 'react';
+import { createContext, useReducer, useMemo, useCallback, useEffect, useState } from 'react';
 import questionsConfig from '../../config/questions.json';
 import causesConfig from '../../config/causes.json';
 import features from '../../config/features.json';
+import { parseShareUrl, clearShareHash } from '../utils/shareUrl';
 import {
   OPTION_COLORS,
   QUESTION_TYPE_COLORS,
@@ -112,6 +113,7 @@ const ACTIONS = {
   RESET_TO_ORIGINAL: 'RESET_TO_ORIGINAL',
   RESET_QUIZ: 'RESET_QUIZ',
   SET_DEBUG_CONFIG: 'SET_DEBUG_CONFIG',
+  RESTORE_FROM_URL: 'RESTORE_FROM_URL',
 };
 
 /**
@@ -166,6 +168,23 @@ function quizReducer(state, action) {
     case ACTIONS.RESET_QUIZ:
       return { ...initialState, questions: createInitialQuestionsState() };
 
+    case ACTIONS.RESTORE_FROM_URL: {
+      const { credences: urlCredences } = action.payload;
+      const newQuestions = {};
+      for (const [questionId, credences] of Object.entries(urlCredences)) {
+        newQuestions[questionId] = {
+          ...createQuestionState(),
+          credences,
+          originalCredences: { ...credences },
+        };
+      }
+      return {
+        ...state,
+        currentStep: 'results',
+        questions: newQuestions,
+      };
+    }
+
     case ACTIONS.SET_DEBUG_CONFIG:
       return { ...state, debugConfig: action.payload };
 
@@ -178,6 +197,29 @@ export const QuizContext = createContext(null);
 
 export function QuizProvider({ children }) {
   const [state, dispatch] = useReducer(quizReducer, initialState);
+  const [shareUrlError, setShareUrlError] = useState(null);
+
+  // Check for shared results URL on mount
+  useEffect(() => {
+    if (!features.ui?.shareResults) return;
+
+    const result = parseShareUrl();
+    if (!result) return;
+
+    if (result.error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional mount-only initialization
+      setShareUrlError(result.error);
+      clearShareHash();
+      // Clear error after 5 seconds
+      window.setTimeout(() => setShareUrlError(null), 5000);
+      return;
+    }
+
+    if (result.credences) {
+      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: { credences: result.credences } });
+      clearShareHash();
+    }
+  }, []);
 
   // Action creators
   const goToStep = useCallback((step) => {
@@ -383,6 +425,7 @@ export function QuizProvider({ children }) {
       questions: state.questions,
       expandedPanel: state.expandedPanel,
       debugConfig: state.debugConfig,
+      shareUrlError,
 
       // Config (static)
       questionsConfig: questionsWithColors,
@@ -430,6 +473,7 @@ export function QuizProvider({ children }) {
       state.questions,
       state.expandedPanel,
       state.debugConfig,
+      shareUrlError,
       goToStep,
       setCredences,
       setInputMode,

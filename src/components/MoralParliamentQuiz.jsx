@@ -7,12 +7,26 @@ import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
 import features from '../../config/features.json';
 
+const toastStyle = {
+  position: 'fixed',
+  top: '1rem',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  background: 'rgba(239, 68, 68, 0.9)',
+  color: 'white',
+  padding: '0.75rem 1.5rem',
+  borderRadius: '0.5rem',
+  fontSize: '0.875rem',
+  zIndex: 1000,
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+};
+
 /**
  * Main quiz router component.
  * Renders the appropriate screen based on current step from context.
  */
 function MoralParliamentQuiz() {
-  const { currentStep, currentQuestion, setDebugConfig } = useQuiz();
+  const { currentStep, currentQuestion, setDebugConfig, shareUrlError } = useQuiz();
 
   // Determine which screen to render
   function getScreenContent() {
@@ -29,6 +43,7 @@ function MoralParliamentQuiz() {
 
   return (
     <>
+      {shareUrlError && <div style={toastStyle}>{shareUrlError}</div>}
       {getScreenContent()}
       {features.developer?.calculationDebugger && (
         <CalculationDebugger onConfigChange={setDebugConfig} />

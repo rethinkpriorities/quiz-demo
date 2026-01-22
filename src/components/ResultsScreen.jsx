@@ -1,8 +1,10 @@
-import { RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { RotateCcw, Share2, Check } from 'lucide-react';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
+import { generateShareUrl } from '../utils/shareUrl';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
@@ -26,6 +28,8 @@ function ResultsScreen() {
     goBack,
   } = useQuiz();
 
+  const [copied, setCopied] = useState(false);
+
   const { maxEV, mergedFavorites } = calculationResults;
   const causeEntries = Object.entries(causesConfig);
 
@@ -33,6 +37,34 @@ function ResultsScreen() {
     if (window.confirm(copy.results.resetConfirmation)) {
       resetQuiz();
     }
+  };
+
+  const handleShareClick = async () => {
+    // Build credences object from stateMap
+    const credences = Object.fromEntries(
+      Object.entries(stateMap).map(([questionId, state]) => [questionId, state.credences])
+    );
+
+    const url = generateShareUrl(credences);
+
+    const showCopiedFeedback = () => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    };
+
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+
+    showCopiedFeedback();
   };
 
   const getPanelConfigs = (question) =>
@@ -162,6 +194,15 @@ function ResultsScreen() {
           <button onClick={goBack} className={styles.backButton}>
             {copy.navigation.backToQuiz}
           </button>
+          {features.ui?.shareResults && (
+            <button
+              onClick={handleShareClick}
+              className={`${styles.shareButton} ${copied ? styles.copied : ''}`}
+            >
+              {copied ? <Check size={16} /> : <Share2 size={16} />}
+              {copied ? copy.results.shareCopied : copy.results.shareButton}
+            </button>
+          )}
           {features.ui?.resetButton && (
             <button onClick={handleResetClick} className={styles.resetButton}>
               {copy.navigation.startOver}

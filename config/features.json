@@ -5,7 +5,8 @@
   "ui": {
     "resetButton": false,
     "sliderLock": false,
-    "questionTypes": true
+    "questionTypes": true,
+    "shareResults": true
   },
 
   "calculations": {

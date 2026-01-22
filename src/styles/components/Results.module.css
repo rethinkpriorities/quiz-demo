@@ -269,6 +269,32 @@
   background: var(--badge-orange-bg);
 }
 
+.shareButton {
+  background: var(--overlay-light);
+  color: var(--text-white);
+  border: 1px solid var(--border-bright);
+  padding: var(--spacing-4) var(--spacing-8);
+  font-size: var(--text-md);
+  font-family: var(--font-body);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  letter-spacing: var(--tracking-wide);
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.shareButton:hover {
+  background: var(--overlay-subtle);
+}
+
+.shareButton.copied {
+  color: var(--color-success-light);
+  border-color: var(--color-success-light);
+}
+
 @media (max-width: 768px) {
   .resultsGrid {
     grid-template-columns: 1fr;
