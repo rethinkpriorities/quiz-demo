@@ -1,5 +1,6 @@
 import Header from './layout/Header';
 import { useQuiz } from '../context/useQuiz';
+import { QUESTION_TYPES } from '../constants/config';
 import styles from '../styles/components/WelcomeScreen.module.css';
 import copy from '../../config/copy.json';
 
@@ -31,11 +32,13 @@ const WelcomeScreen = () => {
           <div className={styles.infoBox}>
             <div className={styles.infoBoxLabel}>{copy.welcome.previewLabel}</div>
             <div className={styles.infoBoxGrid}>
-              {questionsConfig.map((question) => (
-                <div key={question.id} className={styles.infoBoxItem}>
-                  {question.emoji} {question.previewText}
-                </div>
-              ))}
+              {questionsConfig
+                .filter((q) => q.type !== QUESTION_TYPES.INTERMISSION)
+                .map((question) => (
+                  <div key={question.id} className={styles.infoBoxItem}>
+                    {question.emoji} {question.previewText}
+                  </div>
+                ))}
             </div>
           </div>
         </div>

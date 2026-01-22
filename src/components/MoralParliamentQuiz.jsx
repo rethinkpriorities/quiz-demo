@@ -1,8 +1,10 @@
 import WelcomeScreen from './WelcomeScreen';
 import QuestionScreen from './QuestionScreen';
+import IntermissionScreen from './IntermissionScreen';
 import ResultsScreen from './ResultsScreen';
 import CalculationDebugger from './CalculationDebugger';
 import { useQuiz } from '../context/useQuiz';
+import { QUESTION_TYPES } from '../constants/config';
 import features from '../../config/features.json';
 
 /**
@@ -20,7 +22,12 @@ const MoralParliamentQuiz = () => {
   } else if (currentStep === 'results') {
     screenContent = <ResultsScreen />;
   } else if (currentQuestion) {
-    screenContent = <QuestionScreen />;
+    // Route intermission questions to IntermissionScreen
+    if (currentQuestion.type === QUESTION_TYPES.INTERMISSION) {
+      screenContent = <IntermissionScreen />;
+    } else {
+      screenContent = <QuestionScreen />;
+    }
   }
 
   return (

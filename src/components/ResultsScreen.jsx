@@ -1,7 +1,8 @@
 import { RotateCcw } from 'lucide-react';
-import CauseBar from './ui/CauseBar';
 import EditPanel from './ui/EditPanel';
+import ResultCard from './ui/ResultCard';
 import { useQuiz } from '../context/useQuiz';
+import { QUESTION_TYPES } from '../constants/config';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
@@ -45,78 +46,51 @@ const ResultsScreen = () => {
 
   const useSideBySide = features.calculations?.sideBySideComparison === true;
 
-  // Render cause bars for a given result set
-  // simpleMode: compact version for side-by-side comparison (no inline change indicators)
-  // When not in simpleMode, shows original percentage ghost bar and change arrows
-  const renderCauseBars = (results, originalResults = null, simpleMode = false) =>
-    causeEntries.map(([causeKey, cause]) => (
-      <CauseBar
-        key={causeKey}
-        name={cause.name}
-        percentage={results[causeKey]}
-        originalPercentage={originalResults?.[causeKey]}
-        color={cause.color}
-        hasChanged={!simpleMode && hasChanged}
-        simpleMode={simpleMode}
-      />
-    ));
-
-  // Render a single result card
-  // originalResults: for inline comparison mode (ghost bars + arrows)
-  // simpleMode: for side-by-side comparison mode (compact, no inline comparison)
-  const renderResultCard = (
-    methodKey,
-    results,
-    evs = null,
-    originalResults = null,
-    simpleMode = false
-  ) => {
-    const method = copy.results.methods[methodKey];
-    const iconClass = methodKey === 'mergedFavorites' ? 'merged' : methodKey;
-
-    return (
-      <div className={`${styles.resultCard} ${simpleMode ? styles.compactCard : ''}`}>
-        <div className={styles.cardHeader}>
-          <div className={`${styles.cardIcon} ${styles[iconClass]}`}>{method.icon}</div>
-          <div>
-            <h3 className={styles.cardTitle}>{method.title}</h3>
-            {!simpleMode && <p className={styles.cardSubtitle}>{method.subtitle}</p>}
-          </div>
-        </div>
-        {renderCauseBars(results, originalResults, simpleMode)}
-        {!simpleMode && (
-          <div className={styles.cardFooter}>
-            {evs
-              ? `${method.footerLabel} ${causeEntries.map(([key, cause]) => `${cause.name.slice(0, 2)} ${evs[key].toFixed(0)}`).join(' · ')}`
-              : method.footerText}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // Render the results grid for side-by-side comparison mode
   const renderCompactResultsGrid = (results) => (
     <div className={`${styles.resultsGrid} ${styles.compactGrid}`}>
-      {features.calculations?.showMaxEV === true &&
-        renderResultCard('maxEV', results.maxEV, results.maxEV.evs, null, true)}
-      {features.calculations?.showMergedFavorites === true &&
-        renderResultCard('mergedFavorites', results.mergedFavorites, null, null, true)}
+      {features.calculations?.showMaxEV === true && (
+        <ResultCard
+          methodKey="maxEV"
+          results={results.maxEV}
+          evs={results.maxEV.evs}
+          causeEntries={causeEntries}
+          simpleMode={true}
+        />
+      )}
+      {features.calculations?.showMergedFavorites === true && (
+        <ResultCard
+          methodKey="mergedFavorites"
+          results={results.mergedFavorites}
+          causeEntries={causeEntries}
+          simpleMode={true}
+        />
+      )}
     </div>
   );
 
   // Render the standard results grid with inline comparison
   const renderStandardResultsGrid = () => (
     <div className={styles.resultsGrid}>
-      {features.calculations?.showMaxEV === true &&
-        renderResultCard('maxEV', maxEV, maxEV.evs, originalCalculationResults?.maxEV)}
-      {features.calculations?.showMergedFavorites === true &&
-        renderResultCard(
-          'mergedFavorites',
-          mergedFavorites,
-          null,
-          originalCalculationResults?.mergedFavorites
-        )}
+      {features.calculations?.showMaxEV === true && (
+        <ResultCard
+          methodKey="maxEV"
+          results={maxEV}
+          evs={maxEV.evs}
+          originalResults={originalCalculationResults?.maxEV}
+          causeEntries={causeEntries}
+          hasChanged={hasChanged}
+        />
+      )}
+      {features.calculations?.showMergedFavorites === true && (
+        <ResultCard
+          methodKey="mergedFavorites"
+          results={mergedFavorites}
+          originalResults={originalCalculationResults?.mergedFavorites}
+          causeEntries={causeEntries}
+          hasChanged={hasChanged}
+        />
+      )}
     </div>
   );
 
@@ -161,29 +135,31 @@ const ResultsScreen = () => {
             )}
           </div>
           <div className={styles.panelList}>
-            {questionsConfig.map((question) => {
-              const state = stateMap[question.id];
-              if (!state) return null;
+            {questionsConfig
+              .filter((question) => question.type !== QUESTION_TYPES.INTERMISSION)
+              .map((question) => {
+                const state = stateMap[question.id];
+                if (!state) return null;
 
-              return (
-                <EditPanel
-                  key={question.id}
-                  title={question.editPanelTitle}
-                  icon={question.emoji}
-                  credences={state.credences}
-                  setCredences={state.setCredences}
-                  originalCredences={state.originalCredences}
-                  configs={getPanelConfigs(question)}
-                  isExpanded={expandedPanel === question.id}
-                  onToggle={() =>
-                    setExpandedPanel(expandedPanel === question.id ? null : question.id)
-                  }
-                  lockedKey={state.lockedKey}
-                  setLockedKey={state.setLockedKey}
-                  questionType={question.type}
-                />
-              );
-            })}
+                return (
+                  <EditPanel
+                    key={question.id}
+                    title={question.editPanelTitle}
+                    icon={question.emoji}
+                    credences={state.credences}
+                    setCredences={state.setCredences}
+                    originalCredences={state.originalCredences}
+                    configs={getPanelConfigs(question)}
+                    isExpanded={expandedPanel === question.id}
+                    onToggle={() =>
+                      setExpandedPanel(expandedPanel === question.id ? null : question.id)
+                    }
+                    lockedKey={state.lockedKey}
+                    setLockedKey={state.setLockedKey}
+                    questionType={question.type}
+                  />
+                );
+              })}
           </div>
         </div>
 

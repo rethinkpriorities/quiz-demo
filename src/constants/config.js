@@ -123,4 +123,5 @@ export const QUESTION_TYPES = {
   DEFAULT: 'default',
   SELECTION: 'selection',
   CREDENCE: 'credence',
+  INTERMISSION: 'intermission',
 };

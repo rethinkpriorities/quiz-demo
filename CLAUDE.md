@@ -50,6 +50,7 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Context API | N/A | Centralized state via `src/context/QuizContext.jsx` |
 | Calculation Display | `calculations.show*`, `calculations.sideBySideComparison` | Control which calculation cards appear and comparison mode |
 | Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
+| Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
@@ -65,8 +66,16 @@ When `ui.questionTypes` is enabled, questions can have different presentation mo
 | `default` | Mode toggle available (Pick One / Custom Mix) | Omit `type` or set `"type": "default"` |
 | `selection` | Pick one option only, no sliders | `"type": "selection"` |
 | `credence` | Sliders only, no discrete choice | `"type": "credence"` |
+| `intermission` | Pause with partial results + copy | `"type": "intermission"` with `title` and `body` |
 
 Colors defined in `src/constants/config.js` as `QUESTION_TYPE_COLORS` (placeholder: same colors for all types).
+
+**Intermission behavior:**
+- Displays `ResultCard` components showing current calculation results
+- Shows configurable `title` and `body` text
+- Does not count toward progress bar or "Question X of Y"
+- No credences stored (no edit panel on results screen)
+- When `ui.questionTypes` is disabled, intermissions are filtered out entirely
 
 ---
 
@@ -106,36 +115,7 @@ Hide the "You'll be asked about:" preview box on welcome screen. Wrap `infoBox` 
 
 ---
 
-### 3. Intermission Question Type
-**Flag:** `ui.intermissionType`
-
-Pause in quiz showing partial results + contextual copy based on answers so far.
-
-**Behavior:**
-- Displays results component + title/body text
-- Doesn't count toward progress
-- No credences stored
-- Conditional copy via `copyVariants` array with conditions
-
-**Config:**
-```json
-{
-  "id": "intermission-1",
-  "type": "intermission",
-  "copyVariants": [
-    {
-      "condition": { "questionId": "animal", "optionKey": "equal", "operator": "greater_than", "value": 50 },
-      "title": "You lean toward animal welfare",
-      "body": "Based on your answers..."
-    },
-    { "title": "Default title", "body": "Default body (no condition = fallback)" }
-  ]
-}
-```
-
----
-
-### 4. Difficulty Selection System
+### 3. Difficulty Selection System
 **Flag:** `ui.difficultySelection`
 
 Choose between difficulty levels with different question sets (e.g., Socrates/simple, Kant/credence-based, Heidegger/complex).

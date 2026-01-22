@@ -15,8 +15,24 @@ import {
   calculateMaximin,
 } from '../utils/calculations';
 
-const { questions } = questionsConfig;
+const { questions: rawQuestions } = questionsConfig;
 const { causes: CAUSES, defaultCredences } = causesConfig;
+
+// Check if question types feature is enabled
+const isQuestionTypesEnabled = features.ui?.questionTypes !== false;
+
+// Filter out intermission questions when questionTypes is disabled
+const questions = isQuestionTypesEnabled
+  ? rawQuestions
+  : rawQuestions.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
+
+// Get questions that count toward progress (excludes intermissions)
+const progressQuestions = rawQuestions.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
+
+// Check if a question is an intermission
+function isIntermission(question) {
+  return question?.type === QUESTION_TYPES.INTERMISSION;
+}
 
 // Get colors for a question based on its type (when feature enabled)
 function getColorsForQuestion(question) {
@@ -29,6 +45,14 @@ function getColorsForQuestion(question) {
 
 // Add color and normalized type to each question
 const questionsWithColors = questions.map((question) => {
+  // Intermission questions don't have options
+  if (isIntermission(question)) {
+    return {
+      ...question,
+      type: QUESTION_TYPES.INTERMISSION,
+    };
+  }
+
   const colors = getColorsForQuestion(question);
   return {
     ...question,
@@ -51,7 +75,10 @@ function createQuestionState() {
 }
 
 function createInitialQuestionsState() {
-  return Object.fromEntries(questions.map((q) => [q.id, createQuestionState()]));
+  // Only create state for non-intermission questions (they have credences)
+  return Object.fromEntries(
+    questions.filter((q) => !isIntermission(q)).map((q) => [q.id, createQuestionState()])
+  );
 }
 
 // Initial state
@@ -236,19 +263,23 @@ export function QuizProvider({ children }) {
   }, [state.currentStep, goToStep, getNextStep, saveOriginals]);
 
   // Extract credences for calculation functions (dynamic, based on question IDs in config)
+  // Excludes intermission questions which don't have credences
   const extractCredences = useCallback(
     (credenceType) => {
       const getter = credenceType === 'original' ? 'originalCredences' : 'credences';
 
+      // Filter to only non-intermission questions
+      const credenceQuestions = questions.filter((q) => !isIntermission(q));
+
       // For original credences, return null if none have been saved yet
-      const firstQuestion = state.questions[questions[0]?.id];
+      const firstQuestion = state.questions[credenceQuestions[0]?.id];
       if (credenceType === 'original' && !firstQuestion?.originalCredences) {
         return null;
       }
 
       // Build credences object dynamically from question IDs
       return Object.fromEntries(
-        questions.map((q) => [q.id, state.questions[q.id]?.[getter] || defaultCredences])
+        credenceQuestions.map((q) => [q.id, state.questions[q.id]?.[getter] || defaultCredences])
       );
     },
     [state.questions]
@@ -294,33 +325,79 @@ export function QuizProvider({ children }) {
     return questionsWithColors[currentQuestionIndex];
   }, [currentQuestionIndex]);
 
-  const totalQuestions = questions.length;
+  // Total questions excludes intermissions
+  const totalQuestions = progressQuestions.length;
+
+  // Get the progress index (position among non-intermission questions answered so far)
+  const getProgressIndex = useCallback(
+    (questionId) => {
+      const questionIndex = getQuestionIndex(questionId);
+      if (questionIndex === -1) return -1;
+
+      // Count non-intermission questions up to and including current
+      let progressIndex = 0;
+      for (let i = 0; i <= questionIndex; i++) {
+        if (!isIntermission(questions[i])) {
+          progressIndex++;
+        }
+      }
+      return progressIndex;
+    },
+    [getQuestionIndex]
+  );
+
+  const currentProgressIndex = useMemo(() => {
+    return getProgressIndex(state.currentStep);
+  }, [state.currentStep, getProgressIndex]);
 
   const progressPercentage = useMemo(() => {
-    if (currentQuestionIndex === -1) return 0;
-    return ((currentQuestionIndex + 1) / totalQuestions) * 100;
-  }, [currentQuestionIndex, totalQuestions]);
+    if (currentProgressIndex === -1) return 0;
+    // For intermission, show progress based on last completed question
+    const currentQ = questions[currentQuestionIndex];
+    if (isIntermission(currentQ)) {
+      // Count non-intermission questions before this one
+      let count = 0;
+      for (let i = 0; i < currentQuestionIndex; i++) {
+        if (!isIntermission(questions[i])) count++;
+      }
+      return (count / totalQuestions) * 100;
+    }
+    return (currentProgressIndex / totalQuestions) * 100;
+  }, [currentProgressIndex, currentQuestionIndex, totalQuestions]);
 
   const questionNumber = useMemo(() => {
     if (currentQuestionIndex === -1) return '';
-    return `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
-  }, [currentQuestionIndex, totalQuestions]);
+    const currentQ = questions[currentQuestionIndex];
+    // Don't show question number for intermissions
+    if (isIntermission(currentQ)) {
+      // Show progress based on questions before intermission
+      let count = 0;
+      for (let i = 0; i < currentQuestionIndex; i++) {
+        if (!isIntermission(questions[i])) count++;
+      }
+      return `Question ${count} of ${totalQuestions}`;
+    }
+    return `Question ${currentProgressIndex} of ${totalQuestions}`;
+  }, [currentQuestionIndex, currentProgressIndex, totalQuestions]);
 
-  // Build stateMap for ResultsScreen compatibility
+  // Build stateMap for ResultsScreen compatibility (excludes intermission questions)
   const stateMap = useMemo(() => {
     const map = {};
-    questions.forEach((q) => {
-      const questionState = state.questions[q.id];
-      map[q.id] = {
-        credences: questionState.credences,
-        setCredences: (newCredences) => setCredences(q.id, newCredences),
-        originalCredences: questionState.originalCredences,
-        inputMode: questionState.inputMode,
-        setInputMode: (mode) => setInputMode(q.id, mode),
-        lockedKey: questionState.lockedKey,
-        setLockedKey: (key) => setLockedKey(q.id, key),
-      };
-    });
+    questions
+      .filter((q) => !isIntermission(q))
+      .forEach((q) => {
+        const questionState = state.questions[q.id];
+        if (!questionState) return;
+        map[q.id] = {
+          credences: questionState.credences,
+          setCredences: (newCredences) => setCredences(q.id, newCredences),
+          originalCredences: questionState.originalCredences,
+          inputMode: questionState.inputMode,
+          setInputMode: (mode) => setInputMode(q.id, mode),
+          lockedKey: questionState.lockedKey,
+          setLockedKey: (key) => setLockedKey(q.id, key),
+        };
+      });
     return map;
   }, [state.questions, setCredences, setInputMode, setLockedKey]);
 

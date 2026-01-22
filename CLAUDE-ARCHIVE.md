@@ -309,6 +309,104 @@ Edit panels respect question types:
 
 ---
 
+## Intermission Question Type
+**Date:** 2026-01-21
+**Category:** UI
+**Flag:** N/A (requires `ui.questionTypes` to be enabled)
+**Prototype:** `prototype-intermission-v1` (2026-01-21)
+**Dependencies:** Question Types System
+
+**Description:**
+A new question type that pauses the quiz to show partial calculation results with contextual copy. Useful for providing feedback mid-quiz or breaking up longer question sequences.
+
+**Behavior:**
+- Displays title and body text from question config
+- Shows all enabled `ResultCard` components with current calculation results
+- Does not count toward progress bar or "Question X of Y" display
+- No credences stored (no state, no edit panel on results screen)
+- When `ui.questionTypes` is disabled, intermissions are completely filtered out
+
+**Question Config:**
+```json
+{
+  "id": "intermission1",
+  "type": "intermission",
+  "title": "Halfway There",
+  "body": "Based on your answers so far..."
+}
+```
+
+**Implementation:**
+
+1. **Constants** (`src/constants/config.js`):
+   - Added `INTERMISSION: 'intermission'` to `QUESTION_TYPES`
+
+2. **IntermissionScreen** (`src/components/IntermissionScreen.jsx`):
+   - New component displaying Header, ProgressBar, title/body, ResultCards, and navigation
+   - Uses shared `ResultCard` component for calculation display
+   - Respects `calculations.showMaxEV` and `calculations.showMergedFavorites` feature flags
+
+3. **ResultCard** (`src/components/ui/ResultCard.jsx`):
+   - NEW: Extracted shared component from ResultsScreen
+   - Used by both ResultsScreen and IntermissionScreen
+   - Props: `methodKey`, `results`, `evs`, `originalResults`, `causeEntries`, `hasChanged`, `simpleMode`
+
+4. **QuizContext** (`src/context/QuizContext.jsx`):
+   - Filters intermissions from `questions` array when `ui.questionTypes` is disabled
+   - Excludes intermissions from `totalQuestions` count
+   - Excludes intermissions from `progressPercentage` calculation
+   - Excludes intermissions from `questionNumber` display
+   - Excludes intermissions from `createInitialQuestionsState()` (no credence state)
+   - Excludes intermissions from `extractCredences()` and `stateMap`
+
+5. **Router** (`src/components/MoralParliamentQuiz.jsx`):
+   - Routes to `IntermissionScreen` when `currentQuestion.type === QUESTION_TYPES.INTERMISSION`
+
+6. **Calculations** (`src/utils/calculations.js`):
+   - `buildDimensionsFromQuestions()` filters out intermissions (no `worldviewDimension`)
+
+7. **Validation** (`src/utils/validateQuestions.js`):
+   - Special validation for intermission questions: only requires `id`, `title`, `body`
+
+8. **Filtering** (multiple components):
+   - `WelcomeScreen.jsx` - Filters intermissions from question preview
+   - `ResultsScreen.jsx` - Filters intermissions from edit panel list
+
+**Files Changed:**
+- `src/constants/config.js` - Added `INTERMISSION` to `QUESTION_TYPES`
+- `src/components/IntermissionScreen.jsx` - NEW
+- `src/components/ui/ResultCard.jsx` - NEW (extracted from ResultsScreen)
+- `src/styles/components/Intermission.module.css` - NEW
+- `src/context/QuizContext.jsx` - Progress exclusion, state filtering
+- `src/components/MoralParliamentQuiz.jsx` - Router for intermission type
+- `src/components/ResultsScreen.jsx` - Uses ResultCard, filters intermissions
+- `src/components/WelcomeScreen.jsx` - Filters intermissions from preview
+- `src/utils/calculations.js` - Filters intermissions from dimensions
+- `src/utils/validateQuestions.js` - Special validation rules
+- `config/questions.json` - Added example intermission after question 2
+
+**Tests Added:**
+- `src/context/QuizContext.intermission.test.jsx` - 8 tests covering:
+  - Progress calculation excludes intermissions (5 tests)
+  - Feature flag filtering behavior (3 tests)
+
+**Future Enhancement (deferred):**
+Conditional copy variants based on user answers:
+```json
+{
+  "copyVariants": [
+    {
+      "condition": { "questionId": "animal", "optionKey": "equal", "operator": "greater_than", "value": 50 },
+      "title": "You lean toward animal welfare",
+      "body": "Based on your answers..."
+    },
+    { "title": "Default title", "body": "Default body (no condition = fallback)" }
+  ]
+}
+```
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.

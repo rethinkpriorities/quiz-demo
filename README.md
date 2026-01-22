@@ -130,6 +130,7 @@ quiz-prototype/
 │   │   ├── MoralParliamentQuiz.jsx # Main quiz orchestrator
 │   │   ├── WelcomeScreen.jsx       # Landing page
 │   │   ├── QuestionScreen.jsx      # Reusable question template
+│   │   ├── IntermissionScreen.jsx  # Mid-quiz pause with partial results
 │   │   ├── ResultsScreen.jsx       # Results display
 │   │   ├── CalculationDebugger.jsx # Developer tool for testing calculations
 │   │   │
@@ -140,6 +141,7 @@ quiz-prototype/
 │   │   │   ├── CompactSelection.jsx # Compact selection buttons for results
 │   │   │   ├── ModeToggle.jsx      # Options/Sliders mode switcher
 │   │   │   ├── CauseBar.jsx        # Horizontal bar chart
+│   │   │   ├── ResultCard.jsx      # Calculation result card with cause bars
 │   │   │   └── EditPanel.jsx       # Collapsible credence editor
 │   │   │
 │   │   └── layout/                 # Layout components
@@ -293,11 +295,12 @@ npm test
 npm run test:run
 ```
 
-**Test coverage (26 tests):**
+**Test coverage (34 tests):**
 - `ResultsScreen.test.jsx` - Reset button functionality (5 tests)
 - `CredenceSlider.test.jsx` - Slider lock feature (7 tests)
 - `QuestionScreen.test.jsx` - Question types mode toggle (6 tests)
 - `EditPanel.test.jsx` - Selection vs slider rendering (8 tests)
+- `QuizContext.intermission.test.jsx` - Intermission progress/feature flag (8 tests)
 
 ### Manual Testing Areas
 The dev server runs at `http://localhost:5173/quiz-demo/` with hot module replacement.
