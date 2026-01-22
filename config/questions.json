@@ -79,6 +79,12 @@
       ]
     },
     {
+      "id": "intermission1",
+      "type": "intermission",
+      "title": "Halfway There",
+      "body": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Based on your answers so far, we're calculating how your worldview might influence your giving priorities. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    },
+    {
       "id": "scale",
       "worldviewDimension": {
         "appliesTo": "scaleFactor",

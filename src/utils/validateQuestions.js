@@ -133,6 +133,21 @@ export function validateQuestionsConfig(questionsConfig, causesConfig) {
     questionsConfig.questions.forEach((question, qIndex) => {
       const qPrefix = `Question[${qIndex}]`;
 
+      // Skip validation for intermission questions - they have a different structure
+      if (question.type === 'intermission') {
+        // Only validate required intermission fields
+        if (!question.id) {
+          errors.push(`${qPrefix}: Missing required field 'id'`);
+        }
+        if (!question.title) {
+          errors.push(`${qPrefix}: Intermission missing required field 'title'`);
+        }
+        if (!question.body) {
+          errors.push(`${qPrefix}: Intermission missing required field 'body'`);
+        }
+        return; // Skip rest of validation for intermissions
+      }
+
       // Check required fields
       errors.push(...checkRequiredFields(question, REQUIRED_QUESTION_FIELDS, qPrefix));
 

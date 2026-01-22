@@ -36,15 +36,18 @@ const { causes: CAUSES, defaultCredences: DEFAULT_CREDENCES } = causesConfig;
 
 /**
  * Build dimensions object from questions config (keyed by question ID).
+ * Excludes intermission questions which don't have worldviewDimension.
  * @param {boolean} includeName - Include question editPanelTitle as name property
  * @returns {Object} Dimensions keyed by question ID
  */
 export function buildDimensionsFromQuestions(includeName = false) {
   return Object.fromEntries(
-    questionsConfig.questions.map((q) => [
-      q.id,
-      includeName ? { ...q.worldviewDimension, name: q.editPanelTitle } : q.worldviewDimension,
-    ])
+    questionsConfig.questions
+      .filter((q) => q.type !== 'intermission' && q.worldviewDimension)
+      .map((q) => [
+        q.id,
+        includeName ? { ...q.worldviewDimension, name: q.editPanelTitle } : q.worldviewDimension,
+      ])
   );
 }
 
