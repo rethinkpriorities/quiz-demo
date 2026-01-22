@@ -8,10 +8,10 @@ import features from '../../config/features.json';
 import copy from '../../config/copy.json';
 
 /**
- * Intermission screen that displays partial results and contextual copy
- * Does not count toward progress or store credences
+ * Intermission screen that displays partial results and contextual copy.
+ * Does not count toward progress or store credences.
  */
-const IntermissionScreen = () => {
+function IntermissionScreen() {
   const {
     currentQuestion,
     questionNumber,
@@ -67,6 +67,6 @@ const IntermissionScreen = () => {
       </main>
     </div>
   );
-};
+}
 
 export default IntermissionScreen;

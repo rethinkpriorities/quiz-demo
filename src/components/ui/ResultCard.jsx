@@ -3,10 +3,10 @@ import styles from '../../styles/components/Results.module.css';
 import copy from '../../../config/copy.json';
 
 /**
- * Displays a single calculation result card with cause bars
- * Used by both ResultsScreen and IntermissionScreen
+ * Displays a single calculation result card with cause bars.
+ * Used by both ResultsScreen and IntermissionScreen.
  */
-const ResultCard = ({
+function ResultCard({
   methodKey,
   results,
   evs = null,
@@ -14,9 +14,13 @@ const ResultCard = ({
   causeEntries,
   hasChanged = false,
   simpleMode = false,
-}) => {
+}) {
   const method = copy.results.methods[methodKey];
   const iconClass = methodKey === 'mergedFavorites' ? 'merged' : methodKey;
+
+  const footerContent = evs
+    ? `${method.footerLabel} ${causeEntries.map(([key, cause]) => `${cause.name.slice(0, 2)} ${evs[key].toFixed(0)}`).join(' · ')}`
+    : method.footerText;
 
   return (
     <div className={`${styles.resultCard} ${simpleMode ? styles.compactCard : ''}`}>
@@ -38,15 +42,9 @@ const ResultCard = ({
           simpleMode={simpleMode}
         />
       ))}
-      {!simpleMode && (
-        <div className={styles.cardFooter}>
-          {evs
-            ? `${method.footerLabel} ${causeEntries.map(([key, cause]) => `${cause.name.slice(0, 2)} ${evs[key].toFixed(0)}`).join(' · ')}`
-            : method.footerText}
-        </div>
-      )}
+      {!simpleMode && <div className={styles.cardFooter}>{footerContent}</div>}
     </div>
   );
-};
+}
 
 export default ResultCard;

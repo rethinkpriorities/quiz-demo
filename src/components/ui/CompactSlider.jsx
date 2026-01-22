@@ -1,15 +1,14 @@
-import { useState } from 'react';
 import { Lock } from 'lucide-react';
+import { useSliderDrag } from '../../hooks/useSliderDrag';
+import { useLockedSlider } from '../../hooks/useLockedSlider';
 import styles from '../../styles/components/Slider.module.css';
-import features from '../../../config/features.json';
 import copy from '../../../config/copy.json';
 
 /**
- * Compact slider for results page editing
- * Smaller variant used in EditPanel components
- * Tracks drag state to maintain consistent ratios during slider adjustments
+ * Compact slider for results page editing.
+ * Smaller variant used in EditPanel components.
  */
-const CompactSlider = ({
+function CompactSlider({
   label,
   value,
   onChange,
@@ -18,49 +17,28 @@ const CompactSlider = ({
   sliderKey,
   lockedKey,
   setLockedKey,
-}) => {
-  // Track the credences snapshot when drag starts
-  const [dragBaseCredences, setDragBaseCredences] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
+}) {
+  const { isLocked, hasLockedSibling, thumbOffset, featureEnabled } = useLockedSlider({
+    sliderKey,
+    lockedKey,
+    credences,
+  });
 
-  const isLocked = lockedKey === sliderKey;
-
-  // Calculate max allowed value when another slider is locked
-  const hasLockedSibling = lockedKey && lockedKey !== sliderKey;
-  const lockedValue = hasLockedSibling ? credences[lockedKey] : 0;
-  const maxAllowed = hasLockedSibling ? 100 - lockedValue : 100;
-
-  // Adjust position to account for thumb width (16px thumb assumed)
-  const thumbOffset = hasLockedSibling
-    ? `calc(${maxAllowed}% + ${(50 - maxAllowed) * 0.16}px)`
-    : null;
-
-  const handleDragStart = () => {
-    if (isLocked) return;
-    setIsDragging(true);
-    setDragBaseCredences({ ...credences });
-  };
-
-  const handleDragEnd = (e) => {
-    if (isLocked) return;
-    if (!isDragging) return; // Only process if we were actually dragging
-    setIsDragging(false);
-    // On drag end, trigger one final change with rounding
-    const finalValue = parseFloat(e.target.value);
-    onChange(finalValue, dragBaseCredences, true, lockedKey); // true = shouldRound
-    setDragBaseCredences(null);
-  };
-
-  const handleChange = (e) => {
-    if (isLocked) return;
-    const newValue = parseFloat(e.target.value);
-    onChange(newValue, dragBaseCredences, false, lockedKey);
-  };
+  const { isDragging, dragHandlers } = useSliderDrag({
+    credences,
+    isLocked,
+    lockedKey,
+    onChange,
+  });
 
   const handleLockClick = () => {
-    if (!features.ui?.sliderLock) return;
+    if (!featureEnabled) return;
     setLockedKey(lockedKey === sliderKey ? null : sliderKey);
   };
+
+  const sliderBackground = hasLockedSibling
+    ? `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) ${thumbOffset}, rgb(30,41,59) ${thumbOffset}, rgb(30,41,59) 100%)`
+    : `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) 100%)`;
 
   return (
     <div className={styles.compactSlider}>
@@ -78,24 +56,17 @@ const CompactSlider = ({
             max="100"
             step="any"
             value={value}
-            onChange={handleChange}
-            onMouseDown={handleDragStart}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-            onTouchStart={handleDragStart}
-            onTouchEnd={handleDragEnd}
+            {...dragHandlers}
             data-dragging={isDragging}
             disabled={isLocked}
             style={{
-              background: hasLockedSibling
-                ? `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) ${thumbOffset}, rgb(30,41,59) ${thumbOffset}, rgb(30,41,59) 100%)`
-                : `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) 100%)`,
+              background: sliderBackground,
               cursor: isLocked ? 'not-allowed' : 'pointer',
             }}
           />
           {hasLockedSibling && <div className={styles.lockLimit} style={{ left: thumbOffset }} />}
         </div>
-        {features.ui?.sliderLock && (
+        {featureEnabled && (
           <button
             className={`${styles.lockButton} ${isLocked ? styles.locked : ''}`}
             onClick={handleLockClick}
@@ -108,6 +79,6 @@ const CompactSlider = ({
       </div>
     </div>
   );
-};
+}
 
 export default CompactSlider;

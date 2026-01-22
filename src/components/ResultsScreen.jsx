@@ -8,10 +8,10 @@ import features from '../../config/features.json';
 import copy from '../../config/copy.json';
 
 /**
- * Results screen showing all 4 allocation methods
- * Allows editing credences and seeing live recalculation
+ * Results screen showing allocation methods.
+ * Allows editing credences and seeing live recalculation.
  */
-const ResultsScreen = () => {
+function ResultsScreen() {
   const {
     questionsConfig,
     causesConfig,
@@ -26,7 +26,7 @@ const ResultsScreen = () => {
     goBack,
   } = useQuiz();
 
-  const { maxEV, parliament, mergedFavorites, maximin } = calculationResults;
+  const { maxEV, mergedFavorites } = calculationResults;
   const causeEntries = Object.entries(causesConfig);
 
   const handleResetClick = () => {
@@ -35,7 +35,6 @@ const ResultsScreen = () => {
     }
   };
 
-  // Build panel configs from question options
   const getPanelConfigs = (question) =>
     question.options.map((opt) => ({
       key: opt.key,
@@ -46,7 +45,9 @@ const ResultsScreen = () => {
 
   const useSideBySide = features.calculations?.sideBySideComparison === true;
 
-  // Render the results grid for side-by-side comparison mode
+  // Filter out intermission questions for edit panels
+  const editableQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
+
   const renderCompactResultsGrid = (results) => (
     <div className={`${styles.resultsGrid} ${styles.compactGrid}`}>
       {features.calculations?.showMaxEV === true && (
@@ -69,7 +70,6 @@ const ResultsScreen = () => {
     </div>
   );
 
-  // Render the standard results grid with inline comparison
   const renderStandardResultsGrid = () => (
     <div className={styles.resultsGrid}>
       {features.calculations?.showMaxEV === true && (
@@ -97,7 +97,6 @@ const ResultsScreen = () => {
   return (
     <div className={styles.resultsContainer}>
       <div className={styles.inner}>
-        {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>
             {copy.results.heading}
@@ -107,7 +106,6 @@ const ResultsScreen = () => {
           </h1>
         </div>
 
-        {/* Results display - side-by-side comparison when flag enabled and changed */}
         {useSideBySide && hasChanged ? (
           <div className={styles.comparisonContainer}>
             <div className={styles.originalResults}>
@@ -124,7 +122,6 @@ const ResultsScreen = () => {
           renderStandardResultsGrid()
         )}
 
-        {/* Edit controls */}
         <div className={styles.adjustPanel}>
           <div className={styles.adjustHeader}>
             <span className={styles.adjustTitle}>{copy.results.adjustCredencesHeading}</span>
@@ -135,35 +132,32 @@ const ResultsScreen = () => {
             )}
           </div>
           <div className={styles.panelList}>
-            {questionsConfig
-              .filter((question) => question.type !== QUESTION_TYPES.INTERMISSION)
-              .map((question) => {
-                const state = stateMap[question.id];
-                if (!state) return null;
+            {editableQuestions.map((question) => {
+              const state = stateMap[question.id];
+              if (!state) return null;
 
-                return (
-                  <EditPanel
-                    key={question.id}
-                    title={question.editPanelTitle}
-                    icon={question.emoji}
-                    credences={state.credences}
-                    setCredences={state.setCredences}
-                    originalCredences={state.originalCredences}
-                    configs={getPanelConfigs(question)}
-                    isExpanded={expandedPanel === question.id}
-                    onToggle={() =>
-                      setExpandedPanel(expandedPanel === question.id ? null : question.id)
-                    }
-                    lockedKey={state.lockedKey}
-                    setLockedKey={state.setLockedKey}
-                    questionType={question.type}
-                  />
-                );
-              })}
+              return (
+                <EditPanel
+                  key={question.id}
+                  title={question.editPanelTitle}
+                  icon={question.emoji}
+                  credences={state.credences}
+                  setCredences={state.setCredences}
+                  originalCredences={state.originalCredences}
+                  configs={getPanelConfigs(question)}
+                  isExpanded={expandedPanel === question.id}
+                  onToggle={() =>
+                    setExpandedPanel(expandedPanel === question.id ? null : question.id)
+                  }
+                  lockedKey={state.lockedKey}
+                  setLockedKey={state.setLockedKey}
+                  questionType={question.type}
+                />
+              );
+            })}
           </div>
         </div>
 
-        {/* Back button */}
         <div className={styles.backButtonContainer}>
           <button onClick={goBack} className={styles.backButton}>
             {copy.navigation.backToQuiz}
@@ -177,6 +171,6 @@ const ResultsScreen = () => {
       </div>
     </div>
   );
-};
+}
 
 export default ResultsScreen;

@@ -2,19 +2,16 @@ import { Check } from 'lucide-react';
 import styles from '../../styles/components/Slider.module.css';
 
 /**
- * Compact selection button for results page editing
- * Used in EditPanel for selection-type questions
- * Displays as a clickable row with label and selection indicator
+ * Compact selection button for results page editing.
+ * Used in EditPanel for selection-type questions.
  */
-const CompactSelection = ({ label, color, isSelected, onSelect }) => {
+function CompactSelection({ label, color, isSelected, onSelect }) {
   return (
     <button
       type="button"
       onClick={onSelect}
       className={`${styles.compactSelection} ${isSelected ? styles.selected : ''}`}
-      style={{
-        '--selection-color': color,
-      }}
+      style={{ '--selection-color': color }}
     >
       <span className={styles.selectionLabel}>{label}</span>
       <span
@@ -28,6 +25,6 @@ const CompactSelection = ({ label, color, isSelected, onSelect }) => {
       </span>
     </button>
   );
-};
+}
 
 export default CompactSelection;

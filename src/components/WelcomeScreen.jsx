@@ -5,11 +5,14 @@ import styles from '../styles/components/WelcomeScreen.module.css';
 import copy from '../../config/copy.json';
 
 /**
- * Welcome/landing screen
- * Introduces the quiz and provides a start button
+ * Welcome/landing screen.
+ * Introduces the quiz and provides a start button.
  */
-const WelcomeScreen = () => {
+function WelcomeScreen() {
   const { questionsConfig, startQuiz } = useQuiz();
+
+  // Filter out intermission questions from preview
+  const previewQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
 
   return (
     <div className="screen">
@@ -32,19 +35,17 @@ const WelcomeScreen = () => {
           <div className={styles.infoBox}>
             <div className={styles.infoBoxLabel}>{copy.welcome.previewLabel}</div>
             <div className={styles.infoBoxGrid}>
-              {questionsConfig
-                .filter((q) => q.type !== QUESTION_TYPES.INTERMISSION)
-                .map((question) => (
-                  <div key={question.id} className={styles.infoBoxItem}>
-                    {question.emoji} {question.previewText}
-                  </div>
-                ))}
+              {previewQuestions.map((question) => (
+                <div key={question.id} className={styles.infoBoxItem}>
+                  {question.emoji} {question.previewText}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </main>
     </div>
   );
-};
+}
 
 export default WelcomeScreen;

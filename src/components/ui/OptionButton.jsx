@@ -1,10 +1,10 @@
 import styles from '../../styles/components/OptionButton.module.css';
 
 /**
- * Option button for quick selection of a single credence option
- * Sets the selected option to 100% and others to 0%
+ * Option button for quick selection of a single credence option.
+ * Sets the selected option to 100% and others to 0%.
  */
-const OptionButton = ({
+function OptionButton({
   label,
   description,
   optionKey,
@@ -12,12 +12,14 @@ const OptionButton = ({
   setCredences,
   color,
   setInputMode,
-}) => {
+}) {
   const isSelected = credences[optionKey] === 100;
 
   const handleClick = () => {
-    const newCredences = { equal: 0, '10x': 0, '100x': 0 };
-    newCredences[optionKey] = 100;
+    // Build new credences dynamically from existing keys
+    const newCredences = Object.fromEntries(
+      Object.keys(credences).map((key) => [key, key === optionKey ? 100 : 0])
+    );
     setCredences(newCredences);
     setInputMode('options');
   };
@@ -37,6 +39,6 @@ const OptionButton = ({
       </div>
     </button>
   );
-};
+}
 
 export default OptionButton;

@@ -8,11 +8,11 @@ import styles from '../../styles/components/EditPanel.module.css';
 import copy from '../../../config/copy.json';
 
 /**
- * Collapsible panel for editing credences in results screen
- * Shows "modified" badge when values differ from original
- * Includes individual reset button and inline preview when collapsed
+ * Collapsible panel for editing credences in results screen.
+ * Shows "modified" badge when values differ from original.
+ * Includes individual reset button and inline preview when collapsed.
  */
-const EditPanel = ({
+function EditPanel({
   title,
   icon,
   credences,
@@ -24,7 +24,7 @@ const EditPanel = ({
   lockedKey,
   setLockedKey,
   questionType = QUESTION_TYPES.DEFAULT,
-}) => {
+}) {
   const panelChanged =
     originalCredences && JSON.stringify(credences) !== JSON.stringify(originalCredences);
 
@@ -32,7 +32,6 @@ const EditPanel = ({
   const isSelectionType =
     features.ui?.questionTypes !== false && questionType === QUESTION_TYPES.SELECTION;
 
-  // Handle selection button click - sets 100% to clicked option, 0% to others
   const handleSelectionClick = (selectedKey) => {
     const newCredences = {};
     configs.forEach((config) => {
@@ -46,6 +45,8 @@ const EditPanel = ({
     setCredences({ ...originalCredences });
   };
 
+  const previewText = configs.map((c) => `${c.short}:${credences[c.key]}%`).join(' ');
+
   return (
     <div className={`${styles.editPanel} ${isExpanded ? styles.expanded : ''}`}>
       <button onClick={onToggle} className={styles.toggleButton}>
@@ -55,11 +56,7 @@ const EditPanel = ({
           {panelChanged && (
             <span className={styles.modifiedBadge}>{copy.editPanel.modifiedBadge}</span>
           )}
-          {!isExpanded && (
-            <span className={styles.preview}>
-              {configs.map((c) => `${c.short}:${credences[c.key]}%`).join(' ')}
-            </span>
-          )}
+          {!isExpanded && <span className={styles.preview}>{previewText}</span>}
         </div>
         <span className={styles.chevron}>
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -130,6 +127,6 @@ const EditPanel = ({
       )}
     </div>
   );
-};
+}
 
 export default EditPanel;
