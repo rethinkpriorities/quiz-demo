@@ -11,9 +11,20 @@ import styles from '../styles/components/QuestionScreen.module.css';
 import copy from '../../config/copy.json';
 
 /**
- * Question screen that renders the current question from context
+ * Determines the effective input mode based on question type and feature flags.
  */
-const QuestionScreen = () => {
+function getEffectiveInputMode(questionType, inputMode, isQuestionTypesEnabled) {
+  if (!isQuestionTypesEnabled) return inputMode;
+
+  if (questionType === QUESTION_TYPES.SELECTION) return 'options';
+  if (questionType === QUESTION_TYPES.CREDENCE) return 'sliders';
+  return inputMode;
+}
+
+/**
+ * Question screen that renders the current question from context.
+ */
+function QuestionScreen() {
   const { currentQuestion, stateMap, questionNumber, progressPercentage, goBack, goForward } =
     useQuiz();
 
@@ -24,24 +35,11 @@ const QuestionScreen = () => {
 
   const { credences, setCredences, inputMode, setInputMode, lockedKey, setLockedKey } = state;
 
-  // Determine question type behavior
   const questionType = currentQuestion.type || QUESTION_TYPES.DEFAULT;
   const isQuestionTypesEnabled = features.ui?.questionTypes !== false;
-
-  // Show mode toggle only for default type (or when feature disabled)
   const showModeToggle = !isQuestionTypesEnabled || questionType === QUESTION_TYPES.DEFAULT;
+  const effectiveInputMode = getEffectiveInputMode(questionType, inputMode, isQuestionTypesEnabled);
 
-  // Determine effective input mode based on question type
-  let effectiveInputMode = inputMode;
-  if (isQuestionTypesEnabled) {
-    if (questionType === QUESTION_TYPES.SELECTION) {
-      effectiveInputMode = 'options';
-    } else if (questionType === QUESTION_TYPES.CREDENCE) {
-      effectiveInputMode = 'sliders';
-    }
-  }
-
-  // Determine which instructions to show
   const instructions =
     effectiveInputMode === 'options'
       ? currentQuestion.instructionsOptions
@@ -65,9 +63,8 @@ const QuestionScreen = () => {
           {showModeToggle && <ModeToggle mode={inputMode} setMode={setInputMode} />}
 
           <div className="card">
-            {effectiveInputMode === 'options' ? (
-              <>
-                {currentQuestion.options.map((opt) => (
+            {effectiveInputMode === 'options'
+              ? currentQuestion.options.map((opt) => (
                   <OptionButton
                     key={opt.key}
                     label={opt.label}
@@ -78,11 +75,8 @@ const QuestionScreen = () => {
                     color={opt.color}
                     setInputMode={setInputMode}
                   />
-                ))}
-              </>
-            ) : (
-              <>
-                {currentQuestion.options.map((opt) => (
+                ))
+              : currentQuestion.options.map((opt) => (
                   <CredenceSlider
                     key={opt.key}
                     label={opt.label}
@@ -105,8 +99,6 @@ const QuestionScreen = () => {
                     setLockedKey={setLockedKey}
                   />
                 ))}
-              </>
-            )}
           </div>
 
           <div className={styles.buttonRow}>
@@ -121,6 +113,6 @@ const QuestionScreen = () => {
       </main>
     </div>
   );
-};
+}
 
 export default QuestionScreen;

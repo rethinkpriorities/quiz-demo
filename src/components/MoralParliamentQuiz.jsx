@@ -8,36 +8,33 @@ import { QUESTION_TYPES } from '../constants/config';
 import features from '../../config/features.json';
 
 /**
- * Main quiz router component
- * Renders the appropriate screen based on current step from context
+ * Main quiz router component.
+ * Renders the appropriate screen based on current step from context.
  */
-const MoralParliamentQuiz = () => {
+function MoralParliamentQuiz() {
   const { currentStep, currentQuestion, setDebugConfig } = useQuiz();
 
   // Determine which screen to render
-  let screenContent = null;
+  function getScreenContent() {
+    if (currentStep === 'welcome') return <WelcomeScreen />;
+    if (currentStep === 'results') return <ResultsScreen />;
+    if (!currentQuestion) return null;
 
-  if (currentStep === 'welcome') {
-    screenContent = <WelcomeScreen />;
-  } else if (currentStep === 'results') {
-    screenContent = <ResultsScreen />;
-  } else if (currentQuestion) {
     // Route intermission questions to IntermissionScreen
     if (currentQuestion.type === QUESTION_TYPES.INTERMISSION) {
-      screenContent = <IntermissionScreen />;
-    } else {
-      screenContent = <QuestionScreen />;
+      return <IntermissionScreen />;
     }
+    return <QuestionScreen />;
   }
 
   return (
     <>
-      {screenContent}
+      {getScreenContent()}
       {features.developer?.calculationDebugger && (
         <CalculationDebugger onConfigChange={setDebugConfig} />
       )}
     </>
   );
-};
+}
 
 export default MoralParliamentQuiz;
