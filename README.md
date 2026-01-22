@@ -137,6 +137,7 @@ quiz-prototype/
 │   │   │   ├── OptionButton.jsx    # Quick selection button
 │   │   │   ├── CredenceSlider.jsx  # Full-size slider for questions
 │   │   │   ├── CompactSlider.jsx   # Compact slider for results
+│   │   │   ├── CompactSelection.jsx # Compact selection buttons for results
 │   │   │   ├── ModeToggle.jsx      # Options/Sliders mode switcher
 │   │   │   ├── CauseBar.jsx        # Horizontal bar chart
 │   │   │   └── EditPanel.jsx       # Collapsible credence editor
@@ -154,7 +155,7 @@ quiz-prototype/
 │   │   └── validateQuestions.js    # Validates questions.json on startup
 │   │
 │   ├── constants/                  # Static configuration
-│   │   └── config.js               # Colors, input modes, UI constants
+│   │   └── config.js               # Colors, input modes, question types
 │   │
 │   └── styles/                     # Styling
 │       ├── variables.css           # CSS custom properties (design system)
@@ -282,9 +283,25 @@ Global utility classes in `src/styles/global.css` provide common patterns like f
 
 ## 🧪 Testing
 
-The dev server runs at `http://localhost:5173/quiz-demo/` with hot module replacement.
+### Automated Tests
+
+```bash
+# Run tests in watch mode
+npm test
+
+# Single test run
+npm run test:run
+```
+
+**Test coverage (26 tests):**
+- `ResultsScreen.test.jsx` - Reset button functionality (5 tests)
+- `CredenceSlider.test.jsx` - Slider lock feature (7 tests)
+- `QuestionScreen.test.jsx` - Question types mode toggle (6 tests)
+- `EditPanel.test.jsx` - Selection vs slider rendering (8 tests)
 
 ### Manual Testing Areas
+The dev server runs at `http://localhost:5173/quiz-demo/` with hot module replacement.
+
 Test the following flows:
 - All user flows (welcome → questions → results)
 - Option selection and slider modes
@@ -334,6 +351,7 @@ Questions are defined in `config/questions.json`. To add a new question:
    ```json
    {
      "id": "newQuestion",
+     "type": "default",            // optional: "default", "selection", or "credence"
      "worldviewDimension": {
        "appliesWhen": "causeFlag",  // or "appliesTo": "points"
        "applyAs": "multiplier",     // or "exponent"
@@ -381,9 +399,9 @@ Questions are defined in `config/questions.json`. To add a new question:
 ### Planned Improvements
 
 - [x] Refine slider recalculation UX during drag operations (completed with ratio preservation and smooth animations)
+- [x] Add component tests with React Testing Library (26 tests across 4 test files)
 - [ ] Add TypeScript for type safety
 - [ ] Add unit tests for calculation functions
-- [ ] Add component tests with React Testing Library
 - [ ] Improve accessibility (ARIA labels, keyboard navigation)
 - [ ] Add error boundaries
 - [ ] Consider state management library if app grows

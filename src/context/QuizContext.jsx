@@ -1,7 +1,13 @@
 import { createContext, useReducer, useMemo, useCallback } from 'react';
 import questionsConfig from '../../config/questions.json';
 import causesConfig from '../../config/causes.json';
-import { OPTION_COLORS, INPUT_MODES } from '../constants/config';
+import features from '../../config/features.json';
+import {
+  OPTION_COLORS,
+  QUESTION_TYPE_COLORS,
+  INPUT_MODES,
+  QUESTION_TYPES,
+} from '../constants/config';
 import {
   calculateMaxEV,
   calculateVarianceVoting,
@@ -12,14 +18,27 @@ import {
 const { questions } = questionsConfig;
 const { causes: CAUSES, defaultCredences } = causesConfig;
 
-// Add color to each option based on index
-const questionsWithColors = questions.map((question) => ({
-  ...question,
-  options: question.options.map((opt, index) => ({
-    ...opt,
-    color: OPTION_COLORS[index] || OPTION_COLORS[0],
-  })),
-}));
+// Get colors for a question based on its type (when feature enabled)
+function getColorsForQuestion(question) {
+  if (features.ui?.questionTypes !== false) {
+    const questionType = question.type || QUESTION_TYPES.DEFAULT;
+    return QUESTION_TYPE_COLORS[questionType] || QUESTION_TYPE_COLORS[QUESTION_TYPES.DEFAULT];
+  }
+  return OPTION_COLORS;
+}
+
+// Add color and normalized type to each question
+const questionsWithColors = questions.map((question) => {
+  const colors = getColorsForQuestion(question);
+  return {
+    ...question,
+    type: question.type || QUESTION_TYPES.DEFAULT,
+    options: question.options.map((opt, index) => ({
+      ...opt,
+      color: colors[index] || colors[0],
+    })),
+  };
+});
 
 // Initial state for each question
 function createQuestionState() {

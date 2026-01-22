@@ -180,6 +180,7 @@ const ResultsScreen = () => {
                   }
                   lockedKey={state.lockedKey}
                   setLockedKey={state.setLockedKey}
+                  questionType={question.type}
                 />
               );
             })}
