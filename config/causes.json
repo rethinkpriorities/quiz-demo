@@ -1,4 +1,5 @@
 {
+  "diminishingReturns": "sqrt",
   "causes": {
     "globalHealth": {
       "name": "Global Health",

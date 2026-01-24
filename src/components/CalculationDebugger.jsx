@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import causesConfig from '../../config/causes.json';
-import { buildDimensionsFromQuestions } from '../utils/calculations.js';
+import { buildDimensionsFromQuestions, DIMINISHING_RETURNS_POWER } from '../utils/calculations.js';
 import styles from '../styles/components/Debugger.module.css';
 
-const { causes: CAUSES } = causesConfig;
+const { causes: CAUSES, diminishingReturns: DEFAULT_DIMINISHING } = causesConfig;
 const DIMENSIONS = buildDimensionsFromQuestions(true);
 
 /**
@@ -17,6 +17,7 @@ const CalculationDebugger = ({ onConfigChange }) => {
   const [formState, setFormState] = useState({
     causes: JSON.parse(JSON.stringify(CAUSES)),
     dimensions: JSON.parse(JSON.stringify(DIMENSIONS)),
+    diminishingReturns: DEFAULT_DIMINISHING || 'sqrt',
   });
 
   const handleCauseChange = (causeKey, field, value) => {
@@ -75,6 +76,30 @@ const CalculationDebugger = ({ onConfigChange }) => {
             </div>
 
             <div className={styles.content}>
+              <section className={styles.section}>
+                <h3>DIMINISHING RETURNS</h3>
+                <div className={styles.fieldRow}>
+                  <label>
+                    Mode:
+                    <select
+                      value={formState.diminishingReturns}
+                      onChange={(e) =>
+                        setFormState((prev) => ({ ...prev, diminishingReturns: e.target.value }))
+                      }
+                    >
+                      {Object.keys(DIMINISHING_RETURNS_POWER).map((mode) => (
+                        <option key={mode} value={mode}>
+                          {mode} (power = {DIMINISHING_RETURNS_POWER[mode]})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <p className={styles.dimInfo}>
+                  none = winner-take-all · sqrt = moderate spreading · extreme = near-equal
+                </p>
+              </section>
+
               <section className={styles.section}>
                 <h3>CAUSES</h3>
 

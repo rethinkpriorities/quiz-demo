@@ -488,6 +488,88 @@ Graceful handling of stale URLs where quiz config has changed. See CLAUDE.md Pla
 
 ---
 
+## Diminishing Returns for Calculations
+**Date:** 2026-01-24
+**Category:** Calculations
+**Config:** `causes.json` → `diminishingReturns`
+**Prototype:** N/A (calculation behavior - no snapshot needed)
+**Dependencies:** None
+
+**Description:**
+Models the economic principle that the first dollar spent on a cause does more good than the hundredth. Without diminishing returns, allocation methods degenerate to winner-take-all. With diminishing returns, allocations spread across causes proportionally.
+
+**Modes:**
+| Mode | Power | Effect |
+|------|-------|--------|
+| `none` | 1.0 | Linear utility, winner-take-all |
+| `sqrt` | 0.5 | Moderate spreading (default) |
+| `extreme` | 0.1 | Near-equal distribution |
+
+**Mathematical Foundation:**
+For power utility `U = Σ(c_i × x_i^p)` where `0 < p < 1`, the analytical solution is:
+```
+x_i = c_i^(1/(1-p)) / Σ(c_j^(1/(1-p))) × Budget
+```
+
+This closed-form solution eliminates the need for numerical optimization (no scipy dependency).
+
+**Example (sqrt mode):**
+```
+Coefficients: [0.8, 0.6, 0.3]
+Budget: 100
+
+Squared: [0.64, 0.36, 0.09]
+Sum: 1.09
+
+Allocations:
+  x₁ = 0.64/1.09 × 100 = 58.7%
+  x₂ = 0.36/1.09 × 100 = 33.0%
+  x₃ = 0.09/1.09 × 100 = 8.3%
+```
+
+**Which Calculations Are Affected:**
+- `calculateMaxEV` - Spreads allocation based on expected values
+- `calculateMergedFavorites` - Each worldview spreads its budget share
+- `calculateVarianceVoting` - NOT affected (voting mechanism, not utility-based)
+- `calculateMaximin` - NOT affected (enumeration-based)
+
+**Implementation:**
+
+1. **Configuration** (`config/causes.json`):
+   - Added `diminishingReturns: "sqrt"` at top level
+   - Default when missing: `"sqrt"`
+
+2. **Calculations** (`src/utils/calculations.js`):
+   - Added `DIMINISHING_RETURNS_POWER` constant mapping modes to power values
+   - Added `getDiminishingReturnsPower(config)` helper
+   - Added `optimalAllocationAnalytical(coefficients, budget, power)` function
+   - Updated `calculateMaxEV` to use analytical allocation
+   - Updated `calculateMergedFavorites` to use analytical allocation per worldview
+
+3. **Debugger** (`src/components/CalculationDebugger.jsx`):
+   - Added dropdown to select diminishing returns mode
+   - Shows power value for each mode
+   - Setting passed through `debugConfig` to calculation functions
+
+**Files Changed:**
+- `config/causes.json` - Added `diminishingReturns` setting
+- `src/utils/calculations.js` - Added analytical allocation, updated MaxEV and MergedFavorites
+- `src/components/CalculationDebugger.jsx` - Added mode selector
+- `src/utils/calculations.test.js` - NEW: 12 tests for diminishing returns
+
+**Additional Fixes During Implementation:**
+
+1. **Dynamic Calculation Display:**
+   - `ResultsScreen.jsx` and `IntermissionScreen.jsx` now dynamically render all enabled calculation methods based on feature flags
+   - Previously hardcoded to only show MaxEV and MergedFavorites
+
+2. **Disabled Question Types:**
+   - Questions can be disabled by prefixing type with `_` (e.g., `"type": "_intermission"`)
+   - Disabled questions are filtered from quiz, progress count, and validation
+   - Useful for temporarily removing questions without deleting them
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.

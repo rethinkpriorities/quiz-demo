@@ -22,10 +22,20 @@ const { causes: CAUSES, defaultCredences } = causesConfig;
 // Feature flag check - used to filter intermission questions
 const isQuestionTypesEnabled = features.ui?.questionTypes !== false;
 
-// Filter out intermission questions when questionTypes is disabled
-const questions = isQuestionTypesEnabled
-  ? rawQuestions
-  : rawQuestions.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
+/**
+ * Check if a question should be included in the quiz.
+ * Excludes: disabled types (starting with _), and intermissions when questionTypes is off.
+ */
+function isValidQuestion(question) {
+  // Skip disabled questions (type starts with underscore)
+  if (question.type?.startsWith('_')) return false;
+  // Skip intermissions when questionTypes is disabled
+  if (!isQuestionTypesEnabled && question.type === QUESTION_TYPES.INTERMISSION) return false;
+  return true;
+}
+
+// Filter out disabled and conditionally excluded questions
+const questions = rawQuestions.filter(isValidQuestion);
 
 /**
  * Check if a question is an intermission type.
@@ -57,7 +67,7 @@ function getColorsForQuestion(question) {
 }
 
 // Get questions that count toward progress (excludes intermissions)
-const progressQuestions = rawQuestions.filter((q) => !isIntermission(q));
+const progressQuestions = questions.filter((q) => !isIntermission(q));
 const totalQuestions = progressQuestions.length;
 
 // Add color and normalized type to each question

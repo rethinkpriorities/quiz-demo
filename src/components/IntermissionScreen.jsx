@@ -24,8 +24,17 @@ function IntermissionScreen() {
 
   if (!currentQuestion) return null;
 
-  const { maxEV, mergedFavorites } = calculationResults;
   const causeEntries = Object.entries(causesConfig);
+
+  // Map feature flags to calculation result keys
+  const CALC_METHODS = [
+    { flag: 'showMaxEV', key: 'maxEV', hasEvs: true },
+    { flag: 'showParliament', key: 'parliament', hasEvs: false },
+    { flag: 'showMergedFavorites', key: 'mergedFavorites', hasEvs: false },
+    { flag: 'showMaximin', key: 'maximin', hasEvs: false },
+  ];
+
+  const enabledMethods = CALC_METHODS.filter((m) => features.calculations?.[m.flag] === true);
 
   return (
     <div className="screen">
@@ -38,21 +47,15 @@ function IntermissionScreen() {
           <p className={styles.body}>{currentQuestion.body}</p>
 
           <div className={resultStyles.resultsGrid}>
-            {features.calculations?.showMaxEV === true && (
+            {enabledMethods.map((method) => (
               <ResultCard
-                methodKey="maxEV"
-                results={maxEV}
-                evs={maxEV.evs}
+                key={method.key}
+                methodKey={method.key}
+                results={calculationResults[method.key]}
+                evs={method.hasEvs ? calculationResults[method.key].evs : null}
                 causeEntries={causeEntries}
               />
-            )}
-            {features.calculations?.showMergedFavorites === true && (
-              <ResultCard
-                methodKey="mergedFavorites"
-                results={mergedFavorites}
-                causeEntries={causeEntries}
-              />
-            )}
+            ))}
           </div>
 
           <div className={styles.buttonRow}>

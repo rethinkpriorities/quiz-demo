@@ -11,9 +11,9 @@
 
   "calculations": {
     "showMaxEV": true,
-    "showParliament": false,
+    "showParliament": true,
     "showMergedFavorites": true,
-    "showMaximin": false,
+    "showMaximin": true,
     "sideBySideComparison": false
   },
 
