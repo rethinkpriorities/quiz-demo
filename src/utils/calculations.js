@@ -34,6 +34,68 @@ import questionsConfig from '../../config/questions.json';
 
 const { causes: CAUSES, defaultCredences: DEFAULT_CREDENCES } = causesConfig;
 
+// =============================================================================
+// DIMINISHING RETURNS CONFIGURATION
+// =============================================================================
+
+const DIMINISHING_RETURNS_POWER = {
+  none: 1.0,
+  sqrt: 0.5,
+  extreme: 0.1,
+};
+
+/**
+ * Get the diminishing returns power from config.
+ * @param {Object} config - Optional config override
+ * @returns {number} Power value (1.0 = none, 0.5 = sqrt, 0.1 = extreme)
+ */
+function getDiminishingReturnsPower(config) {
+  const preset = config?.diminishingReturns || causesConfig.diminishingReturns || 'sqrt';
+  return DIMINISHING_RETURNS_POWER[preset] ?? 0.5;
+}
+
+// =============================================================================
+// ANALYTICAL ALLOCATION (for diminishing returns)
+// =============================================================================
+
+/**
+ * Compute optimal allocation for power utility analytically.
+ *
+ * For utility U = sum(c_i * x_i^p) where 0 < p < 1, the analytical solution is:
+ *   x_i = c_i^(1/(1-p)) / sum(c_j^(1/(1-p))) * Budget
+ *
+ * @param {number[]} coefficients - How much each cause is valued
+ * @param {number} budget - Total budget to allocate (typically 100)
+ * @param {number} power - Exponent for diminishing returns (0.5 = sqrt, 0.1 = extreme, 1.0 = linear)
+ * @returns {number[]} Optimal allocation for each cause
+ */
+export function optimalAllocationAnalytical(coefficients, budget, power = 0.5) {
+  // Linear case (p >= 1): winner-take-all
+  if (power >= 1) {
+    const maxVal = Math.max(...coefficients);
+    if (maxVal <= 0) {
+      return coefficients.map(() => budget / coefficients.length);
+    }
+    // Handle ties: split equally among max causes
+    const maxIndices = coefficients.map((c, i) => (c === maxVal ? i : -1)).filter((i) => i >= 0);
+    return coefficients.map((_, i) => (maxIndices.includes(i) ? budget / maxIndices.length : 0));
+  }
+
+  // Power utility: x_i proportional to c_i^(1/(1-p))
+  const exponent = 1 / (1 - power);
+
+  // Handle zero/negative coefficients (they get zero allocation)
+  const powered = coefficients.map((c) => (c > 0 ? Math.pow(c, exponent) : 0));
+  const total = powered.reduce((a, b) => a + b, 0);
+
+  // Edge case: all coefficients are zero/negative
+  if (total === 0) {
+    return coefficients.map(() => budget / coefficients.length);
+  }
+
+  return powered.map((p) => (p / total) * budget);
+}
+
 /**
  * Build dimensions object from questions config (keyed by question ID).
  * Excludes intermission questions which don't have worldviewDimension.
@@ -161,7 +223,9 @@ function initCauseValues(causes) {
 
 /**
  * Calculate max expected value allocation across all causes.
- * Determines which cause has highest EV and allocates 100% to it.
+ *
+ * Without diminishing returns: Allocates 100% to the cause with highest EV.
+ * With diminishing returns: Spreads allocation analytically based on EVs.
  *
  * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
@@ -170,6 +234,8 @@ function initCauseValues(causes) {
 export function calculateMaxEV(credences, config) {
   const causes = config?.causes || CAUSES;
   const dimensions = config?.dimensions || DIMENSIONS;
+  const power = getDiminishingReturnsPower(config);
+  const causeKeys = Object.keys(causes);
   const causeEVs = initCauseValues(causes);
 
   // Calculate expected value for each cause across all worldview combinations
@@ -180,14 +246,17 @@ export function calculateMaxEV(credences, config) {
     }
   }
 
-  // Find cause with maximum EV
-  const maxEVCause = Object.keys(causeEVs).reduce((a, b) => (causeEVs[a] > causeEVs[b] ? a : b));
+  // Convert EVs to coefficient array (preserving cause order)
+  const coefficients = causeKeys.map((key) => causeEVs[key]);
 
-  // Build result object dynamically
+  // Calculate optimal allocation using analytical solution
+  const allocationArray = optimalAllocationAnalytical(coefficients, 100, power);
+
+  // Build result object
   const result = { evs: causeEVs };
-  for (const causeKey of Object.keys(causes)) {
-    result[causeKey] = causeKey === maxEVCause ? 100 : 0;
-  }
+  causeKeys.forEach((key, i) => {
+    result[key] = allocationArray[i];
+  });
 
   return result;
 }
@@ -228,7 +297,9 @@ export function calculateVarianceVoting(credences, config) {
 
 /**
  * Calculate merged favorites allocation.
- * Each worldview allocates its probability share to its favorite cause.
+ *
+ * Without diminishing returns: Each worldview allocates 100% to its favorite cause.
+ * With diminishing returns: Each worldview spreads its share analytically.
  *
  * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
@@ -237,18 +308,27 @@ export function calculateVarianceVoting(credences, config) {
 export function calculateMergedFavorites(credences, config) {
   const causes = config?.causes || CAUSES;
   const dimensions = config?.dimensions || DIMENSIONS;
+  const power = getDiminishingReturnsPower(config);
+  const causeKeys = Object.keys(causes);
   const allocation = initCauseValues(causes);
 
   // Each worldview combination allocates its share
   for (const { options, probability } of generateWorldviews(credences)) {
     const values = calculateAllCauseValues(options, causes, dimensions);
-    const favoriteCauses = findMaxCauses(values);
 
-    // Allocate worldview's share equally among favorites
-    const allocPerCause = (probability * 100) / favoriteCauses.length;
-    for (const causeKey of favoriteCauses) {
-      allocation[causeKey] += allocPerCause;
-    }
+    // This worldview's budget share (as percentage points)
+    const share = probability * 100;
+
+    // Convert values to coefficient array
+    const coefficients = causeKeys.map((key) => values[key]);
+
+    // Calculate optimal allocation for this worldview's share
+    const worldviewAllocation = optimalAllocationAnalytical(coefficients, share, power);
+
+    // Add to merged allocation
+    causeKeys.forEach((key, i) => {
+      allocation[key] += worldviewAllocation[i];
+    });
   }
 
   return allocation;
@@ -468,4 +548,4 @@ export function roundCredences(credences) {
 }
 
 // Export config for use by other modules
-export { CAUSES, DIMENSIONS, DEFAULT_CREDENCES };
+export { CAUSES, DIMENSIONS, DEFAULT_CREDENCES, DIMINISHING_RETURNS_POWER };

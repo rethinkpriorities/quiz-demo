@@ -2,7 +2,6 @@
   "questions": [
     {
       "id": "animal",
-      "type": "selection",
       "worldviewDimension": {
         "appliesWhen": "helpsAnimals",
         "applyAs": "multiplier",
@@ -41,7 +40,6 @@
     },
     {
       "id": "future",
-      "type": "credence",
       "worldviewDimension": {
         "appliesWhen": "helpsFutureHumans",
         "applyAs": "multiplier",

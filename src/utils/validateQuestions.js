@@ -133,6 +133,11 @@ export function validateQuestionsConfig(questionsConfig, causesConfig) {
     questionsConfig.questions.forEach((question, qIndex) => {
       const qPrefix = `Question[${qIndex}]`;
 
+      // Skip validation for disabled questions (type starts with underscore)
+      if (question.type?.startsWith('_')) {
+        return;
+      }
+
       // Skip validation for intermission questions - they have a different structure
       if (question.type === 'intermission') {
         // Only validate required intermission fields

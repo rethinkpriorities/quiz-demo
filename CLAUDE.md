@@ -52,12 +52,14 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
 | Share Results | `ui.shareResults` | Share quiz results via URL. Copies link to clipboard; opening link restores credences and shows results. |
+| Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
 - **Questions**: `config/questions.json` with `worldviewDimension` for calculations
-- **Causes**: `config/causes.json` with points, colors, boolean flags
+- **Causes**: `config/causes.json` with points, colors, boolean flags, and `diminishingReturns` setting
 - **Validation**: Runs on dev startup (`validateCauses.js`, `validateQuestions.js`)
+- **Disabling questions**: Prefix any question type with `_` (e.g., `"type": "_intermission"`) to exclude it from the quiz
 
 ### Question Types System
 When `ui.questionTypes` is enabled, questions can have different presentation modes:
@@ -359,7 +361,7 @@ Show an "Explain Results" button that generates a personalized explanation of wh
 |------|---------|
 | `config/features.json` | Feature flags |
 | `config/questions.json` | Question definitions + worldview dimensions |
-| `config/causes.json` | Cause definitions (points, colors, flags) |
+| `config/causes.json` | Cause definitions (points, colors, flags) + `diminishingReturns` setting |
 | `src/context/QuizContext.jsx` | React Context state management |
 | `src/utils/calculations.js` | Calculation functions |
 | `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |

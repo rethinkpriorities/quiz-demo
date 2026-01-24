@@ -12,9 +12,9 @@ Uncertain about your ethical views? This quiz helps you navigate moral uncertain
 
 - Asking about your credences (confidence levels) on key ethical questions
 - Calculating optimal resource allocation using four methods:
-  - **Max Expected Value**: 100% to the cause with highest expected value
+  - **Max Expected Value**: Allocate based on expected values (with diminishing returns, spreads across causes)
   - **Variance Voting**: Weighted votes from different worldviews (moral parliament approach)
-  - **Merged Favorites**: Each worldview allocates its budget share to its favorite cause
+  - **Merged Favorites**: Each worldview allocates its budget share (with diminishing returns, spreads within each)
   - **Maximin**: Maximizes the minimum utility any worldview receives (egalitarian approach)
 - Allowing real-time adjustment and exploration of how different credences affect allocations
 
@@ -197,8 +197,17 @@ quiz-demo/
 
 With 4 questions and 3 options each, there are 81 possible worldview combinations (3^4).
 
+#### Diminishing Returns
+
+By default, the quiz uses **diminishing returns** (sqrt mode) which models that the first dollar spent on a cause does more good than the hundredth. This causes allocations to spread across causes rather than going 100% to a single winner.
+
+Configure in `config/causes.json`:
+- `"none"` - Linear utility, winner-take-all
+- `"sqrt"` - Moderate spreading (default)
+- `"extreme"` - Near-equal distribution
+
 #### 1. Max Expected Value (MaxEV)
-Calculates the expected value for each cause across all 81 worldview combinations, then allocates 100% to the cause with the highest expected value.
+Calculates the expected value for each cause across all 81 worldview combinations. With diminishing returns, allocations spread proportionally to squared EVs. Without diminishing returns, allocates 100% to the cause with highest EV.
 
 For each cause:
 ```
@@ -223,13 +232,13 @@ For each worldview (81 total):
 Final percentages represent the proportion of votes each cause received.
 
 #### 3. Merged Favorites
-Each worldview allocates its probability share of the budget to its favorite cause(s). Similar to variance voting but uses budget shares instead of votes.
+Each worldview allocates its probability share of the budget. With diminishing returns, each worldview spreads its share across causes proportionally. Without diminishing returns, each worldview allocates entirely to its favorite.
 
 ```
 For each worldview:
   - Worldview gets (probability × 100) percent of budget
-  - Allocate entirely to favorite cause(s)
-  - If tied, split allocation equally
+  - With diminishing returns: spread across causes analytically
+  - Without: allocate entirely to favorite cause(s)
 ```
 
 #### 4. Maximin
@@ -309,7 +318,8 @@ npm test
 npm run test:run
 ```
 
-**Test coverage (34 tests across 5 files):**
+**Test coverage (46 tests across 6 files):**
+- `calculations.test.js` - Diminishing returns and analytical allocation (12 tests)
 - `ResultsScreen.test.jsx` - Reset button functionality (5 tests)
 - `CredenceSlider.test.jsx` - Slider lock feature (7 tests)
 - `QuestionScreen.test.jsx` - Question types mode toggle (6 tests)
@@ -416,9 +426,9 @@ Questions are defined in `config/questions.json`. To add a new question:
 ### Planned Improvements
 
 - [x] Refine slider recalculation UX during drag operations (completed with ratio preservation and smooth animations)
-- [x] Add component tests with React Testing Library (34 tests across 5 test files)
+- [x] Add component tests with React Testing Library (46 tests across 6 test files)
 - [ ] Add TypeScript for type safety
-- [ ] Add unit tests for calculation functions
+- [x] Add unit tests for calculation functions (diminishing returns)
 - [ ] Improve accessibility (ARIA labels, keyboard navigation)
 - [ ] Add error boundaries
 - [ ] Consider state management library if app grows

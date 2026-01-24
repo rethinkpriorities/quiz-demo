@@ -30,8 +30,17 @@ function ResultsScreen() {
 
   const [copied, setCopied] = useState(false);
 
-  const { maxEV, mergedFavorites } = calculationResults;
   const causeEntries = Object.entries(causesConfig);
+
+  // Map feature flags to calculation result keys
+  const CALC_METHODS = [
+    { flag: 'showMaxEV', key: 'maxEV', hasEvs: true },
+    { flag: 'showParliament', key: 'parliament', hasEvs: false },
+    { flag: 'showMergedFavorites', key: 'mergedFavorites', hasEvs: false },
+    { flag: 'showMaximin', key: 'maximin', hasEvs: false },
+  ];
+
+  const enabledMethods = CALC_METHODS.filter((m) => features.calculations?.[m.flag] === true);
 
   const handleResetClick = () => {
     if (window.confirm(copy.results.resetConfirmation)) {
@@ -80,49 +89,42 @@ function ResultsScreen() {
   // Filter out intermission questions for edit panels
   const editableQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
 
-  const renderCompactResultsGrid = (results) => (
+  const renderCompactResultsGrid = (resultsObj) => (
     <div className={`${styles.resultsGrid} ${styles.compactGrid}`}>
-      {features.calculations?.showMaxEV === true && (
-        <ResultCard
-          methodKey="maxEV"
-          results={results.maxEV}
-          evs={results.maxEV.evs}
-          causeEntries={causeEntries}
-          simpleMode={true}
-        />
-      )}
-      {features.calculations?.showMergedFavorites === true && (
-        <ResultCard
-          methodKey="mergedFavorites"
-          results={results.mergedFavorites}
-          causeEntries={causeEntries}
-          simpleMode={true}
-        />
-      )}
+      {enabledMethods.map((method) => {
+        const results = resultsObj?.[method.key];
+        if (!results) return null;
+        return (
+          <ResultCard
+            key={method.key}
+            methodKey={method.key}
+            results={results}
+            evs={method.hasEvs ? results.evs : null}
+            causeEntries={causeEntries}
+            simpleMode={true}
+          />
+        );
+      })}
     </div>
   );
 
   const renderStandardResultsGrid = () => (
     <div className={styles.resultsGrid}>
-      {features.calculations?.showMaxEV === true && (
-        <ResultCard
-          methodKey="maxEV"
-          results={maxEV}
-          evs={maxEV.evs}
-          originalResults={originalCalculationResults?.maxEV}
-          causeEntries={causeEntries}
-          hasChanged={hasChanged}
-        />
-      )}
-      {features.calculations?.showMergedFavorites === true && (
-        <ResultCard
-          methodKey="mergedFavorites"
-          results={mergedFavorites}
-          originalResults={originalCalculationResults?.mergedFavorites}
-          causeEntries={causeEntries}
-          hasChanged={hasChanged}
-        />
-      )}
+      {enabledMethods.map((method) => {
+        const results = calculationResults?.[method.key];
+        if (!results) return null;
+        return (
+          <ResultCard
+            key={method.key}
+            methodKey={method.key}
+            results={results}
+            evs={method.hasEvs ? results.evs : null}
+            originalResults={originalCalculationResults?.[method.key]}
+            causeEntries={causeEntries}
+            hasChanged={hasChanged}
+          />
+        );
+      })}
     </div>
   );
 
