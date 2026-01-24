@@ -14,7 +14,7 @@
     "showParliament": true,
     "showMergedFavorites": true,
     "showMaximin": true,
-    "sideBySideComparison": false
+    "sideBySideComparison": true
   },
 
   "developer": {

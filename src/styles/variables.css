@@ -1,9 +1,18 @@
 :root {
   /* ===== COLOR PALETTE ===== */
 
-  /* Primary Colors */
+  /* RP Brand Colors */
+  --color-teal-dark: #0c435f;
+  --color-teal: #1e7d95;
+  --color-teal-light: #2a9ab5;
+
+  /* Accent Colors - comparing options */
+  --color-accent: #1e7d95;
+  --color-accent-light: #2a9ab5;
   --color-coral: #e07a5f;
   --color-coral-dark: #c65d43;
+
+  /* Legacy colors (keeping for cause bars) */
   --color-green: #81b29a;
   --color-blue: #98c1d9;
   --color-yellow: #f2cc8f;
@@ -19,13 +28,13 @@
   --color-gcr: #3d5a80;
 
   /* Text Colors */
-  --text-primary: #f4f4f4;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --text-tertiary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.6);
-  --text-gray: #6b7280;
-  --text-gray-light: #9ca3af;
-  --text-gray-medium: #e5e7eb;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --text-gray: #a1a1aa;
+  --text-gray-light: #d4d4d8;
+  --text-gray-medium: #f4f4f5;
   --text-white: #ffffff;
 
   /* Status Colors */
@@ -34,21 +43,21 @@
   --color-warning: #fdba74;
 
   /* Background Colors */
-  --bg-dark: #1e293b;
-  --bg-slate: rgb(51, 65, 85);
+  --bg-dark: #0c435f;
+  --bg-slate: #1e7d95;
 
   /* Background Overlays */
-  --overlay-subtle: rgba(255, 255, 255, 0.03);
-  --overlay-light: rgba(255, 255, 255, 0.05);
-  --overlay-medium: rgba(30, 41, 59, 0.6);
-  --overlay-dark: rgba(30, 41, 59, 0.4);
-  --overlay-dark-alt: rgba(30, 41, 59, 0.5);
-  --overlay-panel: rgba(6, 78, 59, 0.3);
+  --overlay-subtle: rgba(255, 255, 255, 0.08);
+  --overlay-light: rgba(255, 255, 255, 0.12);
+  --overlay-medium: rgba(0, 0, 0, 0.2);
+  --overlay-dark: rgba(0, 0, 0, 0.25);
+  --overlay-dark-alt: rgba(0, 0, 0, 0.2);
+  --overlay-panel: rgba(255, 255, 255, 0.08);
 
   /* Border Colors */
-  --border-subtle: rgba(255, 255, 255, 0.1);
-  --border-medium: rgba(71, 85, 105, 0.5);
-  --border-bright: rgba(255, 255, 255, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.25);
+  --border-medium: rgba(255, 255, 255, 0.3);
+  --border-bright: rgba(255, 255, 255, 0.5);
   --border-success: rgba(16, 185, 129, 0.4);
   --border-orange: rgba(249, 115, 22, 0.4);
 
@@ -57,19 +66,21 @@
   --badge-orange-bg: rgba(249, 115, 22, 0.2);
   --badge-green: rgba(129, 178, 154, 0.1);
   --badge-green-2: rgba(129, 178, 154, 0.2);
+  --badge-teal: rgba(30, 125, 149, 0.3);
 
   /* Gradients */
-  --gradient-bg: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  --gradient-primary: linear-gradient(90deg, #e07a5f, #81b29a);
-  --gradient-button: linear-gradient(135deg, #e07a5f 0%, #c65d43 100%);
+  --gradient-bg: linear-gradient(145deg, #0c435f 0%, #155a75 50%, #1e7d95 100%);
+  --gradient-primary: linear-gradient(90deg, #2a9ab5, #5fbcd3);
+  --gradient-button: linear-gradient(135deg, #1e7d95 0%, #2a9ab5 100%);
   --gradient-orange: linear-gradient(135deg, #f97316, #ea580c);
   --gradient-green: linear-gradient(135deg, #10b981, #059669);
 
   /* ===== TYPOGRAPHY ===== */
 
   /* Font Families */
-  --font-heading: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Source Sans Pro', sans-serif;
+  --font-heading: 'Raleway', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Raleway', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-script: 'Cormorant Garamond', Georgia, serif;
 
   /* Font Sizes */
   --text-xs: 0.7rem; /* 11.2px */

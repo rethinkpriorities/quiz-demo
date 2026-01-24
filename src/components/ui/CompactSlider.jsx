@@ -37,8 +37,8 @@ function CompactSlider({
   };
 
   const sliderBackground = hasLockedSibling
-    ? `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) ${thumbOffset}, rgb(30,41,59) ${thumbOffset}, rgb(30,41,59) 100%)`
-    : `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgb(51,65,85) ${value}%, rgb(51,65,85) 100%)`;
+    ? `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgba(255,255,255,0.15) ${value}%, rgba(255,255,255,0.15) ${thumbOffset}, rgba(255,255,255,0.08) ${thumbOffset}, rgba(255,255,255,0.08) 100%)`
+    : `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgba(255,255,255,0.15) ${value}%, rgba(255,255,255,0.15) 100%)`;
 
   return (
     <div className={styles.compactSlider}>

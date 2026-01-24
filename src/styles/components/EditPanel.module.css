@@ -1,16 +1,16 @@
 /* Edit Panel Component Styles */
 
 .editPanel {
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-medium);
-  background: var(--overlay-dark-alt);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
   transition: var(--transition-fast);
 }
 
 .editPanel.expanded {
-  border: 1px solid var(--border-success);
-  background: var(--overlay-panel);
+  border: 2px solid var(--border-bright);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .toggleButton {
@@ -27,7 +27,7 @@
 }
 
 .toggleButton:hover {
-  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .buttonContent {
@@ -65,7 +65,7 @@
 
 .content {
   padding: var(--spacing-4) var(--spacing-6) var(--spacing-6);
-  border-top: 1px solid var(--border-medium);
+  border-top: 2px solid var(--border-subtle);
 }
 
 .footer {

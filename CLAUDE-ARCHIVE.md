@@ -570,6 +570,81 @@ Allocations:
 
 ---
 
+## Appearance Revamp (Donor Compass Branding)
+**Date:** 2026-01-24
+**Category:** UI/Branding
+**Flag:** N/A (core styling change)
+**Prototype:** N/A (visual update)
+**Dependencies:** None
+
+**Description:**
+Complete visual overhaul to align with Rethink Priorities branding. Renamed quiz to "Donor Compass" and updated typography, colors, backgrounds, and component styling.
+
+**Branding Changes:**
+- **Name**: Quiz renamed to "Donor Compass"
+- **Header**: RP logo + "Donor Compass" text in bold Raleway
+- **Background**: Teal gradient image (`bg-dark.png`) with brighter spots instead of smooth dark gradient
+- **Primary Font**: Raleway (replaces Cormorant Garamond + Source Sans Pro)
+- **Accent Font**: Cormorant Garamond italic retained for "Giving Go?" emphasis
+
+**Color Palette Updates:**
+- Background gradient: `#0C435F` → `#1E7D95` (dark teal to bright teal)
+- Primary button: White background with dark teal uppercase text
+- Button hover: Bright cyan (`#5fbcd3`) background with white text
+- Secondary buttons: Transparent with white border, hover fills with white overlay
+- Borders: Brightened to `0.25/0.3/0.5` opacity for better contrast against bright background
+- Text: Brightened secondary/muted text for readability
+
+**Button Styling:**
+- Primary (CTA): White background, dark teal text, uppercase, bold
+- Secondary: Transparent, white border, uppercase, bold
+- Hover effects: Background fill, border brighten, subtle lift (`translateY(-2px)`)
+- Consistent `gap` for icon + text alignment
+
+**Component Updates:**
+1. **Cards**: 2px borders, `rgba(255,255,255,0.08)` subtle background
+2. **Option Buttons**: Fixed layout shift bug (border was changing 1px→2px on select)
+3. **Results Cards**: Matched question card styling
+4. **Edit Panels**: Subtle white overlay backgrounds
+5. **Cause Bars**: Light track background (`rgba(255,255,255,0.1)`)
+6. **Sliders**: Updated CompactSlider to use light rgba backgrounds (was hardcoded dark)
+7. **Mode Toggle**: Updated active state to teal accent
+
+**Header Changes:**
+- Added RP logo (`NewLogoSVG.svg`) to header
+- Added "Donor Compass" title in bold Raleway
+- Header now appears on Results screen
+- Progress bar visible on Results screen (acts as horizontal rule)
+
+**Bug Fixes:**
+- Fixed option button layout shift when selecting (consistent 2px border)
+- Fixed "Giving Go?" text clipping (increased line-height to `--leading-snug`)
+- Fixed share button icon spacing (added flex gap to `.btn` class)
+
+**Files Changed:**
+- `src/styles/variables.css` - New color palette, Raleway font, teal gradients
+- `src/styles/global.css` - Raleway import, button styles, header styles
+- `src/styles/components/WelcomeScreen.module.css` - Heading line-height fix
+- `src/styles/components/OptionButton.module.css` - 2px border fix, hover styles
+- `src/styles/components/Results.module.css` - Card styling, removed duplicate button styles
+- `src/styles/components/EditPanel.module.css` - Light overlay backgrounds
+- `src/styles/components/CauseBar.module.css` - Light track background
+- `src/styles/components/ModeToggle.module.css` - Teal active state
+- `src/styles/components/Slider.module.css` - (no changes, inline styles in component)
+- `src/components/layout/Header.jsx` - Added logo and "Donor Compass" title
+- `src/components/ui/CompactSlider.jsx` - Light rgba slider backgrounds
+- `src/components/ResultsScreen.jsx` - Added Header and ProgressBar
+- `public/NewLogoSVG.svg` - RP logo asset
+- `public/NewLogoPNG.png` - RP logo asset (alternate)
+- `public/bg-dark.png` - Teal gradient background image
+
+**Assets Added:**
+- `public/NewLogoSVG.svg` - White RP wordmark logo
+- `public/NewLogoPNG.png` - White RP wordmark logo (PNG)
+- `public/bg-dark.png` - Teal gradient background with bright spots
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.

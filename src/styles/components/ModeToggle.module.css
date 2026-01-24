@@ -39,7 +39,7 @@
 }
 
 .button.sliders.active {
-  border: 1px solid var(--color-coral);
-  background: rgba(224, 122, 95, 0.2);
-  color: var(--color-coral);
+  border: 1px solid var(--color-teal-light);
+  background: rgba(42, 154, 181, 0.2);
+  color: var(--color-teal-light);
 }

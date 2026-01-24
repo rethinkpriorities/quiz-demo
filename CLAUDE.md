@@ -53,6 +53,7 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
 | Share Results | `ui.shareResults` | Share quiz results via URL. Copies link to clipboard; opening link restores credences and shows results. |
 | Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
+| Donor Compass Branding | N/A | Visual revamp: Raleway font, teal gradient background, RP logo, white CTA buttons, consistent card styling. |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
