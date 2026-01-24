@@ -4,7 +4,7 @@
 
   "ui": {
     "resetButton": false,
-    "sliderLock": false,
+    "sliderLock": true,
     "questionTypes": true,
     "shareResults": true
   },

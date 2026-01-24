@@ -1,4 +1,4 @@
-# Moral Parliament Quiz
+# Donor Compass (Moral Parliament Quiz)
 
 An interactive tool to help you allocate resources across different causes based on your moral credences—the probabilities you assign to different ethical perspectives.
 
@@ -8,7 +8,7 @@ An interactive tool to help you allocate resources across different causes based
 
 ## 📖 Overview
 
-Uncertain about your ethical views? This quiz helps you navigate moral uncertainty by:
+**Donor Compass** is a Rethink Priorities tool that helps you navigate moral uncertainty by:
 
 - Asking about your credences (confidence levels) on key ethical questions
 - Calculating optimal resource allocation using four methods:
@@ -287,20 +287,21 @@ See `src/utils/calculations.js` for implementation details (`adjustCredences()` 
 - **Husky + lint-staged** - Pre-commit hooks for code quality
 
 ### Fonts
-- **Cormorant Garamond** - Headings (elegant serif)
-- **Source Sans Pro** - Body text (clean sans-serif)
+- **Raleway** - Primary font for headings and body text (Rethink Priorities brand)
+- **Cormorant Garamond** - Decorative italic for emphasis text ("Giving Go?")
 
 ---
 
 ## 🎨 Design System
 
-The app uses a comprehensive design system defined in `src/styles/variables.css`:
+The app uses Rethink Priorities branding with a comprehensive design system defined in `src/styles/variables.css`:
 
-- **Colors**: 40+ semantic color variables
-- **Typography**: Font families, 13 size scales, 5 weights
+- **Colors**: Teal gradient palette (`#0C435F` → `#1E7D95`), white CTAs, 40+ semantic variables
+- **Typography**: Raleway (primary), Cormorant Garamond (decorative), 13 size scales, 5 weights
 - **Spacing**: 13-level spacing scale (0 to 4rem)
 - **Border Radius**: 7 variants (4px to full circle)
 - **Transitions**: Smooth animations throughout
+- **Background**: Teal gradient image with varied bright spots (`bg-dark.png`)
 
 Global utility classes in `src/styles/global.css` provide common patterns like flex layouts, button styles, and card containers.
 

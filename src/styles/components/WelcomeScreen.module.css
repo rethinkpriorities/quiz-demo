@@ -7,18 +7,23 @@
 
 .heading {
   font-size: var(--text-hero);
-  font-weight: var(--font-light);
-  line-height: var(--leading-tight);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-snug);
   margin-bottom: var(--spacing-16);
   letter-spacing: var(--tracking-tight);
+  overflow: visible;
 }
 
 .headingEmphasis {
+  font-family: var(--font-script);
   font-style: italic;
+  font-weight: var(--font-normal);
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  display: inline-block;
+  padding-right: 0.1em; /* Prevent clipping on italic text */
 }
 
 .intro {

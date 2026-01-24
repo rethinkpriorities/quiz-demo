@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { RotateCcw, Share2, Check } from 'lucide-react';
+import Header from './layout/Header';
+import ProgressBar from './layout/ProgressBar';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import { useQuiz } from '../context/useQuiz';
@@ -130,8 +132,10 @@ function ResultsScreen() {
 
   return (
     <div className={styles.resultsContainer}>
+      <Header />
+      <ProgressBar percentage={100} />
       <div className={styles.inner}>
-        <div className={styles.header}>
+        <div className={styles.resultsHeader}>
           <h1 className={styles.title}>
             {copy.results.heading}
             {hasChanged && (
@@ -193,20 +197,23 @@ function ResultsScreen() {
         </div>
 
         <div className={styles.backButtonContainer}>
-          <button onClick={goBack} className={styles.backButton}>
+          <button onClick={goBack} className="btn btn-secondary">
             {copy.navigation.backToQuiz}
           </button>
           {features.ui?.shareResults && (
             <button
               onClick={handleShareClick}
-              className={`${styles.shareButton} ${copied ? styles.copied : ''}`}
+              className={`btn btn-secondary ${copied ? styles.copied : ''}`}
             >
               {copied ? <Check size={16} /> : <Share2 size={16} />}
               {copied ? copy.results.shareCopied : copy.results.shareButton}
             </button>
           )}
           {features.ui?.resetButton && (
-            <button onClick={handleResetClick} className={styles.resetButton}>
+            <button
+              onClick={handleResetClick}
+              className={`btn btn-secondary ${styles.resetDanger}`}
+            >
               {copy.navigation.startOver}
             </button>
           )}
