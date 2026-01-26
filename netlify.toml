@@ -5,6 +5,12 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Redirect old /quiz-demo/ paths (prototypes were built with old base)
+[[redirects]]
+  from = "/quiz-demo/*"
+  to = "/:splat"
+  status = 200
+
 # Serve prototypes as static files (not SPA)
 [[redirects]]
   from = "/prototypes/*"
