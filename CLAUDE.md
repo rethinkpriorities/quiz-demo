@@ -21,6 +21,47 @@ All visual/UX design decisions are handled by the UX team, not implementation. M
 
 ---
 
+## Hosting & Backend
+
+### Hosting
+Deployed on **Netlify** (migrated from GitHub Pages). Config in `netlify.toml`.
+
+### Database (Turso)
+SQLite database hosted on Turso for share URL persistence.
+
+| Environment | Database | Config |
+|-------------|----------|--------|
+| Local dev | `dev.db` (SQLite file) | `.env` → `file:dev.db` |
+| Production | Turso cloud | Netlify env vars |
+
+**Local setup:**
+```bash
+python3 scripts/init-dev-db.py   # Create local dev.db with schema
+netlify dev                       # Run frontend + functions locally
+```
+
+**Credentials:**
+- Production credentials stored in 1Password and Netlify dashboard
+- Local `.env` file (gitignored) points to local SQLite
+
+### Serverless Functions
+Python functions in `netlify/functions/`. Currently:
+- `share.py` - Create/retrieve share URLs (`POST/GET /api/share`)
+
+### Database Migrations
+Migrations are idempotent SQL files in `migrations/`. Uses `CREATE TABLE IF NOT EXISTS` pattern.
+
+**Workflow:**
+1. Write migration in `migrations/NNN_description.sql`
+2. Test locally: `sqlite3 dev.db < migrations/NNN_description.sql`
+3. Commit and deploy
+4. Run on prod: `turso db shell donor-compass < migrations/NNN_description.sql`
+
+**Current migrations:**
+- `001_initial_schema.sql` - Creates `shares` table
+
+---
+
 ## Feature Flag System
 
 **File:** `config/features.json`
@@ -438,5 +479,9 @@ When user has existing session AND opens a share URL:
 | `src/context/QuizContext.jsx` | React Context state management |
 | `src/utils/calculations.js` | Calculation functions |
 | `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |
+| `netlify.toml` | Netlify deployment config (build, redirects, functions) |
+| `netlify/functions/share.py` | Share URL serverless function |
+| `migrations/` | Database migrations (idempotent SQL) |
 | `scripts/snapshot.sh` | Prototype builder |
+| `scripts/init-dev-db.py` | Initialize local dev database |
 | `CLAUDE-ARCHIVE.md` | Detailed implementation notes for completed features |

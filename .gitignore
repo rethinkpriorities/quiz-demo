@@ -28,3 +28,15 @@ dist-ssr
 
 # Netlify
 .netlify/
+
+# Environment variables
+.env
+
+# Local dev database
+dev.db
+
+# Python cache
+__pycache__/
+
+# Netlify dev artifacts
+deno.lock

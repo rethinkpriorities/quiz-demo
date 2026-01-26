@@ -55,8 +55,24 @@ npm install
 # Start dev server (with hot module replacement)
 npm run dev
 
-# Open http://localhost:5173/quiz-demo/ in your browser
+# Open http://localhost:5173/ in your browser
 ```
+
+### Backend Development
+
+The app uses Netlify serverless functions and a Turso (SQLite) database for share URLs.
+
+```bash
+# Initialize local dev database (first time only)
+python3 scripts/init-dev-db.py
+
+# Run full stack locally (frontend + serverless functions)
+netlify dev
+
+# Open http://localhost:8888/ in your browser
+```
+
+Local development uses a SQLite file (`dev.db`) instead of the production Turso database. The `.env` file (gitignored) configures this automatically.
 
 ### Code Quality
 
@@ -75,6 +91,20 @@ npm run format:check
 ```
 
 Pre-commit hooks automatically run linting and formatting on staged files.
+
+### Database Migrations
+
+Database schema changes use idempotent SQL files in `migrations/`:
+
+```bash
+# Run migration locally
+sqlite3 dev.db < migrations/001_initial_schema.sql
+
+# Run migration on production (after deploy)
+turso db shell donor-compass < migrations/001_initial_schema.sql
+```
+
+Migrations use `CREATE TABLE IF NOT EXISTS` so they can be safely re-run.
 
 ### Production Build
 
@@ -99,9 +129,7 @@ git add prototypes/ && git commit -m "Add prototype a"
 git push && git push --tags
 ```
 
-View prototypes:
-- **Latest**: https://rethinkpriorities.github.io/quiz-demo/
-- **All prototypes**: https://rethinkpriorities.github.io/quiz-demo/prototypes/
+View prototypes at `/prototypes/` on the deployed site.
 
 To modify a previous prototype:
 ```bash
@@ -178,12 +206,23 @@ quiz-demo/
 │           └── WelcomeScreen.module.css
 │
 ├── index.html                      # HTML entry point
-├── vite.config.js                  # Vite configuration (base: /quiz-demo/)
+├── vite.config.js                  # Vite configuration
 ├── vitest.config.js                # Test configuration
+├── netlify.toml                    # Netlify deployment config
 ├── package.json                    # Dependencies and scripts
+│
+├── netlify/functions/              # Serverless backend
+│   ├── share.py                    # Share URL API (create/retrieve)
+│   └── requirements.txt            # Python dependencies
+│
+├── migrations/                     # Database migrations (idempotent SQL)
+│   └── 001_initial_schema.sql      # Creates shares table
+│
 ├── scripts/
 │   ├── snapshot.sh                 # Prototype snapshot script
+│   ├── init-dev-db.py              # Initialize local dev database
 │   └── validate-config.js          # Config validation for CI
+│
 ├── prototypes/                     # Committed prototype builds
 │   └── index.html                  # Prototype listing page
 └── CLAUDE.md                       # Development guide and feature tracking
@@ -279,6 +318,9 @@ See `src/utils/calculations.js` for implementation details (`adjustCredences()` 
 
 - **React 18.3.1** - UI framework
 - **Vite 6.0.5** - Build tool and dev server
+- **Netlify** - Hosting and serverless functions
+- **Turso** - SQLite database (libSQL)
+- **Python** - Serverless function runtime
 - **lucide-react 0.462.0** - Icons
 - **CSS Modules** - Component-scoped styling
 - **CSS Custom Properties** - Design system (colors, spacing, typography)
@@ -328,7 +370,7 @@ npm run test:run
 - `QuizContext.intermission.test.jsx` - Intermission progress/feature flag (8 tests)
 
 ### Manual Testing Areas
-The dev server runs at `http://localhost:5173/quiz-demo/` with hot module replacement.
+The dev server runs at `http://localhost:5173/` with hot module replacement (or `http://localhost:8888/` with `netlify dev` for full stack).
 
 Test the following flows:
 - All user flows (welcome → questions → results)
