@@ -9,7 +9,7 @@ Production-ready. Refactored from single 816-line file to 25-file modular archit
 ## Development Notes
 
 ### Dev Server URL
-The app is served at `http://localhost:5173/quiz-demo/` (not the root). Configured via `base: '/quiz-demo/'` in `vite.config.js`.
+The app is served at `http://localhost:5173/` (root path). Configured via `base: '/'` in `vite.config.js`.
 
 ### Testing
 - `npm test` - run tests in watch mode
