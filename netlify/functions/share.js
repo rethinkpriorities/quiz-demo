@@ -73,16 +73,26 @@ export async function handler(event) {
 
 async function createShare(event, db) {
   const body = JSON.parse(event.body || '{}');
-  const { questions, credences, sessionId, quizVersion } = body;
+  const { worldviews, activeWorldviewId, questions, credences, sessionId, quizVersion } = body;
 
-  // Support both new format (questions with full state) and legacy format (credences only)
-  const dataToStore = questions || credences;
+  // Support worldviews format, questions format, and legacy credences format
+  let dataToStore;
+  if (worldviews && activeWorldviewId) {
+    // New worldviews format
+    dataToStore = { worldviews, activeWorldviewId };
+  } else if (questions) {
+    // Questions format (legacy)
+    dataToStore = questions;
+  } else if (credences) {
+    // Credences-only format (legacy)
+    dataToStore = credences;
+  }
 
   if (!dataToStore) {
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: 'Missing questions or credences' }),
+      body: JSON.stringify({ error: 'Missing worldviews, questions, or credences' }),
     };
   }
 
@@ -162,21 +172,36 @@ async function getShare(event, db) {
   const row = result.rows[0];
   const storedData = JSON.parse(row.credences);
 
-  // Detect format: new format has inputMode/lockedKey in question objects,
-  // legacy format has just credences (numbers) directly
+  const baseResponse = {
+    id: shareId,
+    quizVersion: row.quiz_version,
+    createdAt: row.created_at,
+  };
+
+  // Worldviews format: has worldviews and activeWorldviewId
+  if (storedData.worldviews && storedData.activeWorldviewId) {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        ...baseResponse,
+        worldviews: storedData.worldviews,
+        activeWorldviewId: storedData.activeWorldviewId,
+      }),
+    };
+  }
+
+  // Detect questions format vs legacy credences format
   const firstQuestion = Object.values(storedData)[0];
-  const isNewFormat =
+  const isQuestionsFormat =
     firstQuestion && typeof firstQuestion === 'object' && 'credences' in firstQuestion;
 
   return {
     statusCode: 200,
     headers,
     body: JSON.stringify({
-      id: shareId,
-      // Return as 'questions' for new format, 'credences' for legacy
-      ...(isNewFormat ? { questions: storedData } : { credences: storedData }),
-      quizVersion: row.quiz_version,
-      createdAt: row.created_at,
+      ...baseResponse,
+      ...(isQuestionsFormat ? { questions: storedData } : { credences: storedData }),
     }),
   };
 }

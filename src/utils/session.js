@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   SKIP_CONFLICT: 'quiz_skip_conflict',
 };
 
-const STATE_VERSION = 1;
+const STATE_VERSION = 2;
 
 /**
  * Get or create a session ID for this browser tab.
@@ -36,19 +36,24 @@ export function getSessionId() {
  * Save quiz state to sessionStorage.
  * @param {Object} state - Quiz state to save
  * @param {string} state.currentStep - Current step ID
- * @param {Object} state.questions - Question states keyed by ID
+ * @param {Object} state.worldviews - Worldview states keyed by ID
+ * @param {string} state.activeWorldviewId - Active worldview ID
  */
 export function saveQuizState(state) {
-  const { currentStep, questions } = state;
+  const { currentStep, worldviews, activeWorldviewId } = state;
 
   // Only save relevant question data (not originalCredences)
-  const questionData = {};
-  for (const [questionId, qState] of Object.entries(questions)) {
-    questionData[questionId] = {
-      credences: qState.credences,
-      inputMode: qState.inputMode,
-      lockedKey: qState.lockedKey,
-    };
+  const worldviewData = {};
+  for (const [worldviewId, worldview] of Object.entries(worldviews)) {
+    const questionData = {};
+    for (const [questionId, qState] of Object.entries(worldview.questions)) {
+      questionData[questionId] = {
+        credences: qState.credences,
+        inputMode: qState.inputMode,
+        lockedKey: qState.lockedKey,
+      };
+    }
+    worldviewData[worldviewId] = { questions: questionData };
   }
 
   const payload = {
@@ -56,11 +61,29 @@ export function saveQuizState(state) {
     timestamp: Date.now(),
     state: {
       currentStep,
-      questions: questionData,
+      worldviews: worldviewData,
+      activeWorldviewId,
     },
   };
 
   sessionStorage.setItem(STORAGE_KEYS.QUIZ_STATE, JSON.stringify(payload));
+}
+
+/**
+ * Migrate v1 state (questions) to v2 format (worldviews).
+ * @param {Object} v1State - v1 state with questions
+ * @returns {Object} v2 state with worldviews
+ */
+function migrateV1ToV2(v1State) {
+  const { currentStep, questions } = v1State;
+  return {
+    currentStep,
+    worldviews: {
+      1: { questions },
+      // Leave other worldviews empty - they'll be initialized by the reducer
+    },
+    activeWorldviewId: '1',
+  };
 }
 
 /**
@@ -74,9 +97,14 @@ export function loadQuizState() {
   try {
     const parsed = JSON.parse(stored);
 
-    // Version check for future migrations
+    // Handle version migrations
+    if (parsed.version === 1) {
+      // Migrate v1 to v2
+      return migrateV1ToV2(parsed.state);
+    }
+
     if (parsed.version !== STATE_VERSION) {
-      // For now, reject incompatible versions
+      // Unknown version, clear and return null
       clearQuizState();
       return null;
     }

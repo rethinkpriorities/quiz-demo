@@ -126,9 +126,38 @@ function createInitialQuestionsState() {
   );
 }
 
+/**
+ * Worldview IDs - fixed slots for storing quiz states.
+ */
+const WORLDVIEW_IDS = ['1', '2', '3'];
+
+/**
+ * Create initial worldviews structure with all slots.
+ */
+function createInitialWorldviews() {
+  return Object.fromEntries(
+    WORLDVIEW_IDS.map((id) => [id, { questions: createInitialQuestionsState() }])
+  );
+}
+
+/**
+ * Check if a worldview has any progress (any question with non-default credences).
+ */
+function worldviewHasProgress(worldview) {
+  if (!worldview?.questions) return false;
+  return Object.values(worldview.questions).some((q) => {
+    if (!q.credences) return false;
+    // Compare credences to defaults
+    return Object.entries(q.credences).some(
+      ([key, value]) => value !== (defaultCredences[key] ?? 0)
+    );
+  });
+}
+
 const initialState = {
   currentStep: 'welcome',
-  questions: createInitialQuestionsState(),
+  worldviews: createInitialWorldviews(),
+  activeWorldviewId: '1',
   expandedPanel: null,
   debugConfig: null,
 };
@@ -143,19 +172,33 @@ const ACTIONS = {
   SET_DEBUG_CONFIG: 'SET_DEBUG_CONFIG',
   RESTORE_FROM_URL: 'RESTORE_FROM_URL',
   RESTORE_FROM_SESSION: 'RESTORE_FROM_SESSION',
+  SWITCH_WORLDVIEW: 'SWITCH_WORLDVIEW',
 };
 
 /**
- * Helper to update a single question's state immutably.
+ * Get questions from the active worldview.
+ */
+function getActiveQuestions(state) {
+  return state.worldviews[state.activeWorldviewId].questions;
+}
+
+/**
+ * Helper to update a single question's state in the active worldview immutably.
  */
 function updateQuestion(state, questionId, updates) {
+  const activeQuestions = getActiveQuestions(state);
   return {
     ...state,
-    questions: {
-      ...state.questions,
-      [questionId]: {
-        ...state.questions[questionId],
-        ...updates,
+    worldviews: {
+      ...state.worldviews,
+      [state.activeWorldviewId]: {
+        questions: {
+          ...activeQuestions,
+          [questionId]: {
+            ...activeQuestions[questionId],
+            ...updates,
+          },
+        },
       },
     },
   };
@@ -172,81 +215,124 @@ function quizReducer(state, action) {
     case ACTIONS.SET_EXPANDED_PANEL:
       return { ...state, expandedPanel: action.payload };
 
-    case ACTIONS.SAVE_ORIGINALS:
+    case ACTIONS.SAVE_ORIGINALS: {
+      const activeQuestions = getActiveQuestions(state);
       return {
         ...state,
-        questions: Object.fromEntries(
-          Object.entries(state.questions).map(([id, q]) => [
-            id,
-            { ...q, originalCredences: q.originalCredences || { ...q.credences } },
-          ])
-        ),
+        worldviews: {
+          ...state.worldviews,
+          [state.activeWorldviewId]: {
+            questions: Object.fromEntries(
+              Object.entries(activeQuestions).map(([id, q]) => [
+                id,
+                { ...q, originalCredences: q.originalCredences || { ...q.credences } },
+              ])
+            ),
+          },
+        },
       };
+    }
 
-    case ACTIONS.RESET_TO_ORIGINAL:
+    case ACTIONS.RESET_TO_ORIGINAL: {
+      const activeQuestions = getActiveQuestions(state);
       return {
         ...state,
-        questions: Object.fromEntries(
-          Object.entries(state.questions).map(([id, q]) => [
-            id,
-            { ...q, credences: q.originalCredences ? { ...q.originalCredences } : q.credences },
-          ])
-        ),
+        worldviews: {
+          ...state.worldviews,
+          [state.activeWorldviewId]: {
+            questions: Object.fromEntries(
+              Object.entries(activeQuestions).map(([id, q]) => [
+                id,
+                { ...q, credences: q.originalCredences ? { ...q.originalCredences } : q.credences },
+              ])
+            ),
+          },
+        },
       };
+    }
 
     case ACTIONS.RESET_QUIZ:
-      return { ...initialState, questions: createInitialQuestionsState() };
+      return { ...initialState, worldviews: createInitialWorldviews() };
 
-    case ACTIONS.RESTORE_FROM_URL: {
-      // Supports both legacy format (credences only) and new format (full question state)
-      const { questions: urlQuestions, credences: legacyCredences } = action.payload;
+    case ACTIONS.SWITCH_WORLDVIEW:
+      if (!WORLDVIEW_IDS.includes(action.payload)) {
+        return state;
+      }
+      return { ...state, activeWorldviewId: action.payload };
+
+    case ACTIONS.RESTORE_FROM_URL:
+    case ACTIONS.RESTORE_FROM_SESSION: {
+      const isUrlRestore = action.type === ACTIONS.RESTORE_FROM_URL;
+      const {
+        worldviews: sourceWorldviews,
+        activeWorldviewId: sourceActiveId,
+        questions: sourceQuestions,
+        credences: legacyCredences,
+        currentStep: sessionStep,
+      } = action.payload;
+
+      // Helper to restore a single question's state
+      const restoreQuestion = (qState, setOriginals) => ({
+        credences: qState.credences,
+        originalCredences: setOriginals ? { ...qState.credences } : null,
+        inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
+        lockedKey: qState.lockedKey || null,
+      });
+
+      // Helper to restore worldviews with all slots ensured
+      const restoreWorldviews = (worldviewsData, setOriginals) => {
+        const restored = {};
+        for (const [worldviewId, worldview] of Object.entries(worldviewsData)) {
+          const restoredQuestions = {};
+          for (const [questionId, qState] of Object.entries(worldview.questions)) {
+            restoredQuestions[questionId] = restoreQuestion(qState, setOriginals);
+          }
+          restored[worldviewId] = { questions: restoredQuestions };
+        }
+        // Ensure all worldview slots exist
+        for (const id of WORLDVIEW_IDS) {
+          if (!restored[id]) {
+            restored[id] = { questions: createInitialQuestionsState() };
+          }
+        }
+        return restored;
+      };
+
+      // New worldviews format
+      if (sourceWorldviews && sourceActiveId) {
+        return {
+          ...state,
+          currentStep: isUrlRestore ? 'results' : sessionStep,
+          worldviews: restoreWorldviews(sourceWorldviews, isUrlRestore),
+          activeWorldviewId: sourceActiveId,
+        };
+      }
+
+      // Legacy formats: store in worldview 1
       const newQuestions = {};
 
-      if (urlQuestions) {
-        // New format: full question state with inputMode and lockedKey
-        for (const [questionId, qState] of Object.entries(urlQuestions)) {
-          newQuestions[questionId] = {
-            credences: qState.credences,
-            originalCredences: { ...qState.credences },
-            inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
-            lockedKey: qState.lockedKey || null,
-          };
+      if (sourceQuestions) {
+        for (const [questionId, qState] of Object.entries(sourceQuestions)) {
+          newQuestions[questionId] = restoreQuestion(qState, isUrlRestore);
         }
       } else if (legacyCredences) {
-        // Legacy format: credences only
         for (const [questionId, credences] of Object.entries(legacyCredences)) {
           newQuestions[questionId] = {
             ...createQuestionState(),
             credences,
-            originalCredences: { ...credences },
+            originalCredences: isUrlRestore ? { ...credences } : null,
           };
         }
       }
 
       return {
         ...state,
-        currentStep: 'results',
-        questions: newQuestions,
-      };
-    }
-
-    case ACTIONS.RESTORE_FROM_SESSION: {
-      const { currentStep, questions: sessionQuestions } = action.payload;
-      const newQuestions = {};
-
-      for (const [questionId, qState] of Object.entries(sessionQuestions)) {
-        newQuestions[questionId] = {
-          credences: qState.credences,
-          originalCredences: null, // Session restore doesn't have originals
-          inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
-          lockedKey: qState.lockedKey || null,
-        };
-      }
-
-      return {
-        ...state,
-        currentStep,
-        questions: newQuestions,
+        currentStep: isUrlRestore ? 'results' : sessionStep,
+        worldviews: {
+          ...createInitialWorldviews(),
+          1: { questions: newQuestions },
+        },
+        activeWorldviewId: '1',
       };
     }
 
@@ -350,7 +436,7 @@ export function QuizProvider({ children }) {
       }
 
       // No conflict - load share data directly
-      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: { questions: shareResult.questions } });
+      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: shareResult });
       clearShareHash();
       clearQuizState(); // Clear any old session data
       setIsHydrating(false);
@@ -395,7 +481,7 @@ export function QuizProvider({ children }) {
       }
 
       // No conflict - load share data directly
-      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: { questions: shareResult.questions } });
+      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: shareResult });
       clearShareHash();
       clearQuizState();
     };
@@ -415,10 +501,10 @@ export function QuizProvider({ children }) {
   }, []);
 
   const handleLoadShared = useCallback(() => {
-    if (conflictState?.shareData?.questions) {
+    if (conflictState?.shareData) {
       dispatch({
         type: ACTIONS.RESTORE_FROM_URL,
-        payload: { questions: conflictState.shareData.questions },
+        payload: conflictState.shareData,
       });
       clearQuizState(); // Clear session since we're loading shared
     }
@@ -458,7 +544,8 @@ export function QuizProvider({ children }) {
     saveTimeoutRef.current = setTimeout(() => {
       saveQuizState({
         currentStep: state.currentStep,
-        questions: state.questions,
+        worldviews: state.worldviews,
+        activeWorldviewId: state.activeWorldviewId,
       });
     }, 300);
 
@@ -467,7 +554,7 @@ export function QuizProvider({ children }) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [state.currentStep, state.questions, isHydrating]);
+  }, [state.currentStep, state.worldviews, state.activeWorldviewId, isHydrating]);
 
   // Action creators
   const goToStep = useCallback((step) => {
@@ -514,6 +601,10 @@ export function QuizProvider({ children }) {
     dispatch({ type: ACTIONS.SET_DEBUG_CONFIG, payload: config });
   }, []);
 
+  const switchWorldview = useCallback((worldviewId) => {
+    dispatch({ type: ACTIONS.SWITCH_WORLDVIEW, payload: worldviewId });
+  }, []);
+
   // Navigation helpers
   const getQuestionIndex = useCallback(
     (questionId) => questions.findIndex((q) => q.id === questionId),
@@ -557,6 +648,12 @@ export function QuizProvider({ children }) {
     goToStep(nextStep);
   }, [state.currentStep, goToStep, getNextStep, saveOriginals]);
 
+  // Derive questions from active worldview for backward compatibility
+  const activeQuestions = useMemo(
+    () => state.worldviews[state.activeWorldviewId].questions,
+    [state.worldviews, state.activeWorldviewId]
+  );
+
   // Extract credences for calculation functions (excludes intermission questions)
   const extractCredences = useCallback(
     (credenceType) => {
@@ -564,16 +661,16 @@ export function QuizProvider({ children }) {
       const credenceQuestions = questions.filter((q) => !isIntermission(q));
 
       // For original credences, return null if none have been saved yet
-      const firstQuestion = state.questions[credenceQuestions[0]?.id];
+      const firstQuestion = activeQuestions[credenceQuestions[0]?.id];
       if (credenceType === 'original' && !firstQuestion?.originalCredences) {
         return null;
       }
 
       return Object.fromEntries(
-        credenceQuestions.map((q) => [q.id, state.questions[q.id]?.[getter] || defaultCredences])
+        credenceQuestions.map((q) => [q.id, activeQuestions[q.id]?.[getter] || defaultCredences])
       );
     },
-    [state.questions]
+    [activeQuestions]
   );
 
   // Helper to calculate all results from a set of credences
@@ -600,11 +697,18 @@ export function QuizProvider({ children }) {
 
   // Check if any credences have changed from originals
   const hasChanged = useMemo(() => {
-    return Object.values(state.questions).some(
+    return Object.values(activeQuestions).some(
       (q) =>
         q.originalCredences && JSON.stringify(q.credences) !== JSON.stringify(q.originalCredences)
     );
-  }, [state.questions]);
+  }, [activeQuestions]);
+
+  // Map of worldview IDs to whether they have progress
+  const hasProgressMap = useMemo(() => {
+    return Object.fromEntries(
+      WORLDVIEW_IDS.map((id) => [id, worldviewHasProgress(state.worldviews[id])])
+    );
+  }, [state.worldviews]);
 
   // Derived values
   const currentQuestionIndex = useMemo(() => {
@@ -651,7 +755,7 @@ export function QuizProvider({ children }) {
     questions
       .filter((q) => !isIntermission(q))
       .forEach((q) => {
-        const questionState = state.questions[q.id];
+        const questionState = activeQuestions[q.id];
         if (!questionState) return;
         map[q.id] = {
           credences: questionState.credences,
@@ -664,14 +768,16 @@ export function QuizProvider({ children }) {
         };
       });
     return map;
-  }, [state.questions, setCredences, setInputMode, setLockedKey]);
+  }, [activeQuestions, setCredences, setInputMode, setLockedKey]);
 
   // Context value
   const value = useMemo(
     () => ({
       // State
       currentStep: state.currentStep,
-      questions: state.questions,
+      questions: activeQuestions, // Derived from active worldview for backward compatibility
+      worldviews: state.worldviews,
+      activeWorldviewId: state.activeWorldviewId,
       expandedPanel: state.expandedPanel,
       debugConfig: state.debugConfig,
       shareUrlError,
@@ -682,6 +788,7 @@ export function QuizProvider({ children }) {
       questionsConfig: questionsWithColors,
       causesConfig: CAUSES,
       defaultCredences,
+      worldviewIds: WORLDVIEW_IDS,
 
       // Actions
       goToStep,
@@ -693,6 +800,7 @@ export function QuizProvider({ children }) {
       resetToOriginal,
       resetQuiz,
       setDebugConfig,
+      switchWorldview,
 
       // Navigation helpers
       getQuestionIndex,
@@ -711,6 +819,7 @@ export function QuizProvider({ children }) {
       progressPercentage,
       questionNumber,
       hasChanged,
+      hasProgressMap,
 
       // Calculation results
       calculationResults,
@@ -721,7 +830,9 @@ export function QuizProvider({ children }) {
     }),
     [
       state.currentStep,
-      state.questions,
+      activeQuestions,
+      state.worldviews,
+      state.activeWorldviewId,
       state.expandedPanel,
       state.debugConfig,
       shareUrlError,
@@ -736,6 +847,7 @@ export function QuizProvider({ children }) {
       resetToOriginal,
       resetQuiz,
       setDebugConfig,
+      switchWorldview,
       getQuestionIndex,
       getPrevStep,
       getNextStep,
@@ -747,6 +859,7 @@ export function QuizProvider({ children }) {
       progressPercentage,
       questionNumber,
       hasChanged,
+      hasProgressMap,
       calculationResults,
       originalCalculationResults,
       stateMap,
