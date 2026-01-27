@@ -12,6 +12,7 @@ function OptionButton({
   setCredences,
   color,
   setInputMode,
+  setLockedKey,
 }) {
   const isSelected = credences[optionKey] === 100;
 
@@ -22,6 +23,10 @@ function OptionButton({
     );
     setCredences(newCredences);
     setInputMode('options');
+    // Clear any slider lock when selecting an option
+    if (setLockedKey) {
+      setLockedKey(null);
+    }
   };
 
   return (

@@ -74,6 +74,7 @@ function QuestionScreen() {
                     setCredences={setCredences}
                     color={opt.color}
                     setInputMode={setInputMode}
+                    setLockedKey={setLockedKey}
                   />
                 ))
               : currentQuestion.options.map((opt) => (

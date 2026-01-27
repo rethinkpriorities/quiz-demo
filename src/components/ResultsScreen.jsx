@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { RotateCcw, Share2, Check } from 'lucide-react';
+import { RotateCcw, Share2, Check, Loader2 } from 'lucide-react';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
-import { generateShareUrl } from '../utils/shareUrl';
+import { generateShareUrl, generateShareUrlAsync, isShortShareEnabled } from '../utils/shareUrl';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
@@ -31,6 +31,8 @@ function ResultsScreen() {
   } = useQuiz();
 
   const [copied, setCopied] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState(null);
 
   const causeEntries = Object.entries(causesConfig);
 
@@ -51,31 +53,76 @@ function ResultsScreen() {
   };
 
   const handleShareClick = async () => {
-    // Build credences object from stateMap
-    const credences = Object.fromEntries(
-      Object.entries(stateMap).map(([questionId, state]) => [questionId, state.credences])
-    );
-
-    const url = generateShareUrl(credences);
+    // Clear any previous error
+    setShareError(null);
 
     const showCopiedFeedback = () => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     };
 
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // Fallback for older browsers
+    const copyToClipboardFallback = (text) => {
       const textArea = document.createElement('textarea');
-      textArea.value = url;
+      textArea.value = text;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
       document.body.removeChild(textArea);
-    }
+    };
 
-    showCopiedFeedback();
+    // Use short URLs if enabled, otherwise fall back to legacy
+    if (isShortShareEnabled()) {
+      // Build full question state for backend
+      const questionStates = Object.fromEntries(
+        Object.entries(stateMap).map(([questionId, state]) => [
+          questionId,
+          {
+            credences: state.credences,
+            inputMode: state.inputMode,
+            lockedKey: state.lockedKey,
+          },
+        ])
+      );
+
+      setShareLoading(true);
+
+      // Create the URL promise before any async work
+      const urlPromise = generateShareUrlAsync(questionStates).then(({ url }) => url);
+
+      try {
+        // Safari requires ClipboardItem with a Promise to maintain user gesture context
+        if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+          const blobPromise = urlPromise.then((url) => new Blob([url], { type: 'text/plain' }));
+          await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blobPromise })]);
+        } else {
+          // Fallback for browsers without ClipboardItem
+          const url = await urlPromise;
+          try {
+            await navigator.clipboard.writeText(url);
+          } catch {
+            copyToClipboardFallback(url);
+          }
+        }
+        showCopiedFeedback();
+      } catch (err) {
+        setShareError(err.message || 'Failed to create share link');
+        window.setTimeout(() => setShareError(null), 5000);
+      } finally {
+        setShareLoading(false);
+      }
+    } else {
+      // Legacy: client-side encoding (sync, no Safari issues)
+      const credences = Object.fromEntries(
+        Object.entries(stateMap).map(([questionId, state]) => [questionId, state.credences])
+      );
+      const url = generateShareUrl(credences);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        copyToClipboardFallback(url);
+      }
+      showCopiedFeedback();
+    }
   };
 
   const getPanelConfigs = (question) =>
@@ -203,10 +250,23 @@ function ResultsScreen() {
           {features.ui?.shareResults && (
             <button
               onClick={handleShareClick}
-              className={`btn btn-secondary ${copied ? styles.copied : ''}`}
+              disabled={shareLoading}
+              className={`btn btn-secondary ${copied ? styles.copied : ''} ${shareError ? styles.error : ''}`}
             >
-              {copied ? <Check size={16} /> : <Share2 size={16} />}
-              {copied ? copy.results.shareCopied : copy.results.shareButton}
+              {shareLoading ? (
+                <Loader2 size={16} className={styles.spinning} />
+              ) : copied ? (
+                <Check size={16} />
+              ) : (
+                <Share2 size={16} />
+              )}
+              {shareLoading
+                ? 'Creating link...'
+                : shareError
+                  ? shareError
+                  : copied
+                    ? copy.results.shareCopied
+                    : copy.results.shareButton}
             </button>
           )}
           {features.ui?.resetButton && (

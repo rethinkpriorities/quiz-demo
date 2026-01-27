@@ -1,7 +1,12 @@
 import LZString from 'lz-string';
 import questionsConfig from '../../config/questions.json';
+import features from '../../config/features.json';
+import { getOrCreateSessionId } from './session';
 
 const { questions } = questionsConfig;
+
+// Current quiz version - increment when config changes significantly
+const QUIZ_VERSION = 1;
 
 // Get valid question IDs and their option keys (excluding intermissions)
 function getValidQuestions() {
@@ -162,7 +167,7 @@ export function validateCredences(credences) {
 }
 
 /**
- * Generate a shareable URL for the current quiz results.
+ * Generate a shareable URL for the current quiz results (legacy client-side).
  * @param {Object} credencesByQuestion - Current credences
  * @returns {string} Full URL with hash fragment
  */
@@ -173,7 +178,83 @@ export function generateShareUrl(credencesByQuestion) {
 }
 
 /**
- * Parse the URL hash to extract shared results.
+ * Generate a short shareable URL via backend API.
+ * Includes full question state (credences, inputMode, lockedKey).
+ *
+ * @param {Object} questionStates - { questionId: { credences, inputMode, lockedKey } }
+ * @returns {Promise<{ url: string, id: string }>} Short URL and share ID
+ * @throws {Error} If API call fails
+ */
+export async function generateShareUrlAsync(questionStates) {
+  const sessionId = getOrCreateSessionId();
+
+  const payload = {
+    sessionId,
+    quizVersion: QUIZ_VERSION,
+    questions: questionStates,
+  };
+
+  const response = await fetch('/api/share', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to create share link');
+  }
+
+  const { id } = await response.json();
+  const baseUrl = window.location.origin + window.location.pathname;
+  return {
+    url: `${baseUrl}#s=${id}`,
+    id,
+  };
+}
+
+/**
+ * Fetch share data from backend by short ID.
+ * @param {string} shortId - Share ID from URL
+ * @returns {Promise<Object|null>} Share data or null if not found
+ */
+export async function fetchShareData(shortId) {
+  try {
+    const response = await fetch(`/api/share?id=${encodeURIComponent(shortId)}`);
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error('Failed to fetch share data');
+    }
+
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check what type of share URL is present in the hash.
+ * @returns {{ type: 'short' | 'legacy' | null, id?: string, encoded?: string }}
+ */
+export function detectShareUrl() {
+  const hash = window.location.hash;
+
+  if (hash.startsWith('#s=')) {
+    const id = hash.slice('#s='.length);
+    return id ? { type: 'short', id } : { type: null };
+  }
+
+  if (hash.startsWith('#results=')) {
+    const encoded = hash.slice('#results='.length);
+    return encoded ? { type: 'legacy', encoded } : { type: null };
+  }
+
+  return { type: null };
+}
+
+/**
+ * Parse legacy URL hash to extract shared results (sync, client-side).
  * @returns {Object|null} Parsed and validated credences, or null if none/invalid
  */
 export function parseShareUrl() {
@@ -198,6 +279,91 @@ export function parseShareUrl() {
   }
 
   return { credences: validation.credences };
+}
+
+/**
+ * Parse share URL (handles both legacy and short formats).
+ * For short URLs, fetches from backend.
+ * @returns {Promise<Object|null>} { questions, isShortUrl } or { error } or null
+ */
+export async function parseShareUrlAsync() {
+  const detected = detectShareUrl();
+
+  if (detected.type === null) {
+    return null;
+  }
+
+  // Legacy format: decode client-side
+  if (detected.type === 'legacy') {
+    const result = parseShareUrl();
+    if (!result) return null;
+
+    if (result.error) return result;
+
+    // Convert legacy credences-only format to full question state
+    const questions = {};
+    for (const [questionId, credences] of Object.entries(result.credences)) {
+      questions[questionId] = {
+        credences,
+        inputMode: 'options', // Default for legacy URLs
+        lockedKey: null,
+      };
+    }
+
+    return { questions, isShortUrl: false };
+  }
+
+  // Short format: fetch from backend
+  if (detected.type === 'short') {
+    const shareData = await fetchShareData(detected.id);
+
+    if (!shareData) {
+      return { error: 'This share link has expired or no longer exists' };
+    }
+
+    // Handle both new format (questions) and legacy format (credences) from backend
+    let questions = shareData.questions;
+    if (!questions && shareData.credences) {
+      // Convert legacy credences-only format to full question state
+      questions = {};
+      for (const [questionId, credences] of Object.entries(shareData.credences)) {
+        questions[questionId] = {
+          credences,
+          inputMode: 'options',
+          lockedKey: null,
+        };
+      }
+    }
+
+    if (!questions) {
+      return { error: 'Invalid share data format' };
+    }
+
+    // Validate against current config
+    const validQuestions = getValidQuestions();
+    const validQuestionIds = new Set(validQuestions.map((q) => q.id));
+
+    // Check for config mismatches
+    const shareQuestionIds = Object.keys(questions);
+    const missingInConfig = shareQuestionIds.filter((id) => !validQuestionIds.has(id));
+    const missingInShare = validQuestions.filter((q) => !questions[q.id]);
+
+    if (missingInConfig.length > 0 || missingInShare.length > 0) {
+      return { error: 'Quiz has changed since this link was created' };
+    }
+
+    return { questions, isShortUrl: true };
+  }
+
+  return null;
+}
+
+/**
+ * Check if short share URLs are enabled.
+ * @returns {boolean}
+ */
+export function isShortShareEnabled() {
+  return features.ui?.shortShareUrls === true;
 }
 
 /**

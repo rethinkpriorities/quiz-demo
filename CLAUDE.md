@@ -8,8 +8,16 @@ Production-ready. Refactored from single 816-line file to 25-file modular archit
 
 ## Development Notes
 
-### Dev Server URL
-The app is served at `http://localhost:5173/` (root path). Configured via `base: '/'` in `vite.config.js`.
+### Dev Server
+
+**Two options depending on what you're working on:**
+
+| Command | URL | Use when |
+|---------|-----|----------|
+| `npm run dev` | `localhost:5173` | Frontend-only work (faster) |
+| `netlify dev` | `localhost:8888` | Testing share URLs or other backend features |
+
+The vite server (`npm run dev`) is faster but can't reach the serverless functions. Use `netlify dev` when testing anything that hits `/api/*` endpoints.
 
 ### Testing
 - `npm test` - run tests in watch mode
@@ -92,7 +100,8 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Calculation Display | `calculations.show*`, `calculations.sideBySideComparison` | Control which calculation cards appear and comparison mode |
 | Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
-| Share Results | `ui.shareResults` | Share quiz results via URL. Copies link to clipboard; opening link restores credences and shows results. |
+| Share Results | `ui.shareResults`, `ui.shortShareUrls` | Share quiz results via URL. Short URLs use backend API; legacy URLs use client-side encoding. |
+| Session Persistence | N/A | Quiz progress persists across page reloads via sessionStorage. Conflict modal when share URL + existing session. |
 | Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
 | Donor Compass Branding | N/A | Visual revamp: Raleway font, teal gradient background, RP logo, white CTA buttons, consistent card styling. |
 
@@ -397,78 +406,6 @@ Show an "Explain Results" button that generates a personalized explanation of wh
 
 ---
 
-### 9. Session Persistence
-**Flag:** N/A (infrastructure feature)
-
-Persist quiz state across page reloads using browser storage. Foundation for Multiple Worldviews feature and analytics.
-
-**Behavior:**
-- Quiz progress survives accidental page reload
-- Share URL + existing session triggers conflict modal
-- Session ID generated for analytics correlation
-- Versioned storage format for future migrations
-
-**Storage Strategy:**
-
-| Data | Storage | Lifetime |
-|------|---------|----------|
-| Current quiz progress | `sessionStorage` | Until tab closes |
-| Saved worldviews (future) | `localStorage` | Until user deletes |
-| Session ID | `sessionStorage` | Until tab closes |
-
-**Conflict Resolution:**
-When user has existing session AND opens a share URL:
-```
-┌─────────────────────────────────────────────┐
-│  You have unsaved progress                  │
-│                                             │
-│  Loading this shared link will replace      │
-│  your current quiz data.                    │
-│                                             │
-│    [Keep my progress]  [Load shared]        │
-└─────────────────────────────────────────────┘
-```
-- Neither source hydrates until user chooses
-- "Keep mine" → hydrate from storage, ignore URL
-- "Load shared" → hydrate from URL, clear storage
-
-**Data Format:**
-```js
-// sessionStorage: quiz_state
-{
-  version: 1,
-  state: {
-    currentStep: "question-3",
-    questions: { /* credences per question */ }
-  }
-}
-
-// sessionStorage: quiz_session (for analytics)
-"uuid-string"
-
-// sessionStorage: origin_share (if arrived via share link)
-"x7Kp2mQ"
-```
-
-**Implementation Notes:**
-- Add `HYDRATE_FROM_STORAGE` action to reducer
-- Hydration effect runs on mount, checks both storage and URL
-- Persistence effect saves on `currentStep` and `questions` changes
-- Debounce persistence writes (300ms) to avoid excessive storage calls
-- Share URL detection happens before storage hydration decision
-
-**Session ID for Analytics:**
-- Generated once per browser session via `crypto.randomUUID()`
-- Included in share data when user shares (`sessionId` field)
-- Recipients get `originShare` field linking to source share ID
-- Enables tracking: analytics events → share record → downstream sessions
-
-**Dependencies:**
-- None (pure frontend, no backend required)
-- Foundational for: Multiple Worldviews (#4), Analytics, Share improvements
-
----
-
 ## References
 
 | File | Purpose |
@@ -479,6 +416,7 @@ When user has existing session AND opens a share URL:
 | `src/context/QuizContext.jsx` | React Context state management |
 | `src/utils/calculations.js` | Calculation functions |
 | `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |
+| `src/utils/session.js` | Session persistence utilities (sessionStorage) |
 | `netlify.toml` | Netlify deployment config (build, redirects, functions) |
 | `netlify/functions/share.js` | Share URL serverless function |
 | `migrations/` | Database migrations (idempotent SQL) |

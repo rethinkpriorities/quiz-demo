@@ -73,13 +73,16 @@ export async function handler(event) {
 
 async function createShare(event, db) {
   const body = JSON.parse(event.body || '{}');
-  const { credences, sessionId, quizVersion } = body;
+  const { questions, credences, sessionId, quizVersion } = body;
 
-  if (!credences) {
+  // Support both new format (questions with full state) and legacy format (credences only)
+  const dataToStore = questions || credences;
+
+  if (!dataToStore) {
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: 'Missing credences' }),
+      body: JSON.stringify({ error: 'Missing questions or credences' }),
     };
   }
 
@@ -90,7 +93,7 @@ async function createShare(event, db) {
       await db.execute({
         sql: `INSERT INTO shares (id, credences, session_id, quiz_version)
               VALUES (?, ?, ?, ?)`,
-        args: [shortId, JSON.stringify(credences), sessionId || null, quizVersion || null],
+        args: [shortId, JSON.stringify(dataToStore), sessionId || null, quizVersion || null],
       });
 
       return {
@@ -157,12 +160,21 @@ async function getShare(event, db) {
   });
 
   const row = result.rows[0];
+  const storedData = JSON.parse(row.credences);
+
+  // Detect format: new format has inputMode/lockedKey in question objects,
+  // legacy format has just credences (numbers) directly
+  const firstQuestion = Object.values(storedData)[0];
+  const isNewFormat =
+    firstQuestion && typeof firstQuestion === 'object' && 'credences' in firstQuestion;
+
   return {
     statusCode: 200,
     headers,
     body: JSON.stringify({
       id: shareId,
-      credences: JSON.parse(row.credences),
+      // Return as 'questions' for new format, 'credences' for legacy
+      ...(isNewFormat ? { questions: storedData } : { credences: storedData }),
       quizVersion: row.quiz_version,
       createdAt: row.created_at,
     }),

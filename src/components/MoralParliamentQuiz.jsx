@@ -26,7 +26,12 @@ const toastStyle = {
  * Renders the appropriate screen based on current step from context.
  */
 function MoralParliamentQuiz() {
-  const { currentStep, currentQuestion, setDebugConfig, shareUrlError } = useQuiz();
+  const { currentStep, currentQuestion, setDebugConfig, shareUrlError, isHydrating } = useQuiz();
+
+  // Show nothing while hydrating to avoid flash of welcome screen
+  if (isHydrating) {
+    return null;
+  }
 
   // Determine which screen to render
   function getScreenContent() {

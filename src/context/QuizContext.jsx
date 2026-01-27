@@ -1,14 +1,32 @@
-import { createContext, useReducer, useMemo, useCallback, useEffect, useState } from 'react';
+import {
+  createContext,
+  useReducer,
+  useMemo,
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+} from 'react';
 import questionsConfig from '../../config/questions.json';
 import causesConfig from '../../config/causes.json';
 import features from '../../config/features.json';
-import { parseShareUrl, clearShareHash } from '../utils/shareUrl';
+import { detectShareUrl, parseShareUrlAsync, clearShareHash } from '../utils/shareUrl';
+import {
+  getOrCreateSessionId,
+  saveQuizState,
+  loadQuizState,
+  clearQuizState,
+  hasSavedState,
+  checkAndClearSkipConflict,
+  setSkipConflict,
+} from '../utils/session';
 import {
   OPTION_COLORS,
   QUESTION_TYPE_COLORS,
   INPUT_MODES,
   QUESTION_TYPES,
 } from '../constants/config';
+import SessionConflictModal from '../components/ui/SessionConflictModal';
 import {
   calculateMaxEV,
   calculateVarianceVoting,
@@ -124,6 +142,7 @@ const ACTIONS = {
   RESET_QUIZ: 'RESET_QUIZ',
   SET_DEBUG_CONFIG: 'SET_DEBUG_CONFIG',
   RESTORE_FROM_URL: 'RESTORE_FROM_URL',
+  RESTORE_FROM_SESSION: 'RESTORE_FROM_SESSION',
 };
 
 /**
@@ -179,18 +198,54 @@ function quizReducer(state, action) {
       return { ...initialState, questions: createInitialQuestionsState() };
 
     case ACTIONS.RESTORE_FROM_URL: {
-      const { credences: urlCredences } = action.payload;
+      // Supports both legacy format (credences only) and new format (full question state)
+      const { questions: urlQuestions, credences: legacyCredences } = action.payload;
       const newQuestions = {};
-      for (const [questionId, credences] of Object.entries(urlCredences)) {
-        newQuestions[questionId] = {
-          ...createQuestionState(),
-          credences,
-          originalCredences: { ...credences },
-        };
+
+      if (urlQuestions) {
+        // New format: full question state with inputMode and lockedKey
+        for (const [questionId, qState] of Object.entries(urlQuestions)) {
+          newQuestions[questionId] = {
+            credences: qState.credences,
+            originalCredences: { ...qState.credences },
+            inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
+            lockedKey: qState.lockedKey || null,
+          };
+        }
+      } else if (legacyCredences) {
+        // Legacy format: credences only
+        for (const [questionId, credences] of Object.entries(legacyCredences)) {
+          newQuestions[questionId] = {
+            ...createQuestionState(),
+            credences,
+            originalCredences: { ...credences },
+          };
+        }
       }
+
       return {
         ...state,
         currentStep: 'results',
+        questions: newQuestions,
+      };
+    }
+
+    case ACTIONS.RESTORE_FROM_SESSION: {
+      const { currentStep, questions: sessionQuestions } = action.payload;
+      const newQuestions = {};
+
+      for (const [questionId, qState] of Object.entries(sessionQuestions)) {
+        newQuestions[questionId] = {
+          credences: qState.credences,
+          originalCredences: null, // Session restore doesn't have originals
+          inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
+          lockedKey: qState.lockedKey || null,
+        };
+      }
+
+      return {
+        ...state,
+        currentStep,
         questions: newQuestions,
       };
     }
@@ -208,28 +263,211 @@ export const QuizContext = createContext(null);
 export function QuizProvider({ children }) {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [shareUrlError, setShareUrlError] = useState(null);
+  const [isHydrating, setIsHydrating] = useState(true);
+  const [conflictState, setConflictState] = useState(null);
+  // Initialize session ID lazily (only once on first render)
+  const [sessionId] = useState(() => getOrCreateSessionId());
+  const saveTimeoutRef = useRef(null);
 
-  // Check for shared results URL on mount
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional mount-only initialization */
+  // Hydration effect: check for share URL and/or session storage on mount
   useEffect(() => {
-    if (!features.ui?.shareResults) return;
-
-    const result = parseShareUrl();
-    if (!result) return;
-
-    if (result.error) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional mount-only initialization
-      setShareUrlError(result.error);
-      clearShareHash();
-      // Clear error after 5 seconds
-      window.setTimeout(() => setShareUrlError(null), 5000);
+    if (!features.ui?.shareResults) {
+      // No share feature, just try to restore from session
+      const savedState = loadQuizState();
+      if (savedState) {
+        dispatch({ type: ACTIONS.RESTORE_FROM_SESSION, payload: savedState });
+      }
+      setIsHydrating(false);
       return;
     }
 
-    if (result.credences) {
-      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: { credences: result.credences } });
+    const hydrate = async () => {
+      const shareDetected = detectShareUrl();
+      const hasSession = hasSavedState();
+
+      // No share URL - just restore from session if available
+      if (shareDetected.type === null) {
+        if (hasSession) {
+          const savedState = loadQuizState();
+          if (savedState) {
+            dispatch({ type: ACTIONS.RESTORE_FROM_SESSION, payload: savedState });
+          }
+        }
+        setIsHydrating(false);
+        return;
+      }
+
+      // Share URL detected - parse it
+      const shareResult = await parseShareUrlAsync();
+
+      if (!shareResult) {
+        // Invalid share URL, restore from session
+        clearShareHash();
+        if (hasSession) {
+          const savedState = loadQuizState();
+          if (savedState) {
+            dispatch({ type: ACTIONS.RESTORE_FROM_SESSION, payload: savedState });
+          }
+        }
+        setIsHydrating(false);
+        return;
+      }
+
+      if (shareResult.error) {
+        // Share URL error
+        setShareUrlError(shareResult.error);
+        clearShareHash();
+        window.setTimeout(() => setShareUrlError(null), 5000);
+
+        // Still restore from session if available
+        if (hasSession) {
+          const savedState = loadQuizState();
+          if (savedState) {
+            dispatch({ type: ACTIONS.RESTORE_FROM_SESSION, payload: savedState });
+          }
+        }
+        setIsHydrating(false);
+        return;
+      }
+
+      // Valid share URL - check for conflict
+      // Skip conflict check if flag is set (e.g., opened via "Open in new tab")
+      const skipConflict = checkAndClearSkipConflict();
+
+      if (hasSession && !skipConflict) {
+        const savedState = loadQuizState();
+        // Only show conflict if user has made progress (not just on welcome screen)
+        if (savedState && savedState.currentStep !== 'welcome') {
+          // Store conflict state and wait for user decision
+          setConflictState({
+            shareData: shareResult,
+            shareUrl: window.location.href,
+          });
+          setIsHydrating(false);
+          return;
+        }
+      }
+
+      // No conflict - load share data directly
+      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: { questions: shareResult.questions } });
       clearShareHash();
-    }
+      clearQuizState(); // Clear any old session data
+      setIsHydrating(false);
+    };
+
+    hydrate();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Listen for hash changes (e.g., user pastes URL while already on page)
+  useEffect(() => {
+    if (!features.ui?.shareResults) return;
+
+    const handleHashChange = async () => {
+      const shareDetected = detectShareUrl();
+      if (shareDetected.type === null) return;
+
+      // Parse the share URL
+      const shareResult = await parseShareUrlAsync();
+      if (!shareResult || shareResult.error) {
+        if (shareResult?.error) {
+          setShareUrlError(shareResult.error);
+          window.setTimeout(() => setShareUrlError(null), 5000);
+        }
+        clearShareHash();
+        return;
+      }
+
+      // Check for conflict with current session
+      const hasSession = hasSavedState();
+      const skipConflict = checkAndClearSkipConflict();
+
+      if (hasSession && !skipConflict) {
+        const savedState = loadQuizState();
+        if (savedState && savedState.currentStep !== 'welcome') {
+          setConflictState({
+            shareData: shareResult,
+            shareUrl: window.location.href,
+          });
+          return;
+        }
+      }
+
+      // No conflict - load share data directly
+      dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: { questions: shareResult.questions } });
+      clearShareHash();
+      clearQuizState();
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Conflict resolution handlers
+  const handleKeepMine = useCallback(() => {
+    const savedState = loadQuizState();
+    if (savedState) {
+      dispatch({ type: ACTIONS.RESTORE_FROM_SESSION, payload: savedState });
+    }
+    clearShareHash();
+    setConflictState(null);
+  }, []);
+
+  const handleLoadShared = useCallback(() => {
+    if (conflictState?.shareData?.questions) {
+      dispatch({
+        type: ACTIONS.RESTORE_FROM_URL,
+        payload: { questions: conflictState.shareData.questions },
+      });
+      clearQuizState(); // Clear session since we're loading shared
+    }
+    clearShareHash();
+    setConflictState(null);
+  }, [conflictState]);
+
+  const handleOpenNewTab = useCallback(() => {
+    // Set flag so the new tab skips conflict detection
+    setSkipConflict();
+
+    // Open share URL in new tab
+    if (conflictState?.shareUrl) {
+      window.open(conflictState.shareUrl, '_blank');
+    }
+
+    // Restore current session in this tab
+    const savedState = loadQuizState();
+    if (savedState) {
+      dispatch({ type: ACTIONS.RESTORE_FROM_SESSION, payload: savedState });
+    }
+    clearShareHash();
+    setConflictState(null);
+  }, [conflictState]);
+
+  // Persistence effect: save state to sessionStorage on changes (debounced)
+  useEffect(() => {
+    // Don't save during hydration or if on welcome screen
+    if (isHydrating || state.currentStep === 'welcome') return;
+
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce saves by 300ms
+    saveTimeoutRef.current = setTimeout(() => {
+      saveQuizState({
+        currentStep: state.currentStep,
+        questions: state.questions,
+      });
+    }, 300);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [state.currentStep, state.questions, isHydrating]);
 
   // Action creators
   const goToStep = useCallback((step) => {
@@ -269,6 +507,7 @@ export function QuizProvider({ children }) {
 
   const resetQuiz = useCallback(() => {
     dispatch({ type: ACTIONS.RESET_QUIZ });
+    clearQuizState(); // Also clear session storage
   }, []);
 
   const setDebugConfig = useCallback((config) => {
@@ -436,6 +675,8 @@ export function QuizProvider({ children }) {
       expandedPanel: state.expandedPanel,
       debugConfig: state.debugConfig,
       shareUrlError,
+      isHydrating,
+      sessionId,
 
       // Config (static)
       questionsConfig: questionsWithColors,
@@ -484,6 +725,8 @@ export function QuizProvider({ children }) {
       state.expandedPanel,
       state.debugConfig,
       shareUrlError,
+      isHydrating,
+      sessionId,
       goToStep,
       setCredences,
       setInputMode,
@@ -510,7 +753,18 @@ export function QuizProvider({ children }) {
     ]
   );
 
-  return <QuizContext.Provider value={value}>{children}</QuizContext.Provider>;
+  return (
+    <QuizContext.Provider value={value}>
+      {children}
+      {conflictState && (
+        <SessionConflictModal
+          onKeepMine={handleKeepMine}
+          onLoadShared={handleLoadShared}
+          onOpenNewTab={handleOpenNewTab}
+        />
+      )}
+    </QuizContext.Provider>
+  );
 }
 
 export default QuizContext;

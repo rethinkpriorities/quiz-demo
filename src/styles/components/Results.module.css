@@ -240,6 +240,26 @@
   background: rgba(16, 185, 129, 0.15);
 }
 
+/* State modifier for share error */
+.error {
+  color: var(--color-warning);
+  border-color: var(--border-orange);
+}
+
+/* Spinning animation for loading state */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Danger variant for reset button */
 .resetDanger {
   color: var(--color-warning);
