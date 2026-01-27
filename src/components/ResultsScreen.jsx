@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { RotateCcw, Share2, Check, Loader2 } from 'lucide-react';
+import { RotateCcw, Share2, Check, Loader2, Layers } from 'lucide-react';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
+import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
 import { generateShareUrl, generateShareUrlAsync, isShortShareEnabled } from '../utils/shareUrl';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
+
+const isMultipleWorldviewsEnabled = features.ui?.multipleWorldviews === true;
 
 /**
  * Results screen showing allocation methods.
@@ -28,11 +31,18 @@ function ResultsScreen() {
     resetToOriginal,
     resetQuiz,
     goBack,
+    worldviews,
+    activeWorldviewId,
+    switchWorldview,
+    worldviewIds,
+    hasProgressMap,
+    startQuiz,
   } = useQuiz();
 
   const [copied, setCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareError, setShareError] = useState(null);
+  const [showWorldviewModal, setShowWorldviewModal] = useState(false);
 
   const causeEntries = Object.entries(causesConfig);
 
@@ -49,6 +59,15 @@ function ResultsScreen() {
   const handleResetClick = () => {
     if (window.confirm(copy.results.resetConfirmation)) {
       resetQuiz();
+    }
+  };
+
+  const handleWorldviewSwitch = (id) => {
+    setShowWorldviewModal(false);
+    switchWorldview(id);
+    // If the target worldview has no progress, start the quiz
+    if (!hasProgressMap[id]) {
+      startQuiz();
     }
   };
 
@@ -72,22 +91,26 @@ function ResultsScreen() {
 
     // Use short URLs if enabled, otherwise fall back to legacy
     if (isShortShareEnabled()) {
-      // Build full question state for backend
-      const questionStates = Object.fromEntries(
-        Object.entries(stateMap).map(([questionId, state]) => [
-          questionId,
-          {
-            credences: state.credences,
-            inputMode: state.inputMode,
-            lockedKey: state.lockedKey,
-          },
-        ])
-      );
+      // Build worldviews state for backend
+      const worldviewsForShare = {};
+      for (const [worldviewId, worldview] of Object.entries(worldviews)) {
+        const questionStates = {};
+        for (const [questionId, qState] of Object.entries(worldview.questions)) {
+          questionStates[questionId] = {
+            credences: qState.credences,
+            inputMode: qState.inputMode,
+            lockedKey: qState.lockedKey,
+          };
+        }
+        worldviewsForShare[worldviewId] = { questions: questionStates };
+      }
 
       setShareLoading(true);
 
       // Create the URL promise before any async work
-      const urlPromise = generateShareUrlAsync(questionStates).then(({ url }) => url);
+      const urlPromise = generateShareUrlAsync(worldviewsForShare, activeWorldviewId).then(
+        ({ url }) => url
+      );
 
       try {
         // Safari requires ClipboardItem with a Promise to maintain user gesture context
@@ -134,6 +157,19 @@ function ResultsScreen() {
     }));
 
   const useSideBySide = features.calculations?.sideBySideComparison === true;
+
+  const getShareButtonIcon = () => {
+    if (shareLoading) return <Loader2 size={16} className={styles.spinning} />;
+    if (copied) return <Check size={16} />;
+    return <Share2 size={16} />;
+  };
+
+  const getShareButtonText = () => {
+    if (shareLoading) return 'Creating link...';
+    if (shareError) return shareError;
+    if (copied) return copy.results.shareCopied;
+    return copy.results.shareButton;
+  };
 
   // Filter out intermission questions for edit panels
   const editableQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
@@ -185,6 +221,7 @@ function ResultsScreen() {
         <div className={styles.resultsHeader}>
           <h1 className={styles.title}>
             {copy.results.heading}
+            {isMultipleWorldviewsEnabled && ` (Worldview ${activeWorldviewId})`}
             {hasChanged && (
               <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
             )}
@@ -247,26 +284,20 @@ function ResultsScreen() {
           <button onClick={goBack} className="btn btn-secondary">
             {copy.navigation.backToQuiz}
           </button>
+          {isMultipleWorldviewsEnabled && (
+            <button onClick={() => setShowWorldviewModal(true)} className="btn btn-secondary">
+              <Layers size={16} />
+              Switch Worldview
+            </button>
+          )}
           {features.ui?.shareResults && (
             <button
               onClick={handleShareClick}
               disabled={shareLoading}
               className={`btn btn-secondary ${copied ? styles.copied : ''} ${shareError ? styles.error : ''}`}
             >
-              {shareLoading ? (
-                <Loader2 size={16} className={styles.spinning} />
-              ) : copied ? (
-                <Check size={16} />
-              ) : (
-                <Share2 size={16} />
-              )}
-              {shareLoading
-                ? 'Creating link...'
-                : shareError
-                  ? shareError
-                  : copied
-                    ? copy.results.shareCopied
-                    : copy.results.shareButton}
+              {getShareButtonIcon()}
+              {getShareButtonText()}
             </button>
           )}
           {features.ui?.resetButton && (
@@ -279,6 +310,16 @@ function ResultsScreen() {
           )}
         </div>
       </div>
+
+      {showWorldviewModal && (
+        <WorldviewSwitchModal
+          worldviewIds={worldviewIds}
+          activeWorldviewId={activeWorldviewId}
+          hasProgressMap={hasProgressMap}
+          onSwitch={handleWorldviewSwitch}
+          onClose={() => setShowWorldviewModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -179,19 +179,21 @@ export function generateShareUrl(credencesByQuestion) {
 
 /**
  * Generate a short shareable URL via backend API.
- * Includes full question state (credences, inputMode, lockedKey).
+ * Includes full worldviews state (all worldviews with question states).
  *
- * @param {Object} questionStates - { questionId: { credences, inputMode, lockedKey } }
+ * @param {Object} worldviews - { worldviewId: { questions: { questionId: { credences, inputMode, lockedKey } } } }
+ * @param {string} activeWorldviewId - Active worldview ID
  * @returns {Promise<{ url: string, id: string }>} Short URL and share ID
  * @throws {Error} If API call fails
  */
-export async function generateShareUrlAsync(questionStates) {
+export async function generateShareUrlAsync(worldviews, activeWorldviewId) {
   const sessionId = getOrCreateSessionId();
 
   const payload = {
     sessionId,
     quizVersion: QUIZ_VERSION,
-    questions: questionStates,
+    worldviews,
+    activeWorldviewId,
   };
 
   const response = await fetch('/api/share', {
@@ -282,9 +284,47 @@ export function parseShareUrl() {
 }
 
 /**
- * Parse share URL (handles both legacy and short formats).
+ * Validate questions against current config.
+ * @param {Object} questions - Questions object to validate
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateQuestionsConfig(questions) {
+  const validQuestions = getValidQuestions();
+  const validQuestionIds = new Set(validQuestions.map((q) => q.id));
+
+  // Check for config mismatches
+  const shareQuestionIds = Object.keys(questions);
+  const missingInConfig = shareQuestionIds.filter((id) => !validQuestionIds.has(id));
+  const missingInShare = validQuestions.filter((q) => !questions[q.id]);
+
+  if (missingInConfig.length > 0 || missingInShare.length > 0) {
+    return { valid: false, error: 'Quiz has changed since this link was created' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Convert credences-only format to full question state.
+ * @param {Object} credences - { questionId: { optionKey: value } }
+ * @returns {Object} { questionId: { credences, inputMode, lockedKey } }
+ */
+function credencesToQuestionState(credences) {
+  const questions = {};
+  for (const [questionId, creds] of Object.entries(credences)) {
+    questions[questionId] = {
+      credences: creds,
+      inputMode: 'options',
+      lockedKey: null,
+    };
+  }
+  return questions;
+}
+
+/**
+ * Parse share URL (handles legacy, questions, and worldviews formats).
  * For short URLs, fetches from backend.
- * @returns {Promise<Object|null>} { questions, isShortUrl } or { error } or null
+ * @returns {Promise<Object|null>} { worldviews, activeWorldviewId, isShortUrl } or { questions } (legacy) or { error } or null
  */
 export async function parseShareUrlAsync() {
   const detected = detectShareUrl();
@@ -297,20 +337,12 @@ export async function parseShareUrlAsync() {
   if (detected.type === 'legacy') {
     const result = parseShareUrl();
     if (!result) return null;
-
     if (result.error) return result;
 
-    // Convert legacy credences-only format to full question state
-    const questions = {};
-    for (const [questionId, credences] of Object.entries(result.credences)) {
-      questions[questionId] = {
-        credences,
-        inputMode: 'options', // Default for legacy URLs
-        lockedKey: null,
-      };
-    }
-
-    return { questions, isShortUrl: false };
+    return {
+      questions: credencesToQuestionState(result.credences),
+      isShortUrl: false,
+    };
   }
 
   // Short format: fetch from backend
@@ -321,35 +353,34 @@ export async function parseShareUrlAsync() {
       return { error: 'This share link has expired or no longer exists' };
     }
 
-    // Handle both new format (questions) and legacy format (credences) from backend
-    let questions = shareData.questions;
-    if (!questions && shareData.credences) {
-      // Convert legacy credences-only format to full question state
-      questions = {};
-      for (const [questionId, credences] of Object.entries(shareData.credences)) {
-        questions[questionId] = {
-          credences,
-          inputMode: 'options',
-          lockedKey: null,
-        };
+    // Worldviews format
+    if (shareData.worldviews && shareData.activeWorldviewId) {
+      for (const worldview of Object.values(shareData.worldviews)) {
+        if (worldview.questions) {
+          const validation = validateQuestionsConfig(worldview.questions);
+          if (!validation.valid) {
+            return { error: validation.error };
+          }
+        }
       }
+      return {
+        worldviews: shareData.worldviews,
+        activeWorldviewId: shareData.activeWorldviewId,
+        isShortUrl: true,
+      };
     }
+
+    // Questions or credences format
+    const questions =
+      shareData.questions || (shareData.credences && credencesToQuestionState(shareData.credences));
 
     if (!questions) {
       return { error: 'Invalid share data format' };
     }
 
-    // Validate against current config
-    const validQuestions = getValidQuestions();
-    const validQuestionIds = new Set(validQuestions.map((q) => q.id));
-
-    // Check for config mismatches
-    const shareQuestionIds = Object.keys(questions);
-    const missingInConfig = shareQuestionIds.filter((id) => !validQuestionIds.has(id));
-    const missingInShare = validQuestions.filter((q) => !questions[q.id]);
-
-    if (missingInConfig.length > 0 || missingInShare.length > 0) {
-      return { error: 'Quiz has changed since this link was created' };
+    const validation = validateQuestionsConfig(questions);
+    if (!validation.valid) {
+      return { error: validation.error };
     }
 
     return { questions, isShortUrl: true };
