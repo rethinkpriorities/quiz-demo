@@ -21,6 +21,13 @@ export default [
         document: 'readonly',
         navigator: 'readonly',
         console: 'readonly',
+        fetch: 'readonly',
+        sessionStorage: 'readonly',
+        crypto: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        ClipboardItem: 'readonly',
+        Blob: 'readonly',
       },
     },
     plugins: {

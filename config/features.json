@@ -6,7 +6,8 @@
     "resetButton": false,
     "sliderLock": true,
     "questionTypes": true,
-    "shareResults": true
+    "shareResults": true,
+    "shortShareUrls": true
   },
 
   "calculations": {

@@ -8,8 +8,16 @@ Production-ready. Refactored from single 816-line file to 25-file modular archit
 
 ## Development Notes
 
-### Dev Server URL
-The app is served at `http://localhost:5173/` (root path). Configured via `base: '/'` in `vite.config.js`.
+### Dev Server
+
+**Two options depending on what you're working on:**
+
+| Command | URL | Use when |
+|---------|-----|----------|
+| `npm run dev` | `localhost:5173` | Frontend-only work (faster) |
+| `netlify dev` | `localhost:8888` | Testing share URLs or other backend features |
+
+The vite server (`npm run dev`) is faster but can't reach the serverless functions. Use `netlify dev` when testing anything that hits `/api/*` endpoints.
 
 ### Testing
 - `npm test` - run tests in watch mode
@@ -466,6 +474,99 @@ When user has existing session AND opens a share URL:
 **Dependencies:**
 - None (pure frontend, no backend required)
 - Foundational for: Multiple Worldviews (#4), Analytics, Share improvements
+
+---
+
+### 10. Short Share URLs (Database-Backed)
+**Flag:** `ui.shortShareUrls` (extends `ui.shareResults`)
+
+Replace long `#results=compressed_data` URLs with short `/s/abc1234` links using the backend API.
+
+**Current behavior (client-side only):**
+- Share button generates URL with all credences compressed in hash: `#results=N4IgLg...`
+- Loading URL decompresses and restores state client-side
+- URLs are long (~200+ chars) and fragile (any config change breaks them)
+
+**New behavior (database-backed):**
+- Share button calls `POST /api/share` with credences → returns short ID
+- User gets clean URL: `https://donorcompass.org/s/abc1234`
+- Loading URL fetches `GET /api/share/abc1234` → restores state
+- Short, shareable, trackable (access counts, analytics correlation)
+
+**Frontend Changes Required:**
+
+1. **Update `src/utils/shareUrl.js`:**
+   ```js
+   // Change from sync to async
+   export async function generateShareUrl(credences, sessionId) {
+     const response = await fetch('/api/share', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ credences, sessionId, quizVersion: QUIZ_VERSION })
+     });
+     const { id } = await response.json();
+     return `${window.location.origin}/s/${id}`;
+   }
+
+   export async function loadFromShareUrl(shortId) {
+     const response = await fetch(`/api/share/${shortId}`);
+     if (!response.ok) return null;
+     return response.json(); // { credences, quizVersion, createdAt }
+   }
+   ```
+
+2. **Update `ResultsScreen.jsx`:**
+   - Make share handler async
+   - Add loading state while generating URL
+   - Handle API errors gracefully
+
+3. **Update `QuizContext.jsx` or `App.jsx`:**
+   - On mount, check for `/s/:id` path or `#s=:id` hash
+   - If found, fetch share data and hydrate state
+   - Redirect `/s/:id` → `/#s=:id` is handled by Netlify, frontend reads hash
+
+4. **Add loading state:**
+   - Show spinner/skeleton while fetching share data on page load
+   - Prevent flash of welcome screen before results load
+
+**URL Handling Flow:**
+```
+User visits /s/abc1234
+       ↓
+Netlify redirects → /#s=abc1234 (302)
+       ↓
+Frontend reads hash, extracts ID
+       ↓
+Fetch GET /api/share/abc1234
+       ↓
+Hydrate credences → show results
+```
+
+**Backwards Compatibility:**
+- Keep supporting `#results=compressed_data` for existing shared links
+- Detection logic:
+  - `#s=` prefix → new short URL, fetch from API
+  - `#results=` prefix → legacy, decompress client-side
+- Can eventually deprecate `#results=` format
+
+**Error Handling:**
+- Share not found (404) → Toast "This share link has expired or doesn't exist"
+- Network error → Toast "Couldn't load shared results. Please try again."
+- Quiz version mismatch → Warning but still show results (future: Layer 2 recovery)
+
+**Feature Flag Behavior:**
+- When `ui.shortShareUrls` OFF: use existing `#results=` client-side sharing
+- When `ui.shortShareUrls` ON: use API for new shares, still support legacy URLs
+
+**Dependencies:**
+- Backend: `netlify/functions/share.js` (already deployed)
+- Database: Turso `shares` table (already created)
+- Requires `ui.shareResults` to be enabled
+
+**Analytics Integration:**
+- Store `sessionId` with share for correlation
+- Track `access_count` and `last_accessed_at` server-side
+- Future: dashboard showing share virality
 
 ---
 
