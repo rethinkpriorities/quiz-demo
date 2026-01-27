@@ -645,6 +645,132 @@ Complete visual overhaul to align with Rethink Priorities branding. Renamed quiz
 
 ---
 
+## Session Persistence & Short Share URLs
+**Date:** 2026-01-26
+**Category:** Infrastructure / UI
+**Flags:** `ui.shareResults`, `ui.shortShareUrls`
+**Prototype:** N/A (infrastructure - share shouldn't work in prototypes)
+**Dependencies:** lz-string, Turso database, Netlify functions
+
+**Description:**
+Two related features implemented together:
+1. **Session Persistence** - Quiz progress survives page reloads via sessionStorage
+2. **Short Share URLs** - Database-backed short URLs replace long client-side encoded URLs
+
+**Session Persistence Behavior:**
+- Quiz state (currentStep, credences, inputMode, lockedKey) saved to sessionStorage
+- Debounced saves (300ms) to avoid excessive writes
+- Session ID generated via `crypto.randomUUID()` for analytics correlation
+- Conflict modal when user has progress AND opens a share URL
+- Three options: "Keep my progress", "Load shared results", "Open in new tab"
+- `hashchange` listener detects share URLs pasted while already on page
+
+**Short Share URLs Behavior:**
+- Share button calls `POST /api/share` with full question state
+- Returns short ID, generates URL like `#s=abc1234`
+- Opening URL calls `GET /api/share?id=abc1234` to fetch data
+- Backwards compatible: still supports legacy `#results=compressed` URLs
+- Safari clipboard fix using `ClipboardItem` with Promise
+
+**Data Stored in Share:**
+```js
+{
+  sessionId: "uuid",
+  quizVersion: 1,
+  questions: {
+    "questionId": {
+      credences: { opt1: 50, opt2: 30, opt3: 20 },
+      inputMode: "sliders",
+      lockedKey: "opt1"
+    }
+  }
+}
+```
+
+**Session Storage Keys:**
+| Key | Purpose |
+|-----|---------|
+| `quiz_session_id` | UUID for analytics |
+| `quiz_state` | Versioned state object |
+| `quiz_skip_conflict` | Flag to skip conflict modal (for "Open in new tab") |
+
+**Conflict Resolution Flow:**
+```
+Page load
+    ↓
+Check for share URL (#s= or #results=)
+    ↓
+Check for saved session
+    ↓
+Both exist? → Show conflict modal
+    ↓
+User chooses → Hydrate from chosen source
+```
+
+**Implementation:**
+
+1. **session.js** (`src/utils/session.js`):
+   - `getOrCreateSessionId()` - Get/create UUID
+   - `saveQuizState(state)` / `loadQuizState()` - Persist/restore
+   - `hasSavedState()` / `clearQuizState()` - Detection and cleanup
+   - `setSkipConflict()` / `checkAndClearSkipConflict()` - New tab handling
+
+2. **shareUrl.js** (`src/utils/shareUrl.js`):
+   - `generateShareUrlAsync(questionStates)` - Call backend API
+   - `fetchShareData(shortId)` - Fetch from backend
+   - `detectShareUrl()` - Detect `#s=` vs `#results=` format
+   - `parseShareUrlAsync()` - Handle both formats
+   - `isShortShareEnabled()` - Check feature flag
+
+3. **QuizContext.jsx**:
+   - Added `sessionId` state (lazy initialized)
+   - Added `isHydrating` state to prevent flash of welcome screen
+   - Hydration effect checks both share URL and sessionStorage
+   - Conflict modal state and handlers
+   - Persistence effect with 300ms debounce
+   - `hashchange` listener for mid-session URL changes
+   - New actions: `RESTORE_FROM_URL` (updated), `RESTORE_FROM_SESSION`
+
+4. **SessionConflictModal.jsx** (`src/components/ui/SessionConflictModal.jsx`):
+   - Three-button modal for conflict resolution
+   - "Open in new tab" sets skip flag before opening
+
+5. **ResultsScreen.jsx**:
+   - Async share handler with loading state
+   - Safari `ClipboardItem` fix for async clipboard writes
+   - Error handling with toast display
+
+6. **MoralParliamentQuiz.jsx**:
+   - Returns null while `isHydrating` to prevent welcome screen flash
+
+7. **share.js** (`netlify/functions/share.js`):
+   - Updated to accept `questions` (new) or `credences` (legacy)
+   - Returns appropriate format based on stored data
+
+8. **OptionButton.jsx**:
+   - Clears slider lock when option selected (bug fix)
+
+**Files Changed:**
+- `src/utils/session.js` - NEW
+- `src/utils/shareUrl.js` - Added async functions, format detection
+- `src/context/QuizContext.jsx` - Session management, hydration, conflict handling
+- `src/components/ui/SessionConflictModal.jsx` - NEW
+- `src/styles/components/SessionConflictModal.module.css` - NEW
+- `src/components/ResultsScreen.jsx` - Async share, Safari clipboard fix
+- `src/components/MoralParliamentQuiz.jsx` - Hydration guard
+- `src/components/QuestionScreen.jsx` - Pass setLockedKey to OptionButton
+- `src/components/ui/OptionButton.jsx` - Clear lock on option select
+- `netlify/functions/share.js` - Support new data format
+- `config/features.json` - Added `ui.shortShareUrls`
+- `eslint.config.js` - Added browser globals
+- `CLAUDE.md` - Updated dev server docs
+
+**Bug Fixes Included:**
+- Clear slider lock when selecting option in select view
+- Safari clipboard API requires `ClipboardItem` with Promise for async operations
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.

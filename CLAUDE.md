@@ -100,7 +100,8 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Calculation Display | `calculations.show*`, `calculations.sideBySideComparison` | Control which calculation cards appear and comparison mode |
 | Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
-| Share Results | `ui.shareResults` | Share quiz results via URL. Copies link to clipboard; opening link restores credences and shows results. |
+| Share Results | `ui.shareResults`, `ui.shortShareUrls` | Share quiz results via URL. Short URLs use backend API; legacy URLs use client-side encoding. |
+| Session Persistence | N/A | Quiz progress persists across page reloads via sessionStorage. Conflict modal when share URL + existing session. |
 | Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
 | Donor Compass Branding | N/A | Visual revamp: Raleway font, teal gradient background, RP logo, white CTA buttons, consistent card styling. |
 
@@ -405,171 +406,6 @@ Show an "Explain Results" button that generates a personalized explanation of wh
 
 ---
 
-### 9. Session Persistence
-**Flag:** N/A (infrastructure feature)
-
-Persist quiz state across page reloads using browser storage. Foundation for Multiple Worldviews feature and analytics.
-
-**Behavior:**
-- Quiz progress survives accidental page reload
-- Share URL + existing session triggers conflict modal
-- Session ID generated for analytics correlation
-- Versioned storage format for future migrations
-
-**Storage Strategy:**
-
-| Data | Storage | Lifetime |
-|------|---------|----------|
-| Current quiz progress | `sessionStorage` | Until tab closes |
-| Saved worldviews (future) | `localStorage` | Until user deletes |
-| Session ID | `sessionStorage` | Until tab closes |
-
-**Conflict Resolution:**
-When user has existing session AND opens a share URL:
-```
-┌─────────────────────────────────────────────┐
-│  You have unsaved progress                  │
-│                                             │
-│  Loading this shared link will replace      │
-│  your current quiz data.                    │
-│                                             │
-│    [Keep my progress]  [Load shared]        │
-└─────────────────────────────────────────────┘
-```
-- Neither source hydrates until user chooses
-- "Keep mine" → hydrate from storage, ignore URL
-- "Load shared" → hydrate from URL, clear storage
-
-**Data Format:**
-```js
-// sessionStorage: quiz_state
-{
-  version: 1,
-  state: {
-    currentStep: "question-3",
-    questions: { /* credences per question */ }
-  }
-}
-
-// sessionStorage: quiz_session (for analytics)
-"uuid-string"
-
-// sessionStorage: origin_share (if arrived via share link)
-"x7Kp2mQ"
-```
-
-**Implementation Notes:**
-- Add `HYDRATE_FROM_STORAGE` action to reducer
-- Hydration effect runs on mount, checks both storage and URL
-- Persistence effect saves on `currentStep` and `questions` changes
-- Debounce persistence writes (300ms) to avoid excessive storage calls
-- Share URL detection happens before storage hydration decision
-
-**Session ID for Analytics:**
-- Generated once per browser session via `crypto.randomUUID()`
-- Included in share data when user shares (`sessionId` field)
-- Recipients get `originShare` field linking to source share ID
-- Enables tracking: analytics events → share record → downstream sessions
-
-**Dependencies:**
-- None (pure frontend, no backend required)
-- Foundational for: Multiple Worldviews (#4), Analytics, Share improvements
-
----
-
-### 10. Short Share URLs (Database-Backed)
-**Flag:** `ui.shortShareUrls` (extends `ui.shareResults`)
-
-Replace long `#results=compressed_data` URLs with short `/s/abc1234` links using the backend API.
-
-**Current behavior (client-side only):**
-- Share button generates URL with all credences compressed in hash: `#results=N4IgLg...`
-- Loading URL decompresses and restores state client-side
-- URLs are long (~200+ chars) and fragile (any config change breaks them)
-
-**New behavior (database-backed):**
-- Share button calls `POST /api/share` with credences → returns short ID
-- User gets clean URL: `https://donorcompass.org/s/abc1234`
-- Loading URL fetches `GET /api/share/abc1234` → restores state
-- Short, shareable, trackable (access counts, analytics correlation)
-
-**Frontend Changes Required:**
-
-1. **Update `src/utils/shareUrl.js`:**
-   ```js
-   // Change from sync to async
-   export async function generateShareUrl(credences, sessionId) {
-     const response = await fetch('/api/share', {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ credences, sessionId, quizVersion: QUIZ_VERSION })
-     });
-     const { id } = await response.json();
-     return `${window.location.origin}/s/${id}`;
-   }
-
-   export async function loadFromShareUrl(shortId) {
-     const response = await fetch(`/api/share/${shortId}`);
-     if (!response.ok) return null;
-     return response.json(); // { credences, quizVersion, createdAt }
-   }
-   ```
-
-2. **Update `ResultsScreen.jsx`:**
-   - Make share handler async
-   - Add loading state while generating URL
-   - Handle API errors gracefully
-
-3. **Update `QuizContext.jsx` or `App.jsx`:**
-   - On mount, check for `/s/:id` path or `#s=:id` hash
-   - If found, fetch share data and hydrate state
-   - Redirect `/s/:id` → `/#s=:id` is handled by Netlify, frontend reads hash
-
-4. **Add loading state:**
-   - Show spinner/skeleton while fetching share data on page load
-   - Prevent flash of welcome screen before results load
-
-**URL Handling Flow:**
-```
-User visits /s/abc1234
-       ↓
-Netlify redirects → /#s=abc1234 (302)
-       ↓
-Frontend reads hash, extracts ID
-       ↓
-Fetch GET /api/share/abc1234
-       ↓
-Hydrate credences → show results
-```
-
-**Backwards Compatibility:**
-- Keep supporting `#results=compressed_data` for existing shared links
-- Detection logic:
-  - `#s=` prefix → new short URL, fetch from API
-  - `#results=` prefix → legacy, decompress client-side
-- Can eventually deprecate `#results=` format
-
-**Error Handling:**
-- Share not found (404) → Toast "This share link has expired or doesn't exist"
-- Network error → Toast "Couldn't load shared results. Please try again."
-- Quiz version mismatch → Warning but still show results (future: Layer 2 recovery)
-
-**Feature Flag Behavior:**
-- When `ui.shortShareUrls` OFF: use existing `#results=` client-side sharing
-- When `ui.shortShareUrls` ON: use API for new shares, still support legacy URLs
-
-**Dependencies:**
-- Backend: `netlify/functions/share.js` (already deployed)
-- Database: Turso `shares` table (already created)
-- Requires `ui.shareResults` to be enabled
-
-**Analytics Integration:**
-- Store `sessionId` with share for correlation
-- Track `access_count` and `last_accessed_at` server-side
-- Future: dashboard showing share virality
-
----
-
 ## References
 
 | File | Purpose |
@@ -580,6 +416,7 @@ Hydrate credences → show results
 | `src/context/QuizContext.jsx` | React Context state management |
 | `src/utils/calculations.js` | Calculation functions |
 | `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |
+| `src/utils/session.js` | Session persistence utilities (sessionStorage) |
 | `netlify.toml` | Netlify deployment config (build, redirects, functions) |
 | `netlify/functions/share.js` | Share URL serverless function |
 | `migrations/` | Database migrations (idempotent SQL) |
