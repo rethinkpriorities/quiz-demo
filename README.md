@@ -212,8 +212,7 @@ quiz-demo/
 ├── package.json                    # Dependencies and scripts
 │
 ├── netlify/functions/              # Serverless backend
-│   ├── share.py                    # Share URL API (create/retrieve)
-│   └── requirements.txt            # Python dependencies
+│   └── share.js                    # Share URL API (create/retrieve)
 │
 ├── migrations/                     # Database migrations (idempotent SQL)
 │   └── 001_initial_schema.sql      # Creates shares table
@@ -320,7 +319,6 @@ See `src/utils/calculations.js` for implementation details (`adjustCredences()` 
 - **Vite 6.0.5** - Build tool and dev server
 - **Netlify** - Hosting and serverless functions
 - **Turso** - SQLite database (libSQL)
-- **Python** - Serverless function runtime
 - **lucide-react 0.462.0** - Icons
 - **CSS Modules** - Component-scoped styling
 - **CSS Custom Properties** - Design system (colors, spacing, typography)

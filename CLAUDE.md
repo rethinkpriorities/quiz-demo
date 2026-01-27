@@ -37,7 +37,7 @@ SQLite database hosted on Turso for share URL persistence.
 **Local setup:**
 ```bash
 python3 scripts/init-dev-db.py   # Create local dev.db with schema
-netlify dev                       # Run frontend + functions locally
+netlify dev                       # Run frontend + functions at localhost:8888
 ```
 
 **Credentials:**
@@ -45,8 +45,8 @@ netlify dev                       # Run frontend + functions locally
 - Local `.env` file (gitignored) points to local SQLite
 
 ### Serverless Functions
-Python functions in `netlify/functions/`. Currently:
-- `share.py` - Create/retrieve share URLs (`POST/GET /api/share`)
+JavaScript functions in `netlify/functions/`. Currently:
+- `share.js` - Create/retrieve share URLs (`POST/GET /api/share`)
 
 ### Database Migrations
 Migrations are idempotent SQL files in `migrations/`. Uses `CREATE TABLE IF NOT EXISTS` pattern.
@@ -480,7 +480,7 @@ When user has existing session AND opens a share URL:
 | `src/utils/calculations.js` | Calculation functions |
 | `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |
 | `netlify.toml` | Netlify deployment config (build, redirects, functions) |
-| `netlify/functions/share.py` | Share URL serverless function |
+| `netlify/functions/share.js` | Share URL serverless function |
 | `migrations/` | Database migrations (idempotent SQL) |
 | `scripts/snapshot.sh` | Prototype builder |
 | `scripts/init-dev-db.py` | Initialize local dev database |
