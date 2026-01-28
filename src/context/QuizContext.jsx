@@ -10,7 +10,7 @@ import {
 import questionsConfig from '../../config/questions.json';
 import causesConfig from '../../config/causes.json';
 import features from '../../config/features.json';
-import { detectShareUrl, parseShareUrlAsync, clearShareHash } from '../utils/shareUrl';
+import { detectShareUrl, parseShareUrl, clearShareHash } from '../utils/shareUrl';
 import {
   getOrCreateSessionId,
   saveQuizState,
@@ -373,7 +373,7 @@ export function QuizProvider({ children }) {
       const hasSession = hasSavedState();
 
       // No share URL - just restore from session if available
-      if (shareDetected.type === null) {
+      if (!shareDetected.hasShare) {
         if (hasSession) {
           const savedState = loadQuizState();
           if (savedState) {
@@ -385,7 +385,7 @@ export function QuizProvider({ children }) {
       }
 
       // Share URL detected - parse it
-      const shareResult = await parseShareUrlAsync();
+      const shareResult = await parseShareUrl();
 
       if (!shareResult) {
         // Invalid share URL, restore from session
@@ -452,10 +452,10 @@ export function QuizProvider({ children }) {
 
     const handleHashChange = async () => {
       const shareDetected = detectShareUrl();
-      if (shareDetected.type === null) return;
+      if (!shareDetected.hasShare) return;
 
       // Parse the share URL
-      const shareResult = await parseShareUrlAsync();
+      const shareResult = await parseShareUrl();
       if (!shareResult || shareResult.error) {
         if (shareResult?.error) {
           setShareUrlError(shareResult.error);

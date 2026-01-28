@@ -8,7 +8,7 @@ import QuestionIcon from './ui/QuestionIcon';
 import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
-import { generateShareUrl, generateShareUrlAsync, isShortShareEnabled } from '../utils/shareUrl';
+import { generateShareUrl } from '../utils/shareUrl';
 import styles from '../styles/components/Results.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
@@ -73,7 +73,6 @@ function ResultsScreen() {
   };
 
   const handleShareClick = async () => {
-    // Clear any previous error
     setShareError(null);
 
     const showCopiedFeedback = () => {
@@ -90,62 +89,47 @@ function ResultsScreen() {
       document.body.removeChild(textArea);
     };
 
-    // Use short URLs if enabled, otherwise fall back to legacy
-    if (isShortShareEnabled()) {
-      // Build worldviews state for backend
-      const worldviewsForShare = {};
-      for (const [worldviewId, worldview] of Object.entries(worldviews)) {
-        const questionStates = {};
-        for (const [questionId, qState] of Object.entries(worldview.questions)) {
-          questionStates[questionId] = {
-            credences: qState.credences,
-            inputMode: qState.inputMode,
-            lockedKey: qState.lockedKey,
-          };
-        }
-        worldviewsForShare[worldviewId] = { questions: questionStates };
+    // Build worldviews state for backend
+    const worldviewsForShare = {};
+    for (const [worldviewId, worldview] of Object.entries(worldviews)) {
+      const questionStates = {};
+      for (const [questionId, qState] of Object.entries(worldview.questions)) {
+        questionStates[questionId] = {
+          credences: qState.credences,
+          inputMode: qState.inputMode,
+          lockedKey: qState.lockedKey,
+        };
       }
+      worldviewsForShare[worldviewId] = { questions: questionStates };
+    }
 
-      setShareLoading(true);
+    setShareLoading(true);
 
-      // Create the URL promise before any async work
-      const urlPromise = generateShareUrlAsync(worldviewsForShare, activeWorldviewId).then(
-        ({ url }) => url
-      );
+    // Create the URL promise before any async work
+    const urlPromise = generateShareUrl(worldviewsForShare, activeWorldviewId).then(
+      ({ url }) => url
+    );
 
-      try {
-        // Safari requires ClipboardItem with a Promise to maintain user gesture context
-        if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
-          const blobPromise = urlPromise.then((url) => new Blob([url], { type: 'text/plain' }));
-          await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blobPromise })]);
-        } else {
-          // Fallback for browsers without ClipboardItem
-          const url = await urlPromise;
-          try {
-            await navigator.clipboard.writeText(url);
-          } catch {
-            copyToClipboardFallback(url);
-          }
+    try {
+      // Safari requires ClipboardItem with a Promise to maintain user gesture context
+      if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+        const blobPromise = urlPromise.then((url) => new Blob([url], { type: 'text/plain' }));
+        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blobPromise })]);
+      } else {
+        // Fallback for browsers without ClipboardItem
+        const url = await urlPromise;
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch {
+          copyToClipboardFallback(url);
         }
-        showCopiedFeedback();
-      } catch (err) {
-        setShareError(err.message || 'Failed to create share link');
-        window.setTimeout(() => setShareError(null), 5000);
-      } finally {
-        setShareLoading(false);
-      }
-    } else {
-      // Legacy: client-side encoding (sync, no Safari issues)
-      const credences = Object.fromEntries(
-        Object.entries(stateMap).map(([questionId, state]) => [questionId, state.credences])
-      );
-      const url = generateShareUrl(credences);
-      try {
-        await navigator.clipboard.writeText(url);
-      } catch {
-        copyToClipboardFallback(url);
       }
       showCopiedFeedback();
+    } catch (err) {
+      setShareError(err.message || 'Failed to create share link');
+      window.setTimeout(() => setShareError(null), 5000);
+    } finally {
+      setShareLoading(false);
     }
   };
 

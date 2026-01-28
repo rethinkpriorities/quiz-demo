@@ -73,28 +73,17 @@ export async function handler(event) {
 
 async function createShare(event, db) {
   const body = JSON.parse(event.body || '{}');
-  const { worldviews, activeWorldviewId, questions, credences, sessionId, quizVersion } = body;
+  const { worldviews, activeWorldviewId, sessionId, quizVersion } = body;
 
-  // Support worldviews format, questions format, and legacy credences format
-  let dataToStore;
-  if (worldviews && activeWorldviewId) {
-    // New worldviews format
-    dataToStore = { worldviews, activeWorldviewId };
-  } else if (questions) {
-    // Questions format (legacy)
-    dataToStore = questions;
-  } else if (credences) {
-    // Credences-only format (legacy)
-    dataToStore = credences;
-  }
-
-  if (!dataToStore) {
+  if (!worldviews || !activeWorldviewId) {
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: 'Missing worldviews, questions, or credences' }),
+      body: JSON.stringify({ error: 'Missing worldviews or activeWorldviewId' }),
     };
   }
+
+  const dataToStore = { worldviews, activeWorldviewId };
 
   // Generate unique short ID (retry on collision)
   for (let attempt = 0; attempt < 5; attempt++) {
