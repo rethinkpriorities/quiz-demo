@@ -8,7 +8,9 @@
     "questionTypes": true,
     "shareResults": true,
     "shortShareUrls": true,
-    "multipleWorldviews": true
+    "multipleWorldviews": true,
+    "questionInfo": true,
+    "answerInfo": true
   },
 
   "calculations": {

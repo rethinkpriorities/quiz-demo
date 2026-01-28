@@ -3,6 +3,7 @@ import ProgressBar from './layout/ProgressBar';
 import ModeToggle from './ui/ModeToggle';
 import OptionButton from './ui/OptionButton';
 import CredenceSlider from './ui/CredenceSlider';
+import InfoTooltip from './ui/InfoTooltip';
 import { useQuiz } from '../context/useQuiz';
 import { adjustCredences, roundCredences } from '../utils/calculations';
 import { CATEGORY_LABEL_COLOR, QUESTION_TYPES } from '../constants/config';
@@ -39,6 +40,8 @@ function QuestionScreen() {
   const isQuestionTypesEnabled = features.ui?.questionTypes !== false;
   const showModeToggle = !isQuestionTypesEnabled || questionType === QUESTION_TYPES.DEFAULT;
   const effectiveInputMode = getEffectiveInputMode(questionType, inputMode, isQuestionTypesEnabled);
+  const showQuestionInfo = features.ui?.questionInfo !== false;
+  const showAnswerInfo = features.ui?.answerInfo !== false;
 
   const instructions =
     effectiveInputMode === 'options'
@@ -56,7 +59,10 @@ function QuestionScreen() {
             {currentQuestion.categoryLabel}
           </div>
 
-          <h2 className={styles.heading}>{currentQuestion.heading}</h2>
+          <h2 className={styles.heading}>
+            {currentQuestion.heading}
+            {showQuestionInfo && <InfoTooltip content={currentQuestion.info} />}
+          </h2>
 
           <p className={styles.instructions}>{instructions}</p>
 
@@ -69,6 +75,7 @@ function QuestionScreen() {
                     key={opt.key}
                     label={opt.label}
                     description={opt.description}
+                    info={showAnswerInfo ? opt.info : null}
                     optionKey={opt.key}
                     credences={credences}
                     setCredences={setCredences}
@@ -82,6 +89,7 @@ function QuestionScreen() {
                     key={opt.key}
                     label={opt.label}
                     description={opt.description}
+                    info={showAnswerInfo ? opt.info : null}
                     value={credences[opt.key]}
                     onChange={(val, baseCredences, shouldRound, currentLockedKey) => {
                       const adjusted = adjustCredences(

@@ -22,14 +22,23 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Fallback color matching the dark end of the gradient */
+  background-color: #0c435f;
 }
 
 body {
   margin: 0;
   padding: 0;
+  /* Account for iOS safe areas */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   min-height: 100vh;
   font-family: var(--font-heading);
   color: var(--text-primary);
+  /* Fallback color for areas outside the gradient */
+  background-color: #0c435f;
   background: var(--gradient-bg);
   background-image: url('/bg-dark.png');
   background-size: cover;
@@ -72,6 +81,8 @@ input[type='range'] {
   appearance: none;
   outline: none;
   cursor: pointer;
+  /* Prevent browser touch gestures from interfering with slider drag */
+  touch-action: none;
 }
 
 /* Range slider track styles */
@@ -92,7 +103,8 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 50%;
   background: white;
   cursor: pointer;
-  border: 2px solid currentColor;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 input[type='range']::-moz-range-thumb {
@@ -101,7 +113,8 @@ input[type='range']::-moz-range-thumb {
   border-radius: 50%;
   background: white;
   cursor: pointer;
-  border: 2px solid currentColor;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -172,8 +185,12 @@ input[type='range']::-moz-range-thumb {
 .header {
   padding: var(--spacing-16) var(--spacing-32);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+}
+
+.header-with-subtitle {
+  justify-content: space-between;
 }
 
 .header-brand {
@@ -355,5 +372,27 @@ input[type='range']::-moz-range-thumb {
   .btn {
     padding: var(--spacing-8) var(--spacing-12);
     font-size: var(--text-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: var(--spacing-12) var(--spacing-8);
+  }
+
+  .header-with-subtitle {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .header-with-subtitle .header-brand {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-4);
+  }
+
+  .header-with-subtitle .header-title {
+    font-size: var(--text-2xl);
   }
 }

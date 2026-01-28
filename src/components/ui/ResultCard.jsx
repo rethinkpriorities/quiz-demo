@@ -1,4 +1,5 @@
 import CauseBar from './CauseBar';
+import MethodIcon from './MethodIcon';
 import styles from '../../styles/components/Results.module.css';
 import copy from '../../../config/copy.json';
 
@@ -16,7 +17,6 @@ function ResultCard({
   simpleMode = false,
 }) {
   const method = copy.results.methods[methodKey];
-  const iconClass = methodKey === 'mergedFavorites' ? 'merged' : methodKey;
 
   const footerContent = evs
     ? `${method.footerLabel} ${causeEntries.map(([key, cause]) => `${cause.name.slice(0, 2)} ${evs[key].toFixed(0)}`).join(' · ')}`
@@ -25,7 +25,9 @@ function ResultCard({
   return (
     <div className={`${styles.resultCard} ${simpleMode ? styles.compactCard : ''}`}>
       <div className={styles.cardHeader}>
-        <div className={`${styles.cardIcon} ${styles[iconClass]}`}>{method.icon}</div>
+        <div className={styles.cardIcon}>
+          <MethodIcon name={method.icon} size={18} />
+        </div>
         <div>
           <h3 className={styles.cardTitle}>{method.title}</h3>
           {!simpleMode && <p className={styles.cardSubtitle}>{method.subtitle}</p>}

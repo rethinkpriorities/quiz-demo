@@ -15,15 +15,8 @@
 }
 
 .headingEmphasis {
-  font-family: var(--font-script);
-  font-style: italic;
-  font-weight: var(--font-normal);
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  /* Matches parent heading style - no special styling */
   display: inline-block;
-  padding-right: 0.1em; /* Prevent clipping on italic text */
 }
 
 .intro {

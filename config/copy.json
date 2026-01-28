@@ -25,35 +25,35 @@
   "results": {
     "heading": "Recommended Allocations",
     "modifiedIndicator": "(modified)",
-    "adjustCredencesHeading": "🎛️ Adjust Your Credences",
+    "adjustCredencesHeading": "Adjust Your Credences",
     "resetAllButton": "Reset All",
     "resetConfirmation": "Are you sure? This will clear all your answers and return to the beginning.",
     "shareButton": "Share Results",
     "shareCopied": "Link copied!",
     "methods": {
       "maxEV": {
-        "icon": "🎯",
+        "icon": "target",
         "title": "Max Expected Value",
         "subtitle": "100% to highest EV",
         "footerLabel": "EVs:",
         "footerText": null
       },
       "parliament": {
-        "icon": "🏛️",
+        "icon": "parliament",
         "title": "Variance Voting",
         "subtitle": "Weighted worldview votes",
         "footerLabel": null,
         "footerText": "Each worldview votes for preferred cause"
       },
       "mergedFavorites": {
-        "icon": "🤝",
+        "icon": "handshake",
         "title": "Merged Favorites",
         "subtitle": "Budget shares to favorites",
         "footerLabel": null,
         "footerText": "Each worldview allocates its budget share"
       },
       "maximin": {
-        "icon": "⚖️",
+        "icon": "scale",
         "title": "Maximin (Egalitarian)",
         "subtitle": "Fairest to all worldviews",
         "footerLabel": null,

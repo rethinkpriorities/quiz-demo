@@ -54,7 +54,7 @@ const mockQuestions = [
   {
     id: 'animal',
     editPanelTitle: 'Animal Values',
-    emoji: '🐾',
+    icon: 'paw',
     options: [
       { key: 'equal', panelLabel: 'Equal weight', panelShort: 'Eq', color: '#81B29A' },
       { key: '10x', panelLabel: '10× less', panelShort: '10×', color: '#98C1D9' },
@@ -64,7 +64,7 @@ const mockQuestions = [
   {
     id: 'future',
     editPanelTitle: 'Future Values',
-    emoji: '⏳',
+    icon: 'hourglass',
     options: [
       { key: 'equal', panelLabel: 'Equal weight', panelShort: 'Eq', color: '#81B29A' },
       { key: '10x', panelLabel: '10× less', panelShort: '10×', color: '#98C1D9' },
@@ -74,7 +74,7 @@ const mockQuestions = [
   {
     id: 'scale',
     editPanelTitle: 'Scale Sensitivity',
-    emoji: '📊',
+    icon: 'bar-chart',
     options: [
       { key: 'equal', panelLabel: 'Irrelevant', panelShort: 'Eq', color: '#81B29A' },
       { key: '10x', panelLabel: 'Matters', panelShort: '10×', color: '#98C1D9' },
@@ -84,7 +84,7 @@ const mockQuestions = [
   {
     id: 'certainty',
     editPanelTitle: 'Evidence Preference',
-    emoji: '🔬',
+    icon: 'microscope',
     options: [
       { key: 'equal', panelLabel: 'Equal weight', panelShort: 'Eq', color: '#81B29A' },
       { key: '10x', panelLabel: '10× less', panelShort: '10×', color: '#98C1D9' },
