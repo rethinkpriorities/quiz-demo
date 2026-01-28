@@ -648,9 +648,11 @@ Complete visual overhaul to align with Rethink Priorities branding. Renamed quiz
 ## Session Persistence & Short Share URLs
 **Date:** 2026-01-26
 **Category:** Infrastructure / UI
-**Flags:** `ui.shareResults`, `ui.shortShareUrls`
+**Flags:** `ui.shareResults` (note: `ui.shortShareUrls` was removed in simplification on 2026-01-28)
 **Prototype:** N/A (infrastructure - share shouldn't work in prototypes)
-**Dependencies:** lz-string, Turso database, Netlify functions
+**Dependencies:** Turso database, Netlify functions (note: lz-string dependency was removed in simplification)
+
+> **Simplification Note (2026-01-28):** The `shortShareUrls` flag and legacy client-side URL encoding were removed. Share functionality now only uses the backend API approach. The lz-string dependency was also removed.
 
 **Description:**
 Two related features implemented together:

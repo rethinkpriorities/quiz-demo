@@ -100,7 +100,7 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Calculation Display | `calculations.show*`, `calculations.sideBySideComparison` | Control which calculation cards appear and comparison mode |
 | Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
-| Share Results | `ui.shareResults`, `ui.shortShareUrls` | Share quiz results via URL. Short URLs use backend API; legacy URLs use client-side encoding. |
+| Share Results | `ui.shareResults` | Share quiz results via URL using backend API. |
 | Session Persistence | N/A | Quiz progress persists across page reloads via sessionStorage. Conflict modal when share URL + existing session. |
 | Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
 | Donor Compass Branding | N/A | Visual revamp: Raleway font, teal gradient background, RP logo, white CTA buttons, consistent card styling. |
