@@ -1,17 +1,19 @@
 // Option colors by index (applies to all questions)
-// Option 0 = green, Option 1 = blue, Option 2 = coral
-export const OPTION_COLORS = ['#81B29A', '#98C1D9', '#E07A5F'];
+// Neutralized to match teal/white scheme - custom colors preserved in config structure
+const NEUTRAL_OPTION_COLOR = 'rgba(255, 255, 255, 0.8)';
+export const OPTION_COLORS = [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR];
 
-// Question type colors - placeholder, same colors for now
+// Question type colors - neutralized, same color for all
 // Design decisions are handled by UX team, not implementation
 export const QUESTION_TYPE_COLORS = {
-  default: ['#81B29A', '#98C1D9', '#E07A5F'],
-  selection: ['#81B29A', '#98C1D9', '#E07A5F'],
-  credence: ['#81B29A', '#98C1D9', '#E07A5F'],
+  default: [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR],
+  selection: [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR],
+  credence: [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR],
 };
 
 // Category label color (appears above question heading)
-export const CATEGORY_LABEL_COLOR = '#81B29A';
+// Neutralized to white to match overall scheme
+export const CATEGORY_LABEL_COLOR = 'rgba(255, 255, 255, 0.7)';
 
 // Color palette
 export const COLORS = {

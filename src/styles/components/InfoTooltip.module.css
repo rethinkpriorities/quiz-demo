@@ -1,0 +1,62 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 0.4rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s ease;
+}
+
+.trigger:hover,
+.trigger:focus {
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+
+.popover {
+  position: fixed;
+  z-index: 1000;
+  width: min(600px, calc(100vw - 2rem));
+  padding: 1rem 1.25rem;
+  background: #1a2a3a;
+  color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+/* Invisible bridge to maintain hover when moving from trigger to popover */
+.popover::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.wrapper:hover .popover,
+.wrapper:focus-within .popover,
+.popoverVisible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}

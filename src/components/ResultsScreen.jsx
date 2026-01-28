@@ -4,6 +4,7 @@ import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
+import QuestionIcon from './ui/QuestionIcon';
 import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
@@ -221,7 +222,9 @@ function ResultsScreen() {
         <div className={styles.resultsHeader}>
           <h1 className={styles.title}>
             {copy.results.heading}
-            {isMultipleWorldviewsEnabled && ` (Worldview ${activeWorldviewId})`}
+            {isMultipleWorldviewsEnabled && (
+              <span className={styles.worldviewLabel}> (Worldview {activeWorldviewId})</span>
+            )}
             {hasChanged && (
               <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
             )}
@@ -262,7 +265,7 @@ function ResultsScreen() {
                 <EditPanel
                   key={question.id}
                   title={question.editPanelTitle}
-                  icon={question.emoji}
+                  icon={<QuestionIcon name={question.icon} size={16} />}
                   credences={state.credences}
                   setCredences={state.setCredences}
                   originalCredences={state.originalCredences}

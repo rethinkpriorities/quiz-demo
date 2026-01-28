@@ -8,7 +8,7 @@ const REQUIRED_QUESTION_FIELDS = [
   'id',
   'worldviewDimension',
   'categoryLabel',
-  'emoji',
+  'icon',
   'previewText',
   'heading',
   'instructionsOptions',

@@ -1,4 +1,5 @@
 import Header from './layout/Header';
+import QuestionIcon from './ui/QuestionIcon';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
 import styles from '../styles/components/WelcomeScreen.module.css';
@@ -37,7 +38,7 @@ function WelcomeScreen() {
             <div className={styles.infoBoxGrid}>
               {previewQuestions.map((question) => (
                 <div key={question.id} className={styles.infoBoxItem}>
-                  {question.emoji} {question.previewText}
+                  <QuestionIcon name={question.icon} size={16} /> {question.previewText}
                 </div>
               ))}
             </div>

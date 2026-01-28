@@ -1,6 +1,7 @@
 import { Lock } from 'lucide-react';
 import { useSliderDrag } from '../../hooks/useSliderDrag';
 import { useLockedSlider } from '../../hooks/useLockedSlider';
+import InfoTooltip from './InfoTooltip';
 import styles from '../../styles/components/Slider.module.css';
 import copy from '../../../config/copy.json';
 
@@ -11,6 +12,7 @@ import copy from '../../../config/copy.json';
 function CredenceSlider({
   label,
   description,
+  info,
   value,
   onChange,
   color,
@@ -45,7 +47,10 @@ function CredenceSlider({
     <div className={styles.credenceSlider}>
       <div className={styles.header}>
         <div>
-          <div className={styles.label}>{label}</div>
+          <div className={styles.label}>
+            {label}
+            <InfoTooltip content={info} />
+          </div>
           <div className={styles.description}>{description}</div>
         </div>
         <div className={styles.value} style={{ color }}>

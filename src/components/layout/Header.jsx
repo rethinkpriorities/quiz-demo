@@ -4,7 +4,7 @@
  */
 const Header = ({ subtitle }) => {
   return (
-    <header className="header">
+    <header className={`header${subtitle ? ' header-with-subtitle' : ''}`}>
       <div className="header-brand">
         <img
           src={`${import.meta.env.BASE_URL}NewLogoSVG.svg`}

@@ -25,10 +25,14 @@
 }
 
 .modifiedIndicator {
-  color: var(--color-success-light);
+  color: rgba(255, 255, 255, 0.6);
   font-size: var(--text-sm);
   margin-left: var(--spacing-4);
   font-weight: var(--font-normal);
+}
+
+.worldviewLabel {
+  white-space: nowrap;
 }
 
 .resultsGrid {
@@ -151,14 +155,7 @@
   align-items: center;
   justify-content: center;
   font-size: var(--text-md);
-}
-
-.cardIcon.maxEV {
-  background: var(--gradient-orange);
-}
-
-.cardIcon.parliament {
-  background: var(--gradient-green);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .cardTitle {
@@ -300,5 +297,19 @@
   .dividerArrow {
     transform: rotate(90deg);
     padding: 0 var(--spacing-2);
+  }
+
+  .backButtonContainer {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .backButtonContainer > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .worldviewLabel {
+    display: block;
   }
 }

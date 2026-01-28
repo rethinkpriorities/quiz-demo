@@ -1,3 +1,4 @@
+import InfoTooltip from './InfoTooltip';
 import styles from '../../styles/components/OptionButton.module.css';
 
 /**
@@ -7,6 +8,7 @@ import styles from '../../styles/components/OptionButton.module.css';
 function OptionButton({
   label,
   description,
+  info,
   optionKey,
   credences,
   setCredences,
@@ -37,7 +39,10 @@ function OptionButton({
     >
       <div className={styles.content}>
         <div className={styles.textContent}>
-          <div className={`${styles.label} ${isSelected ? styles.selected : ''}`}>{label}</div>
+          <div className={`${styles.label} ${isSelected ? styles.selected : ''}`}>
+            {label}
+            <InfoTooltip content={info} />
+          </div>
           <div className={styles.description}>{description}</div>
         </div>
         {isSelected && <div className={styles.checkmark}>✓</div>}

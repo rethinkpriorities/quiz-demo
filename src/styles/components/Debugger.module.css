@@ -19,6 +19,12 @@
   background: #444;
 }
 
+@media (max-width: 768px) {
+  .debugButton {
+    display: none;
+  }
+}
+
 .overlay {
   position: fixed;
   top: 0;

@@ -9,7 +9,7 @@
   text-align: left;
   transition: var(--transition-fast);
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden removed to allow tooltips to display */
 }
 
 .optionButton.default {
