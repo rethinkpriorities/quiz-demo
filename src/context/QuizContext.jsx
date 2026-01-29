@@ -160,6 +160,7 @@ const initialState = {
   activeWorldviewId: '1',
   expandedPanel: null,
   debugConfig: null,
+  selectedCalculations: { left: null, right: null },
 };
 
 const ACTIONS = {
@@ -173,6 +174,7 @@ const ACTIONS = {
   RESTORE_FROM_URL: 'RESTORE_FROM_URL',
   RESTORE_FROM_SESSION: 'RESTORE_FROM_SESSION',
   SWITCH_WORLDVIEW: 'SWITCH_WORLDVIEW',
+  SET_SELECTED_CALCULATIONS: 'SET_SELECTED_CALCULATIONS',
 };
 
 /**
@@ -269,12 +271,17 @@ function quizReducer(state, action) {
         questions: sourceQuestions,
         credences: legacyCredences,
         currentStep: sessionStep,
+        selectedCalculations: sourceSelectedCalculations,
       } = action.payload;
 
       // Helper to restore a single question's state
       const restoreQuestion = (qState, setOriginals) => ({
         credences: qState.credences,
-        originalCredences: setOriginals ? { ...qState.credences } : null,
+        originalCredences: setOriginals
+          ? { ...qState.credences }
+          : qState.originalCredences
+            ? { ...qState.originalCredences }
+            : null,
         inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
         lockedKey: qState.lockedKey || null,
       });
@@ -305,6 +312,7 @@ function quizReducer(state, action) {
           currentStep: isUrlRestore ? 'results' : sessionStep,
           worldviews: restoreWorldviews(sourceWorldviews, isUrlRestore),
           activeWorldviewId: sourceActiveId,
+          selectedCalculations: sourceSelectedCalculations || state.selectedCalculations,
         };
       }
 
@@ -338,6 +346,15 @@ function quizReducer(state, action) {
 
     case ACTIONS.SET_DEBUG_CONFIG:
       return { ...state, debugConfig: action.payload };
+
+    case ACTIONS.SET_SELECTED_CALCULATIONS:
+      return {
+        ...state,
+        selectedCalculations: {
+          ...state.selectedCalculations,
+          ...action.payload,
+        },
+      };
 
     default:
       return state;
@@ -546,6 +563,7 @@ export function QuizProvider({ children }) {
         currentStep: state.currentStep,
         worldviews: state.worldviews,
         activeWorldviewId: state.activeWorldviewId,
+        selectedCalculations: state.selectedCalculations,
       });
     }, 300);
 
@@ -554,7 +572,13 @@ export function QuizProvider({ children }) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [state.currentStep, state.worldviews, state.activeWorldviewId, isHydrating]);
+  }, [
+    state.currentStep,
+    state.worldviews,
+    state.activeWorldviewId,
+    state.selectedCalculations,
+    isHydrating,
+  ]);
 
   // Action creators
   const goToStep = useCallback((step) => {
@@ -603,6 +627,10 @@ export function QuizProvider({ children }) {
 
   const switchWorldview = useCallback((worldviewId) => {
     dispatch({ type: ACTIONS.SWITCH_WORLDVIEW, payload: worldviewId });
+  }, []);
+
+  const setSelectedCalculations = useCallback((selections) => {
+    dispatch({ type: ACTIONS.SET_SELECTED_CALCULATIONS, payload: selections });
   }, []);
 
   // Navigation helpers
@@ -780,6 +808,7 @@ export function QuizProvider({ children }) {
       activeWorldviewId: state.activeWorldviewId,
       expandedPanel: state.expandedPanel,
       debugConfig: state.debugConfig,
+      selectedCalculations: state.selectedCalculations,
       shareUrlError,
       isHydrating,
       sessionId,
@@ -801,6 +830,7 @@ export function QuizProvider({ children }) {
       resetQuiz,
       setDebugConfig,
       switchWorldview,
+      setSelectedCalculations,
 
       // Navigation helpers
       getQuestionIndex,
@@ -835,6 +865,7 @@ export function QuizProvider({ children }) {
       state.activeWorldviewId,
       state.expandedPanel,
       state.debugConfig,
+      state.selectedCalculations,
       shareUrlError,
       isHydrating,
       sessionId,
@@ -848,6 +879,7 @@ export function QuizProvider({ children }) {
       resetQuiz,
       setDebugConfig,
       switchWorldview,
+      setSelectedCalculations,
       getQuestionIndex,
       getPrevStep,
       getNextStep,

@@ -268,6 +268,78 @@
   border-color: var(--color-warning);
 }
 
+/* Calculation Select Dropdown */
+.calculationSelect {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--text-sm);
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  background: var(--overlay-subtle);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-3) center;
+  padding-right: var(--spacing-10);
+}
+
+.calculationSelect:hover {
+  border-color: var(--border-medium);
+}
+
+.calculationSelect:focus {
+  outline: none;
+  border-color: var(--border-medium);
+}
+
+.calculationSelect option {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  padding: var(--spacing-2);
+}
+
+/* Calculation select container */
+.calculationSelectContainer {
+  margin-bottom: var(--spacing-6);
+}
+
+.calculationSelectContainer > .calculationSelect {
+  max-width: 450px;
+  margin: 0 auto var(--spacing-3);
+  display: block;
+}
+
+/* Single calculation card wrapper */
+.singleResultCard {
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+/* Ensure comparison container works inside calculationSelectContainer */
+.calculationSelectContainer .comparisonContainer {
+  margin-bottom: 0;
+}
+
+/* Side labels for comparison mode */
+.sideLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-2);
+}
+
+/* In comparison mode, selects should match card width */
+.originalResults .calculationSelect,
+.newResults .calculationSelect {
+  max-width: 100%;
+  margin: 0 0 var(--spacing-3);
+}
+
 @media (max-width: 768px) {
   .resultsGrid {
     grid-template-columns: 1fr;
@@ -311,5 +383,13 @@
 
   .worldviewLabel {
     display: block;
+  }
+
+  .singleResultCard {
+    max-width: 100%;
+  }
+
+  .calculationSelectContainer .calculationSelect {
+    max-width: 100%;
   }
 }

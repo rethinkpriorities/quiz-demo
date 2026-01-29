@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RotateCcw, Share2, Check, Loader2, Layers } from 'lucide-react';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
@@ -14,6 +14,7 @@ import features from '../../config/features.json';
 import copy from '../../config/copy.json';
 
 const isMultipleWorldviewsEnabled = features.ui?.multipleWorldviews === true;
+const isCalculationSelectEnabled = features.ui?.calculationSelect === true;
 
 /**
  * Results screen showing allocation methods.
@@ -38,6 +39,8 @@ function ResultsScreen() {
     worldviewIds,
     hasProgressMap,
     startQuiz,
+    selectedCalculations,
+    setSelectedCalculations,
   } = useQuiz();
 
   const [copied, setCopied] = useState(false);
@@ -56,6 +59,34 @@ function ResultsScreen() {
   ];
 
   const enabledMethods = CALC_METHODS.filter((m) => features.calculations?.[m.flag] === true);
+
+  // Initialize selected calculations to first enabled method if not set or invalid
+  useEffect(() => {
+    if (!isCalculationSelectEnabled || enabledMethods.length === 0) return;
+
+    const firstKey = enabledMethods[0].key;
+    const isLeftValid =
+      selectedCalculations.left && enabledMethods.some((m) => m.key === selectedCalculations.left);
+    const isRightValid =
+      selectedCalculations.right &&
+      enabledMethods.some((m) => m.key === selectedCalculations.right);
+
+    if (!isLeftValid || !isRightValid) {
+      setSelectedCalculations({
+        left: isLeftValid ? selectedCalculations.left : firstKey,
+        right: isRightValid ? selectedCalculations.right : firstKey,
+      });
+    }
+  }, [
+    enabledMethods,
+    selectedCalculations.left,
+    selectedCalculations.right,
+    setSelectedCalculations,
+  ]);
+
+  const handleCalculationChange = (side, methodKey) => {
+    setSelectedCalculations({ [side]: methodKey });
+  };
 
   const handleResetClick = () => {
     if (window.confirm(copy.results.resetConfirmation)) {
@@ -106,9 +137,12 @@ function ResultsScreen() {
     setShareLoading(true);
 
     // Create the URL promise before any async work
-    const urlPromise = generateShareUrl(worldviewsForShare, activeWorldviewId).then(
-      ({ url }) => url
-    );
+    const selectionsForShare = isCalculationSelectEnabled ? selectedCalculations : null;
+    const urlPromise = generateShareUrl(
+      worldviewsForShare,
+      activeWorldviewId,
+      selectionsForShare
+    ).then(({ url }) => url);
 
     try {
       // Safari requires ClipboardItem with a Promise to maintain user gesture context
@@ -158,6 +192,38 @@ function ResultsScreen() {
 
   // Filter out intermission questions for edit panels
   const editableQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
+
+  const renderCalculationSelect = (side) => (
+    <select
+      className={styles.calculationSelect}
+      value={selectedCalculations[side] || ''}
+      onChange={(e) => handleCalculationChange(side, e.target.value)}
+    >
+      {enabledMethods.map((method) => (
+        <option key={method.key} value={method.key}>
+          {copy.results.methods[method.key].title}
+        </option>
+      ))}
+    </select>
+  );
+
+  const renderSelectedCalculationCard = (resultsObj, side, simpleMode = true) => {
+    const selectedKey = selectedCalculations[side];
+    const method = enabledMethods.find((m) => m.key === selectedKey);
+    if (!method) return null;
+    const results = resultsObj?.[method.key];
+    if (!results) return null;
+
+    return (
+      <ResultCard
+        methodKey={method.key}
+        results={results}
+        evs={method.hasEvs ? results.evs : null}
+        causeEntries={causeEntries}
+        simpleMode={simpleMode}
+      />
+    );
+  };
 
   const renderCompactResultsGrid = (resultsObj) => (
     <div className={`${styles.resultsGrid} ${styles.compactGrid}`}>
@@ -215,7 +281,39 @@ function ResultsScreen() {
           </h1>
         </div>
 
-        {useSideBySide && hasChanged ? (
+        {isCalculationSelectEnabled ? (
+          <div className={styles.calculationSelectContainer}>
+            {useSideBySide && hasChanged ? (
+              <div className={styles.comparisonContainer}>
+                <div className={styles.originalResults}>
+                  <div className={styles.sideLabel}>Original</div>
+                  {renderCalculationSelect('left')}
+                  {renderSelectedCalculationCard(originalCalculationResults, 'left')}
+                </div>
+                <div className={styles.comparisonDivider}>
+                  <div className={styles.dividerLine} />
+                  <div className={styles.dividerArrow}>→</div>
+                  <div className={styles.dividerLine} />
+                </div>
+                <div className={styles.newResults}>
+                  <div className={styles.sideLabel}>Modified</div>
+                  {renderCalculationSelect('right')}
+                  {renderSelectedCalculationCard(calculationResults, 'right')}
+                </div>
+              </div>
+            ) : (
+              <>
+                {renderCalculationSelect('left')}
+                <div className={styles.singleResultCard}>
+                  {renderSelectedCalculationCard(
+                    originalCalculationResults || calculationResults,
+                    'left'
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : useSideBySide && hasChanged ? (
           <div className={styles.comparisonContainer}>
             <div className={styles.originalResults}>
               {renderCompactResultsGrid(originalCalculationResults)}

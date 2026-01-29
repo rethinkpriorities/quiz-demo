@@ -149,6 +149,8 @@ const createMockContextValue = (overrides = {}) => {
     resetToOriginal: vi.fn(),
     resetQuiz,
     goBack: vi.fn(),
+    selectedCalculations: { left: 'maxEV', right: null },
+    setSelectedCalculations: vi.fn(),
     ...overrides,
   };
 };
