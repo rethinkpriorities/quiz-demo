@@ -8,6 +8,8 @@ import {
   calculateMergedFavorites,
   calculateVarianceVoting,
   optimalAllocationAnalytical,
+  calculateWorldviewEVs,
+  calculateMoralMarketplace,
   DIMINISHING_RETURNS_POWER,
 } from './calculations.js';
 
@@ -233,5 +235,180 @@ describe('calculateVarianceVoting', () => {
     for (const key of Object.keys(testCauses)) {
       expect(noneResult[key]).toBeCloseTo(sqrtResult[key], 5);
     }
+  });
+});
+
+// =============================================================================
+// WORLDVIEW EVs
+// =============================================================================
+
+describe('calculateWorldviewEVs', () => {
+  it('returns correct EVs with uniform credences (no discounts)', () => {
+    const credences = {
+      animal: { equal: 100, '10x': 0, '100x': 0 },
+      future: { equal: 100, '10x': 0, '100x': 0 },
+    };
+    const evs = calculateWorldviewEVs(credences, {
+      causes: testCauses,
+      dimensions: testDimensions,
+    });
+
+    // All causes get their base points (100) with no discounts
+    expect(evs.globalHealth).toBeCloseTo(100, 1);
+    expect(evs.animalWelfare).toBeCloseTo(100, 1);
+    expect(evs.gcr).toBeCloseTo(100, 1);
+  });
+
+  it('applies animal discount correctly', () => {
+    const credences = {
+      animal: { equal: 0, '10x': 100, '100x': 0 }, // 10x discount to animals
+      future: { equal: 100, '10x': 0, '100x': 0 },
+    };
+    const evs = calculateWorldviewEVs(credences, {
+      causes: testCauses,
+      dimensions: testDimensions,
+    });
+
+    // Global health unaffected, animal welfare discounted by 0.1
+    expect(evs.globalHealth).toBeCloseTo(100, 1);
+    expect(evs.animalWelfare).toBeCloseTo(10, 1); // 100 * 0.1
+    expect(evs.gcr).toBeCloseTo(100, 1);
+  });
+
+  it('applies future discount correctly', () => {
+    const credences = {
+      animal: { equal: 100, '10x': 0, '100x': 0 },
+      future: { equal: 0, '10x': 0, '100x': 100 }, // 100x discount to future
+    };
+    const evs = calculateWorldviewEVs(credences, {
+      causes: testCauses,
+      dimensions: testDimensions,
+    });
+
+    // Global health and animal welfare unaffected, GCR discounted
+    expect(evs.globalHealth).toBeCloseTo(100, 1);
+    expect(evs.animalWelfare).toBeCloseTo(100, 1);
+    expect(evs.gcr).toBeCloseTo(1, 1); // 100 * 0.01
+  });
+
+  it('calculates weighted average with mixed credences', () => {
+    const credences = {
+      animal: { equal: 50, '10x': 50, '100x': 0 }, // 50% full value, 50% 10x discount
+      future: { equal: 100, '10x': 0, '100x': 0 },
+    };
+    const evs = calculateWorldviewEVs(credences, {
+      causes: testCauses,
+      dimensions: testDimensions,
+    });
+
+    // Animal welfare: 50% * 100 + 50% * 10 = 55
+    expect(evs.globalHealth).toBeCloseTo(100, 1);
+    expect(evs.animalWelfare).toBeCloseTo(55, 1);
+    expect(evs.gcr).toBeCloseTo(100, 1);
+  });
+});
+
+// =============================================================================
+// MORAL MARKETPLACE
+// =============================================================================
+
+describe('calculateMoralMarketplace', () => {
+  it('throws error with empty worldviews array', () => {
+    expect(() => calculateMoralMarketplace([])).toThrow('At least one worldview is required');
+  });
+
+  it('single worldview matches direct analytical allocation', () => {
+    const worldviews = [{ name: 'Test', evs: { globalHealth: 80, animalWelfare: 60, gcr: 30 } }];
+    const result = calculateMoralMarketplace(worldviews, { diminishingReturns: 'sqrt' });
+
+    // Should match direct analytical allocation
+    const directAlloc = optimalAllocationAnalytical([80, 60, 30], 100, 0.5);
+    expect(result.allocation.globalHealth).toBeCloseTo(directAlloc[0], 1);
+    expect(result.allocation.animalWelfare).toBeCloseTo(directAlloc[1], 1);
+    expect(result.allocation.gcr).toBeCloseTo(directAlloc[2], 1);
+  });
+
+  it('two equal worldviews with opposing preferences split evenly', () => {
+    const worldviews = [
+      { name: 'A', evs: { globalHealth: 100, animalWelfare: 0, gcr: 0 } },
+      { name: 'B', evs: { globalHealth: 0, animalWelfare: 100, gcr: 0 } },
+    ];
+    const result = calculateMoralMarketplace(worldviews, { diminishingReturns: 'sqrt' });
+
+    // Each worldview gets 50% budget, allocates 100% to its top cause
+    expect(result.allocation.globalHealth).toBeCloseTo(50, 1);
+    expect(result.allocation.animalWelfare).toBeCloseTo(50, 1);
+    expect(result.allocation.gcr).toBeCloseTo(0, 1);
+  });
+
+  it('respects worldview weights', () => {
+    const worldviews = [
+      { name: 'A', evs: { globalHealth: 100, animalWelfare: 0, gcr: 0 }, weight: 3 },
+      { name: 'B', evs: { globalHealth: 0, animalWelfare: 100, gcr: 0 }, weight: 1 },
+    ];
+    const result = calculateMoralMarketplace(worldviews, { diminishingReturns: 'sqrt' });
+
+    // A gets 75%, B gets 25%
+    expect(result.allocation.globalHealth).toBeCloseTo(75, 1);
+    expect(result.allocation.animalWelfare).toBeCloseTo(25, 1);
+  });
+
+  it('allocations always sum to budget', () => {
+    const worldviews = [
+      { name: 'A', evs: { globalHealth: 80, animalWelfare: 60, gcr: 40 } },
+      { name: 'B', evs: { globalHealth: 40, animalWelfare: 90, gcr: 20 } },
+      { name: 'C', evs: { globalHealth: 30, animalWelfare: 30, gcr: 95 } },
+    ];
+
+    for (const dr of ['none', 'sqrt', 'extreme']) {
+      const result = calculateMoralMarketplace(worldviews, { diminishingReturns: dr });
+      const sum = Object.values(result.allocation).reduce((a, b) => a + b, 0);
+      expect(sum).toBeCloseTo(100, 5);
+    }
+  });
+
+  it('returns per-worldview breakdown', () => {
+    const worldviews = [
+      { name: 'Utilitarian', evs: { globalHealth: 80, animalWelfare: 60, gcr: 30 } },
+      { name: 'Animal-focused', evs: { globalHealth: 40, animalWelfare: 90, gcr: 20 } },
+    ];
+    const result = calculateMoralMarketplace(worldviews, { diminishingReturns: 'sqrt' });
+
+    expect(result.worldviewAllocations).toHaveLength(2);
+    expect(result.worldviewAllocations[0].name).toBe('Utilitarian');
+    expect(result.worldviewAllocations[0].share).toBeCloseTo(50, 1);
+    expect(result.worldviewAllocations[1].name).toBe('Animal-focused');
+    expect(result.worldviewAllocations[1].share).toBeCloseTo(50, 1);
+
+    // Each worldview's allocation should sum to its share
+    for (const wv of result.worldviewAllocations) {
+      const wvSum = Object.values(wv.allocation).reduce((a, b) => a + b, 0);
+      expect(wvSum).toBeCloseTo(wv.share, 5);
+    }
+  });
+
+  it('linear (none) produces winner-take-all per worldview', () => {
+    const worldviews = [{ name: 'Test', evs: { globalHealth: 80, animalWelfare: 60, gcr: 30 } }];
+    const result = calculateMoralMarketplace(worldviews, { diminishingReturns: 'none' });
+
+    // With linear utility, 100% goes to highest EV cause
+    expect(result.allocation.globalHealth).toBeCloseTo(100, 1);
+    expect(result.allocation.animalWelfare).toBeCloseTo(0, 1);
+    expect(result.allocation.gcr).toBeCloseTo(0, 1);
+  });
+
+  it('sqrt produces spreading compared to none', () => {
+    const worldviews = [{ name: 'Test', evs: { globalHealth: 80, animalWelfare: 60, gcr: 40 } }];
+
+    const noneResult = calculateMoralMarketplace(worldviews, { diminishingReturns: 'none' });
+    const sqrtResult = calculateMoralMarketplace(worldviews, { diminishingReturns: 'sqrt' });
+
+    // With sqrt, allocation spreads across causes
+    expect(sqrtResult.allocation.globalHealth).toBeLessThan(100);
+    expect(sqrtResult.allocation.animalWelfare).toBeGreaterThan(0);
+    expect(sqrtResult.allocation.gcr).toBeGreaterThan(0);
+
+    // None is winner-take-all
+    expect(noneResult.allocation.globalHealth).toBeCloseTo(100, 1);
   });
 });

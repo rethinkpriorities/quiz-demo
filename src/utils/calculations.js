@@ -547,5 +547,126 @@ export function roundCredences(credences) {
   return rounded;
 }
 
+// =============================================================================
+// MORAL MARKETPLACE: MULTI-WORLDVIEW CALCULATIONS
+// =============================================================================
+
+/**
+ * Calculate expected value per cause for a single worldview's credences.
+ * This "collapses" the N^K micro-worldviews into a single EV per cause.
+ *
+ * @param {Object} credences - Credences per dimension, e.g.:
+ *   { animal: { equal: 33, '10x': 33, '100x': 34 }, future: {...}, ... }
+ * @param {Object} config - Optional config override
+ * @param {Object} config.causes - Causes config (defaults to CAUSES)
+ * @param {Object} config.dimensions - Dimensions config (defaults to DIMENSIONS)
+ * @returns {Object} Expected values keyed by cause ID
+ *
+ * @example
+ * const evs = calculateWorldviewEVs(credences);
+ * // => { globalHealth: 80.5, animalWelfare: 45.2, gcr: 22.1 }
+ */
+export function calculateWorldviewEVs(credences, config) {
+  const causes = config?.causes || CAUSES;
+  const dimensions = config?.dimensions || DIMENSIONS;
+  const causeKeys = Object.keys(causes);
+
+  // Initialize EVs to zero
+  const evs = {};
+  for (const causeKey of causeKeys) {
+    evs[causeKey] = 0;
+  }
+
+  // Generate all worldview combinations and sum probability-weighted values
+  for (const { options, probability } of generateWorldviews(credences)) {
+    for (const causeKey of causeKeys) {
+      const value = calculateCauseValue(causes[causeKey], options, dimensions);
+      evs[causeKey] += probability * value;
+    }
+  }
+
+  return evs;
+}
+
+/**
+ * Calculate Moral Marketplace allocation across multiple worldviews.
+ *
+ * The Moral Marketplace treats each saved worldview as a "voter" with equal budget.
+ * Each voter optimally allocates their share using diminishing returns, and results
+ * are merged into a final recommendation.
+ *
+ * @param {Object[]} worldviews - Array of worldview objects:
+ *   { name: string, evs: { causeKey: number, ... }, weight?: number }
+ * @param {Object} options - Configuration options
+ * @param {number} options.power - Diminishing returns power (default from config)
+ * @param {number} options.budget - Total budget (default: 100 for percentages)
+ * @param {string} options.diminishingReturns - Preset name ('none', 'sqrt', 'extreme')
+ * @returns {Object} Result with allocation and per-worldview breakdown
+ *
+ * @example
+ * const worldviews = [
+ *   { name: "Utilitarian", evs: { globalHealth: 80, animalWelfare: 60, gcr: 30 } },
+ *   { name: "Animal-focused", evs: { globalHealth: 40, animalWelfare: 90, gcr: 20 } },
+ * ];
+ *
+ * const result = calculateMoralMarketplace(worldviews, { diminishingReturns: 'sqrt' });
+ * // result.allocation => { globalHealth: 52.3, animalWelfare: 38.1, gcr: 9.6 }
+ * // result.worldviewAllocations => [{ name, share, allocation }, ...]
+ */
+export function calculateMoralMarketplace(worldviews, options = {}) {
+  const { budget = 100 } = options;
+  const power = options.power ?? getDiminishingReturnsPower(options);
+
+  if (worldviews.length === 0) {
+    throw new Error('At least one worldview is required');
+  }
+
+  // Get cause keys from first worldview
+  const causeKeys = Object.keys(worldviews[0].evs);
+
+  // Calculate total weight (default: equal weights)
+  const totalWeight = worldviews.reduce((sum, wv) => sum + (wv.weight || 1), 0);
+
+  // Initialize merged allocation
+  const mergedAllocation = {};
+  for (const causeKey of causeKeys) {
+    mergedAllocation[causeKey] = 0;
+  }
+
+  // Track per-worldview allocations for transparency
+  const worldviewAllocations = [];
+
+  for (const worldview of worldviews) {
+    const weight = worldview.weight || 1;
+    const share = (weight / totalWeight) * budget;
+
+    // Convert EVs to coefficient array (preserving cause order)
+    const coefficients = causeKeys.map((key) => worldview.evs[key] || 0);
+
+    // Calculate optimal allocation for this worldview's share
+    const allocation = optimalAllocationAnalytical(coefficients, share, power);
+
+    // Add to merged allocation
+    const allocationObj = {};
+    causeKeys.forEach((key, i) => {
+      mergedAllocation[key] += allocation[i];
+      allocationObj[key] = allocation[i];
+    });
+
+    worldviewAllocations.push({
+      name: worldview.name,
+      weight,
+      share,
+      allocation: allocationObj,
+    });
+  }
+
+  return {
+    allocation: mergedAllocation,
+    worldviewAllocations,
+    config: { power, budget },
+  };
+}
+
 // Export config for use by other modules
 export { CAUSES, DIMENSIONS, DEFAULT_CREDENCES, DIMINISHING_RETURNS_POWER };

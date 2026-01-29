@@ -69,5 +69,27 @@
   "sliders": {
     "lockTooltip": "Lock slider",
     "unlockTooltip": "Unlock slider"
+  },
+  "marketplace": {
+    "heading": "Moral Marketplace",
+    "description": "Combined allocation based on your worldviews",
+    "backButton": "← Back to Results",
+    "worldviewBreakdownHeading": "Worldview Contributions",
+    "emptyState": "Complete at least two worldviews to see combined results.",
+    "budgetLabel": "Total Budget",
+    "settingsLabel": "Allocation Mode",
+    "diminishingReturns": {
+      "none": "Winner-take-all",
+      "sqrt": "Balanced (default)",
+      "extreme": "Near-equal"
+    }
+  },
+  "worldviewModal": {
+    "title": "Switch Worldview",
+    "description": "Each worldview stores a separate set of quiz answers. Select a worldview to view or edit.",
+    "emptyLabel": "(empty)",
+    "currentLabel": "(current)",
+    "marketplaceButton": "Moral Marketplace",
+    "defaultName": "Worldview"
   }
 }

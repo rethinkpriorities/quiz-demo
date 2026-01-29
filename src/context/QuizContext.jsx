@@ -154,13 +154,24 @@ function worldviewHasProgress(worldview) {
   });
 }
 
+/**
+ * Create initial worldview names (e.g., "Worldview 1", "Worldview 2", "Worldview 3")
+ */
+function createInitialWorldviewNames() {
+  return Object.fromEntries(WORLDVIEW_IDS.map((id) => [id, `Worldview ${id}`]));
+}
+
+const DEFAULT_MARKETPLACE_BUDGET = 10_000_000;
+
 const initialState = {
   currentStep: 'welcome',
   worldviews: createInitialWorldviews(),
+  worldviewNames: createInitialWorldviewNames(),
   activeWorldviewId: '1',
   expandedPanel: null,
   debugConfig: null,
   selectedCalculations: { left: null, right: null },
+  marketplaceBudget: DEFAULT_MARKETPLACE_BUDGET,
 };
 
 const ACTIONS = {
@@ -175,6 +186,8 @@ const ACTIONS = {
   RESTORE_FROM_SESSION: 'RESTORE_FROM_SESSION',
   SWITCH_WORLDVIEW: 'SWITCH_WORLDVIEW',
   SET_SELECTED_CALCULATIONS: 'SET_SELECTED_CALCULATIONS',
+  SET_WORLDVIEW_NAME: 'SET_WORLDVIEW_NAME',
+  SET_MARKETPLACE_BUDGET: 'SET_MARKETPLACE_BUDGET',
 };
 
 /**
@@ -254,7 +267,11 @@ function quizReducer(state, action) {
     }
 
     case ACTIONS.RESET_QUIZ:
-      return { ...initialState, worldviews: createInitialWorldviews() };
+      return {
+        ...initialState,
+        worldviews: createInitialWorldviews(),
+        worldviewNames: createInitialWorldviewNames(),
+      };
 
     case ACTIONS.SWITCH_WORLDVIEW:
       if (!WORLDVIEW_IDS.includes(action.payload)) {
@@ -262,16 +279,35 @@ function quizReducer(state, action) {
       }
       return { ...state, activeWorldviewId: action.payload };
 
+    case ACTIONS.SET_WORLDVIEW_NAME: {
+      const { worldviewId, name } = action.payload;
+      if (!WORLDVIEW_IDS.includes(worldviewId)) {
+        return state;
+      }
+      return {
+        ...state,
+        worldviewNames: {
+          ...state.worldviewNames,
+          [worldviewId]: name,
+        },
+      };
+    }
+
+    case ACTIONS.SET_MARKETPLACE_BUDGET:
+      return { ...state, marketplaceBudget: action.payload };
+
     case ACTIONS.RESTORE_FROM_URL:
     case ACTIONS.RESTORE_FROM_SESSION: {
       const isUrlRestore = action.type === ACTIONS.RESTORE_FROM_URL;
       const {
         worldviews: sourceWorldviews,
+        worldviewNames: sourceWorldviewNames,
         activeWorldviewId: sourceActiveId,
         questions: sourceQuestions,
         credences: legacyCredences,
         currentStep: sessionStep,
         selectedCalculations: sourceSelectedCalculations,
+        marketplaceBudget: sourceMarketplaceBudget,
       } = action.payload;
 
       // Helper to restore a single question's state
@@ -305,14 +341,25 @@ function quizReducer(state, action) {
         return restored;
       };
 
+      // Helper to restore worldview names with defaults for missing IDs
+      const restoreWorldviewNames = (namesData) => {
+        const restored = {};
+        for (const id of WORLDVIEW_IDS) {
+          restored[id] = namesData?.[id] || `Worldview ${id}`;
+        }
+        return restored;
+      };
+
       // New worldviews format
       if (sourceWorldviews && sourceActiveId) {
         return {
           ...state,
           currentStep: isUrlRestore ? 'results' : sessionStep,
           worldviews: restoreWorldviews(sourceWorldviews, isUrlRestore),
+          worldviewNames: restoreWorldviewNames(sourceWorldviewNames),
           activeWorldviewId: sourceActiveId,
           selectedCalculations: sourceSelectedCalculations || state.selectedCalculations,
+          marketplaceBudget: sourceMarketplaceBudget || DEFAULT_MARKETPLACE_BUDGET,
         };
       }
 
@@ -340,7 +387,9 @@ function quizReducer(state, action) {
           ...createInitialWorldviews(),
           1: { questions: newQuestions },
         },
+        worldviewNames: createInitialWorldviewNames(),
         activeWorldviewId: '1',
+        marketplaceBudget: DEFAULT_MARKETPLACE_BUDGET,
       };
     }
 
@@ -562,8 +611,10 @@ export function QuizProvider({ children }) {
       saveQuizState({
         currentStep: state.currentStep,
         worldviews: state.worldviews,
+        worldviewNames: state.worldviewNames,
         activeWorldviewId: state.activeWorldviewId,
         selectedCalculations: state.selectedCalculations,
+        marketplaceBudget: state.marketplaceBudget,
       });
     }, 300);
 
@@ -575,8 +626,10 @@ export function QuizProvider({ children }) {
   }, [
     state.currentStep,
     state.worldviews,
+    state.worldviewNames,
     state.activeWorldviewId,
     state.selectedCalculations,
+    state.marketplaceBudget,
     isHydrating,
   ]);
 
@@ -631,6 +684,14 @@ export function QuizProvider({ children }) {
 
   const setSelectedCalculations = useCallback((selections) => {
     dispatch({ type: ACTIONS.SET_SELECTED_CALCULATIONS, payload: selections });
+  }, []);
+
+  const setWorldviewName = useCallback((worldviewId, name) => {
+    dispatch({ type: ACTIONS.SET_WORLDVIEW_NAME, payload: { worldviewId, name } });
+  }, []);
+
+  const setMarketplaceBudget = useCallback((budget) => {
+    dispatch({ type: ACTIONS.SET_MARKETPLACE_BUDGET, payload: budget });
   }, []);
 
   // Navigation helpers
@@ -805,10 +866,12 @@ export function QuizProvider({ children }) {
       currentStep: state.currentStep,
       questions: activeQuestions, // Derived from active worldview for backward compatibility
       worldviews: state.worldviews,
+      worldviewNames: state.worldviewNames,
       activeWorldviewId: state.activeWorldviewId,
       expandedPanel: state.expandedPanel,
       debugConfig: state.debugConfig,
       selectedCalculations: state.selectedCalculations,
+      marketplaceBudget: state.marketplaceBudget,
       shareUrlError,
       isHydrating,
       sessionId,
@@ -831,6 +894,8 @@ export function QuizProvider({ children }) {
       setDebugConfig,
       switchWorldview,
       setSelectedCalculations,
+      setWorldviewName,
+      setMarketplaceBudget,
 
       // Navigation helpers
       getQuestionIndex,
@@ -862,10 +927,12 @@ export function QuizProvider({ children }) {
       state.currentStep,
       activeQuestions,
       state.worldviews,
+      state.worldviewNames,
       state.activeWorldviewId,
       state.expandedPanel,
       state.debugConfig,
       state.selectedCalculations,
+      state.marketplaceBudget,
       shareUrlError,
       isHydrating,
       sessionId,
@@ -880,6 +947,8 @@ export function QuizProvider({ children }) {
       setDebugConfig,
       switchWorldview,
       setSelectedCalculations,
+      setWorldviewName,
+      setMarketplaceBudget,
       getQuestionIndex,
       getPrevStep,
       getNextStep,

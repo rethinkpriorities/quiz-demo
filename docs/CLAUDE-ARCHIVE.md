@@ -773,6 +773,126 @@ User chooses → Hydrate from chosen source
 
 ---
 
+## Calculation Select Feature
+**Date:** 2026-01-28
+**Category:** UI
+**Flag:** `calculations.sideBySideComparison`
+**Prototype:** `prototype-calculation-select` (2026-01-28)
+**Dependencies:** None
+
+**Description:**
+Display one calculation at a time on the results screen with a dropdown selector to switch between calculation types. In side-by-side comparison mode, each side has its own independent dropdown for comparing any two calculation types.
+
+**Behavior:**
+- Each result card shows a dropdown at the top with all enabled calculation types as options
+- Selecting a different calculation type updates the card to show that calculation's results
+- In side-by-side comparison mode (`calculations.sideBySideComparison`), each side has its own independent dropdown
+- Users can compare any two calculation types by selecting different options on left vs right
+- Selected calculation(s) persist when sharing results via URL
+
+**UI:**
+- Dropdown positioned at top of ResultCard component
+- Shows currently selected calculation name
+- Options list populated from enabled calculations in `config/features.json`
+- Default selection: first enabled calculation type
+
+**State:**
+- `selectedCalculation` (single mode) or `selectedCalculations: { left, right }` (side-by-side mode)
+- Stored in QuizContext for persistence
+- Included in share URL encoding
+
+**Share URL Integration:**
+- Extends existing `ui.shareResults` data format
+- Adds `selectedCalculation` or `selectedCalculations` to encoded payload
+- When loading from URL, restore the selected calculation state
+- Graceful fallback: if shared calculation type is now disabled, default to first enabled type
+
+**Notes:**
+- Works independently of `calculations.sideBySideComparison` setting
+- Single mode: one dropdown, one calculation displayed
+- Side-by-side mode: two independent dropdowns, one per card
+
+**Files Changed:**
+- `src/components/ui/ResultCard.jsx` - Added dropdown selector for calculation type
+- `src/context/QuizContext.jsx` - Added selectedCalculations state and actions
+- `src/components/ResultsScreen.jsx` - Pass selected calculations to ResultCard
+- `src/utils/shareUrl.js` - Include selectedCalculations in share data
+- `src/utils/session.js` - Persist selectedCalculations in session
+
+---
+
+## Moral Marketplace Feature
+**Date:** 2026-01-28
+**Category:** UI / Calculations
+**Flag:** `ui.moralMarketplace`
+**Prototype:** `prototype-moral-marketplace` (2026-01-28)
+**Dependencies:** `ui.multipleWorldviews`
+
+**Description:**
+A calculation screen that combines multiple saved worldviews into a unified allocation recommendation. The Moral Marketplace treats each worldview as a "voter" with equal budget share. Each voter optimally allocates their share using diminishing returns, and results are merged into a final recommendation. This answers: "If I'm uncertain between these worldviews, how should I allocate?"
+
+**Example:**
+```
+Worldview "Utilitarian": EVs = { globalHealth: 85, animalWelfare: 45, gcr: 25 }
+Worldview "Animal-focused": EVs = { globalHealth: 40, animalWelfare: 95, gcr: 15 }
+
+Moral Marketplace Result (sqrt diminishing returns):
+  → { globalHealth: 44%, animalWelfare: 52%, gcr: 4% }
+```
+
+**Behavior:**
+- Only visible when 2+ worldviews have progress
+- Accessible from WorldviewSwitchModal via "Moral Marketplace" button
+- Marketplace screen shows:
+  1. Budget input ($10M default) with dollar amounts
+  2. Combined allocation bar chart with percentages
+  3. Diminishing returns toggle (none/sqrt/extreme)
+  4. Per-worldview breakdown (how each worldview allocated its share)
+- Dollar amounts rounded to nearest 0.5% of budget
+- Budget, worldview names, and selections persist in session and share URLs
+
+**Implementation:**
+
+1. **Core Calculations** (`src/utils/calculations.js`):
+   - `calculateWorldviewEVs(credences, config)` - Collapses micro-worldviews to EVs per cause
+   - `calculateMoralMarketplace(worldviews, options)` - Combines multiple worldviews
+     - Input: `[{ name, evs: {...}, weight? }, ...]`
+     - Options: `{ diminishingReturns?, power?, budget? }`
+     - Returns: `{ allocation, worldviewAllocations, config }`
+
+2. **State Management** (`src/context/QuizContext.jsx`):
+   - Added `worldviewNames` state with per-worldview custom names
+   - Added `marketplaceBudget` state (default: $10M)
+   - Actions: `SET_WORLDVIEW_NAME`, `SET_MARKETPLACE_BUDGET`
+   - Persisted to sessionStorage and share URLs
+
+3. **UI Components**:
+   - `MoralMarketplaceScreen.jsx` - Main screen with combined allocation, budget input, settings dropdown
+   - `WorldviewSwitchModal.jsx` - Added inline name editing and "Moral Marketplace" button
+   - Custom allocation bars with larger text for cause names and dollar amounts
+
+4. **Share URL Integration** (`src/utils/shareUrl.js`):
+   - Extended `generateShareUrl` to accept `worldviewNames` and `marketplaceBudget` options
+   - Extended `parseShareUrl` to return these fields
+
+**Files Changed/Created:**
+- `config/features.json` - Added `ui.moralMarketplace: true` flag
+- `config/copy.json` - Added `marketplace.*` copy strings
+- `src/utils/calculations.js` - Added `calculateWorldviewEVs`, `calculateMoralMarketplace`
+- `src/utils/calculations.test.js` - 11 tests for marketplace calculations
+- `src/context/QuizContext.jsx` - Added worldviewNames, marketplaceBudget state and persistence
+- `src/components/MoralMarketplaceScreen.jsx` - NEW: Main marketplace screen
+- `src/styles/components/Marketplace.module.css` - NEW: Marketplace styles
+- `src/components/ui/WorldviewSwitchModal.jsx` - Added inline name editing, marketplace button
+- `src/components/MoralParliamentQuiz.jsx` - Added routing for `currentStep === 'marketplace'`
+- `src/components/ResultsScreen.jsx` - Passes worldviewNames/marketplaceBudget to modal and share URL
+- `src/utils/shareUrl.js` - Extended to include worldviewNames and marketplaceBudget
+
+**Reference Implementation:**
+See `example/moral-marketplace-calculations.js` for standalone calculation module and `example/test-calculations.js` for test cases.
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.
