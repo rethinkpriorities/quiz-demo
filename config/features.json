@@ -9,7 +9,8 @@
     "shareResults": true,
     "multipleWorldviews": true,
     "questionInfo": true,
-    "answerInfo": true
+    "answerInfo": true,
+    "calculationSelect": true
   },
 
   "calculations": {
@@ -17,7 +18,7 @@
     "showParliament": true,
     "showMergedFavorites": true,
     "showMaximin": true,
-    "sideBySideComparison": false
+    "sideBySideComparison": true
   },
 
   "developer": {

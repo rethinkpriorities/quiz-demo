@@ -43,10 +43,11 @@ function validateQuestionsConfig(questionsToValidate) {
  *
  * @param {Object} worldviews - { worldviewId: { questions: { questionId: { credences, inputMode, lockedKey } } } }
  * @param {string} activeWorldviewId - Active worldview ID
+ * @param {Object} selectedCalculations - { left: string|null, right: string|null } selected calculation keys
  * @returns {Promise<{ url: string, id: string }>} Short URL and share ID
  * @throws {Error} If API call fails
  */
-export async function generateShareUrl(worldviews, activeWorldviewId) {
+export async function generateShareUrl(worldviews, activeWorldviewId, selectedCalculations = null) {
   const sessionId = getOrCreateSessionId();
 
   const payload = {
@@ -54,6 +55,7 @@ export async function generateShareUrl(worldviews, activeWorldviewId) {
     quizVersion: QUIZ_VERSION,
     worldviews,
     activeWorldviewId,
+    ...(selectedCalculations && { selectedCalculations }),
   };
 
   const response = await fetch('/api/share', {
@@ -158,6 +160,7 @@ export async function parseShareUrl() {
     return {
       worldviews: shareData.worldviews,
       activeWorldviewId: shareData.activeWorldviewId,
+      selectedCalculations: shareData.selectedCalculations || null,
     };
   }
 
