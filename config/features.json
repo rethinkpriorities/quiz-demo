@@ -8,6 +8,7 @@
     "questionTypes": true,
     "shareResults": true,
     "multipleWorldviews": true,
+    "moralMarketplace": true,
     "questionInfo": true,
     "answerInfo": true,
     "calculationSelect": true

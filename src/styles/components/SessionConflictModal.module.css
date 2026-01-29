@@ -46,3 +46,60 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Worldview row with edit button */
+.worldviewRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.worldviewButton {
+  flex: 1;
+}
+
+/* Edit mode styles */
+.editRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.editInput {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--border-medium);
+  border-radius: 8px;
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: var(--border-light);
+}
+
+/* Icon button for edit/save/cancel */
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.iconButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}

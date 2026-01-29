@@ -2,6 +2,7 @@ import WelcomeScreen from './WelcomeScreen';
 import QuestionScreen from './QuestionScreen';
 import IntermissionScreen from './IntermissionScreen';
 import ResultsScreen from './ResultsScreen';
+import MoralMarketplaceScreen from './MoralMarketplaceScreen';
 import CalculationDebugger from './CalculationDebugger';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
@@ -37,6 +38,7 @@ function MoralParliamentQuiz() {
   function getScreenContent() {
     if (currentStep === 'welcome') return <WelcomeScreen />;
     if (currentStep === 'results') return <ResultsScreen />;
+    if (currentStep === 'marketplace') return <MoralMarketplaceScreen />;
     if (!currentQuestion) return null;
 
     // Route intermission questions to IntermissionScreen

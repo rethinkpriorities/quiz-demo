@@ -43,12 +43,16 @@ function validateQuestionsConfig(questionsToValidate) {
  *
  * @param {Object} worldviews - { worldviewId: { questions: { questionId: { credences, inputMode, lockedKey } } } }
  * @param {string} activeWorldviewId - Active worldview ID
- * @param {Object} selectedCalculations - { left: string|null, right: string|null } selected calculation keys
+ * @param {Object} options - Optional parameters
+ * @param {Object} options.selectedCalculations - { left: string|null, right: string|null } selected calculation keys
+ * @param {Object} options.worldviewNames - { worldviewId: string } custom worldview names
+ * @param {number} options.marketplaceBudget - Budget for moral marketplace in dollars
  * @returns {Promise<{ url: string, id: string }>} Short URL and share ID
  * @throws {Error} If API call fails
  */
-export async function generateShareUrl(worldviews, activeWorldviewId, selectedCalculations = null) {
+export async function generateShareUrl(worldviews, activeWorldviewId, options = {}) {
   const sessionId = getOrCreateSessionId();
+  const { selectedCalculations, worldviewNames, marketplaceBudget } = options;
 
   const payload = {
     sessionId,
@@ -56,6 +60,8 @@ export async function generateShareUrl(worldviews, activeWorldviewId, selectedCa
     worldviews,
     activeWorldviewId,
     ...(selectedCalculations && { selectedCalculations }),
+    ...(worldviewNames && { worldviewNames }),
+    ...(marketplaceBudget && { marketplaceBudget }),
   };
 
   const response = await fetch('/api/share', {
@@ -161,6 +167,8 @@ export async function parseShareUrl() {
       worldviews: shareData.worldviews,
       activeWorldviewId: shareData.activeWorldviewId,
       selectedCalculations: shareData.selectedCalculations || null,
+      worldviewNames: shareData.worldviewNames || null,
+      marketplaceBudget: shareData.marketplaceBudget || null,
     };
   }
 

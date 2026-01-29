@@ -33,7 +33,9 @@ function ResultsScreen() {
     resetToOriginal,
     resetQuiz,
     goBack,
+    goToStep,
     worldviews,
+    worldviewNames,
     activeWorldviewId,
     switchWorldview,
     worldviewIds,
@@ -41,6 +43,8 @@ function ResultsScreen() {
     startQuiz,
     selectedCalculations,
     setSelectedCalculations,
+    setWorldviewName,
+    marketplaceBudget,
   } = useQuiz();
 
   const [copied, setCopied] = useState(false);
@@ -103,6 +107,11 @@ function ResultsScreen() {
     }
   };
 
+  const handleMarketplace = () => {
+    setShowWorldviewModal(false);
+    goToStep('marketplace');
+  };
+
   const handleShareClick = async () => {
     setShareError(null);
 
@@ -137,12 +146,14 @@ function ResultsScreen() {
     setShareLoading(true);
 
     // Create the URL promise before any async work
-    const selectionsForShare = isCalculationSelectEnabled ? selectedCalculations : null;
-    const urlPromise = generateShareUrl(
-      worldviewsForShare,
-      activeWorldviewId,
-      selectionsForShare
-    ).then(({ url }) => url);
+    const shareOptions = {
+      selectedCalculations: isCalculationSelectEnabled ? selectedCalculations : null,
+      worldviewNames,
+      marketplaceBudget,
+    };
+    const urlPromise = generateShareUrl(worldviewsForShare, activeWorldviewId, shareOptions).then(
+      ({ url }) => url
+    );
 
     try {
       // Safari requires ClipboardItem with a Promise to maintain user gesture context
@@ -273,7 +284,10 @@ function ResultsScreen() {
           <h1 className={styles.title}>
             {copy.results.heading}
             {isMultipleWorldviewsEnabled && (
-              <span className={styles.worldviewLabel}> (Worldview {activeWorldviewId})</span>
+              <span className={styles.worldviewLabel}>
+                {' '}
+                ({worldviewNames?.[activeWorldviewId] || `Worldview ${activeWorldviewId}`})
+              </span>
             )}
             {hasChanged && (
               <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
@@ -401,8 +415,11 @@ function ResultsScreen() {
           worldviewIds={worldviewIds}
           activeWorldviewId={activeWorldviewId}
           hasProgressMap={hasProgressMap}
+          worldviewNames={worldviewNames}
           onSwitch={handleWorldviewSwitch}
           onClose={() => setShowWorldviewModal(false)}
+          onMarketplace={handleMarketplace}
+          onRename={setWorldviewName}
         />
       )}
     </div>

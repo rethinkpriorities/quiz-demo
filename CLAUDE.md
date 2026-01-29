@@ -104,6 +104,8 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Session Persistence | N/A | Quiz progress persists across page reloads via sessionStorage. Conflict modal when share URL + existing session. |
 | Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
 | Donor Compass Branding | N/A | Visual revamp: Raleway font, teal gradient background, RP logo, white CTA buttons, consistent card styling. |
+| Calculation Select | `calculations.sideBySideComparison` | Dropdown selectors on result cards to switch between calculation types. Independent dropdowns in side-by-side mode. |
+| Moral Marketplace | `ui.moralMarketplace` | Combines multiple worldviews into unified allocation. Features: budget input ($10M default) with dollar amounts, diminishing returns toggle, named worldviews. |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
@@ -406,46 +408,6 @@ Show an "Explain Results" button that generates a personalized explanation of wh
 
 ---
 
-### 9. Calculation Select
-**Flag:** `ui.calculationSelect`
-
-Display one calculation at a time on the results screen with a dropdown selector to switch between calculation types.
-
-**Behavior:**
-- Each result card shows a dropdown at the top with all enabled calculation types as options
-- Selecting a different calculation type updates the card to show that calculation's results
-- In side-by-side comparison mode (`calculations.sideBySideComparison`), each side has its own independent dropdown
-- Users can compare any two calculation types by selecting different options on left vs right
-- Selected calculation(s) persist when sharing results via URL
-
-**UI:**
-- Dropdown positioned at top of ResultCard component
-- Shows currently selected calculation name
-- Options list populated from enabled calculations in `config/features.json`
-- Default selection: first enabled calculation type
-
-**State:**
-- `selectedCalculation` (single mode) or `selectedCalculations: { left, right }` (side-by-side mode)
-- Stored in QuizContext for persistence
-- Included in share URL encoding
-
-**Share URL Integration:**
-- Extends existing `ui.shareResults` data format
-- Adds `selectedCalculation` or `selectedCalculations` to encoded payload
-- When loading from URL, restore the selected calculation state
-- Graceful fallback: if shared calculation type is now disabled, default to first enabled type
-
-**Dependencies:**
-- Integrates with `ui.shareResults` for persistence
-
-**Notes:**
-- Works independently of `calculations.sideBySideComparison` setting
-- Single mode: one dropdown, one calculation displayed
-- Side-by-side mode: two independent dropdowns, one per card
-- Developing with side-by-side enabled for expedited user testing
-
----
-
 ## References
 
 | File | Purpose |
@@ -463,3 +425,6 @@ Display one calculation at a time on the results screen with a dropdown selector
 | `scripts/snapshot.sh` | Prototype builder |
 | `scripts/init-dev-db.py` | Initialize local dev database |
 | `CLAUDE-ARCHIVE.md` | Detailed implementation notes for completed features |
+| `example/` | Standalone calculation code for Moral Marketplace feature |
+| `example/moral-marketplace-calculations.js` | Reference implementation of marketplace calculations |
+| `example/test-calculations.js` | Test suite for marketplace calculations |
