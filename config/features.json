@@ -6,7 +6,7 @@
     "resetButton": false,
     "sliderLock": true,
     "questionTypes": true,
-    "shareResults": false,
+    "shareResults": true,
     "multipleWorldviews": true,
     "questionInfo": true,
     "answerInfo": true,
