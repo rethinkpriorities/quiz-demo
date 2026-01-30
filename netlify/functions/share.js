@@ -1,5 +1,4 @@
 /* global process */
-import { createClient } from '@libsql/client';
 
 // Base62 alphabet for short IDs
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -12,7 +11,7 @@ function generateShortId(length = 7) {
   return result;
 }
 
-function getDbClient() {
+async function getDbClient() {
   const url = process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
 
@@ -20,8 +19,10 @@ function getDbClient() {
     throw new Error('Missing TURSO_DATABASE_URL');
   }
 
-  // Local file doesn't need auth token
+  // Local file: use native client (has SQLite bindings)
+  // Remote Turso: use web client (HTTP only, no native deps)
   if (url.startsWith('file:')) {
+    const { createClient } = await import('@libsql/client');
     return createClient({ url });
   }
 
@@ -29,6 +30,7 @@ function getDbClient() {
     throw new Error('Missing TURSO_AUTH_TOKEN for remote database');
   }
 
+  const { createClient } = await import('@libsql/client/web');
   return createClient({ url, authToken });
 }
 
@@ -48,7 +50,7 @@ export async function handler(event) {
   }
 
   try {
-    const db = getDbClient();
+    const db = await getDbClient();
 
     if (httpMethod === 'POST') {
       return await createShare(event, db);
