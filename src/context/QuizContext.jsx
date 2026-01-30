@@ -106,11 +106,28 @@ const questionsWithColors = questions.map((question) => {
 });
 
 /**
+ * Get default credences for a question.
+ * Uses question-specific defaults if provided, otherwise splits evenly across options.
+ */
+function getDefaultCredencesForQuestion(question) {
+  if (question.defaultCredences) {
+    return { ...question.defaultCredences };
+  }
+  // Generate equal split from options
+  const optionKeys = question.options.map((opt) => opt.key);
+  const equalShare = Math.floor(100 / optionKeys.length);
+  const remainder = 100 - equalShare * optionKeys.length;
+  return Object.fromEntries(
+    optionKeys.map((key, i) => [key, equalShare + (i === 0 ? remainder : 0)])
+  );
+}
+
+/**
  * Create initial state for a single question.
  */
-function createQuestionState() {
+function createQuestionState(question) {
   return {
-    credences: { ...defaultCredences },
+    credences: getDefaultCredencesForQuestion(question),
     originalCredences: null,
     inputMode: INPUT_MODES.OPTIONS,
     lockedKey: null,
@@ -122,7 +139,7 @@ function createQuestionState() {
  */
 function createInitialQuestionsState() {
   return Object.fromEntries(
-    questions.filter((q) => !isIntermission(q)).map((q) => [q.id, createQuestionState()])
+    questions.filter((q) => !isIntermission(q)).map((q) => [q.id, createQuestionState(q)])
   );
 }
 
@@ -145,11 +162,14 @@ function createInitialWorldviews() {
  */
 function worldviewHasProgress(worldview) {
   if (!worldview?.questions) return false;
-  return Object.values(worldview.questions).some((q) => {
+  return Object.entries(worldview.questions).some(([questionId, q]) => {
     if (!q.credences) return false;
+    const question = questions.find((qu) => qu.id === questionId);
+    if (!question) return false;
+    const questionDefaults = getDefaultCredencesForQuestion(question);
     // Compare credences to defaults
     return Object.entries(q.credences).some(
-      ([key, value]) => value !== (defaultCredences[key] ?? 0)
+      ([key, value]) => value !== (questionDefaults[key] ?? 0)
     );
   });
 }
@@ -756,7 +776,10 @@ export function QuizProvider({ children }) {
       }
 
       return Object.fromEntries(
-        credenceQuestions.map((q) => [q.id, activeQuestions[q.id]?.[getter] || defaultCredences])
+        credenceQuestions.map((q) => [
+          q.id,
+          activeQuestions[q.id]?.[getter] || getDefaultCredencesForQuestion(q),
+        ])
       );
     },
     [activeQuestions]

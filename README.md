@@ -20,16 +20,21 @@ An interactive tool to help you allocate resources across different causes based
 
 ### Questions Asked
 
-1. **Animal vs. Human Welfare**: How do you value animal welfare relative to human welfare?
-2. **Current vs. Future Generations**: How do you value future human welfare relative to current human welfare?
-3. **Scale Sensitivity**: How much does the scale of an intervention matter?
-4. **Certainty vs. Speculation**: How do you discount speculative interventions?
+1. **Disability vs. Lives**: How do you value relieving disability vs. saving lives?
+2. **Income vs. Lives**: How do you value increasing income vs. saving lives?
+3. **Chicken Welfare**: How do you value chicken welfare relative to human welfare?
+4. **Shrimp Welfare**: How do you value shrimp/invertebrate welfare relative to human welfare?
+5. **Timeframes**: How do you prioritize short-term vs. medium-term vs. long-term effects?
+6. **Existential Risk**: How do you prioritize x-risk mitigation vs. other projects?
 
 ### Causes Evaluated
 
-- **Global Health**: Helps current humans
-- **Animal Welfare**: Helps animals
-- **GCR (Global Catastrophic Risks)**: Helps future humans
+- **Blindness Prevention**: Short-term disability intervention
+- **Basic Income**: Short-term income intervention
+- **Chicken Welfare**: Animal welfare (vertebrates)
+- **Shrimp Welfare**: Animal welfare (invertebrates)
+- **AI Safety Research**: Long-term x-risk mitigation
+- **Pandemic Prevention**: Short-term x-risk mitigation
 
 ---
 
@@ -233,7 +238,7 @@ quiz-demo/
 
 ### Calculation Methods
 
-With 4 questions and 3 options each, there are 81 possible worldview combinations (3^4).
+The quiz uses selection-type questions where users pick one option. With deterministic selections, calculations are optimized to O(1) for worldview generation.
 
 #### Diminishing Returns
 
@@ -359,13 +364,14 @@ npm test
 npm run test:run
 ```
 
-**Test coverage (46 tests across 6 files):**
-- `calculations.test.js` - Diminishing returns and analytical allocation (12 tests)
+**Test coverage (71 tests across 7 files):**
+- `calculations.test.js` - Calculations, Monte Carlo sampling, appliesTo pattern (35 tests)
 - `ResultsScreen.test.jsx` - Reset button functionality (5 tests)
 - `CredenceSlider.test.jsx` - Slider lock feature (7 tests)
 - `QuestionScreen.test.jsx` - Question types mode toggle (6 tests)
 - `EditPanel.test.jsx` - Selection vs slider rendering (8 tests)
 - `QuizContext.intermission.test.jsx` - Intermission progress/feature flag (8 tests)
+- `session.test.js` - Session persistence (2 tests)
 
 ### Manual Testing Areas
 The dev server runs at `http://localhost:5173/` with hot module replacement (or `http://localhost:8888/` with `netlify dev` for full stack).
@@ -419,14 +425,22 @@ Questions are defined in `config/questions.json`. To add a new question:
    ```json
    {
      "id": "newQuestion",
-     "type": "default",            // optional: "default", "selection", or "credence"
+     "type": "selection",           // "default", "selection", or "credence"
      "worldviewDimension": {
-       "appliesWhen": "causeFlag",  // or "appliesTo": "points"
-       "applyAs": "multiplier",     // or "exponent"
+       // Pattern 1: Boolean flag - applies multiplier when cause has flag
+       "appliesWhen": "causeFlag",
+       "applyAs": "multiplier",
        "options": { "equal": 1, "10x": 0.1, "100x": 0.01 }
+
+       // Pattern 2: Property lookup - different multipliers per property value
+       // "appliesTo": "timeframe",
+       // "options": {
+       //   "equalAll": { "short": 1, "medium": 1, "long": 1 },
+       //   "shortOnly": { "short": 1, "medium": 0, "long": 0 }
+       // }
      },
      "categoryLabel": "Category",
-     "emoji": "🎯",
+     "icon": "heart",
      "previewText": "Short description",
      "heading": "Full question text?",
      "instructionsOptions": "Instructions for option mode...",

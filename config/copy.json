@@ -47,7 +47,7 @@
       },
       "mergedFavorites": {
         "icon": "handshake",
-        "title": "Merged Favorites",
+        "title": "Proportional Allocation",
         "subtitle": "Budget shares to favorites",
         "footerLabel": null,
         "footerText": "Each worldview allocates its budget share"

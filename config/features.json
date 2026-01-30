@@ -7,18 +7,19 @@
     "sliderLock": true,
     "questionTypes": true,
     "shareResults": true,
-    "multipleWorldviews": true,
-    "moralMarketplace": true,
+    "multipleWorldviews": false,
+    "moralMarketplace": false,
     "questionInfo": true,
     "answerInfo": true,
     "calculationSelect": true
   },
 
   "calculations": {
-    "showMaxEV": true,
-    "showParliament": true,
+    "order": ["mergedFavorites", "maxEV", "parliament", "maximin"],
     "showMergedFavorites": true,
-    "showMaximin": true,
+    "showMaxEV": true,
+    "showParliament": false,
+    "showMaximin": false,
     "sideBySideComparison": true
   },
 

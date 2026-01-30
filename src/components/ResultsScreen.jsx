@@ -62,7 +62,19 @@ function ResultsScreen() {
     { flag: 'showMaximin', key: 'maximin', hasEvs: false },
   ];
 
-  const enabledMethods = CALC_METHODS.filter((m) => features.calculations?.[m.flag] === true);
+  // Sort by config order if provided, otherwise use default order
+  const configOrder = features.calculations?.order || [];
+  const sortedMethods = [...CALC_METHODS].sort((a, b) => {
+    const aIndex = configOrder.indexOf(a.key);
+    const bIndex = configOrder.indexOf(b.key);
+    // Methods not in order array go to the end
+    if (aIndex === -1 && bIndex === -1) return 0;
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+
+  const enabledMethods = sortedMethods.filter((m) => features.calculations?.[m.flag] === true);
 
   // Initialize selected calculations to first enabled method if not set or invalid
   useEffect(() => {
