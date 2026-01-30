@@ -333,10 +333,11 @@ function quizReducer(state, action) {
       // Helper to restore a single question's state
       const restoreQuestion = (qState, setOriginals) => ({
         credences: qState.credences,
-        originalCredences: setOriginals
-          ? { ...qState.credences }
-          : qState.originalCredences
-            ? { ...qState.originalCredences }
+        // Use stored originalCredences if present; otherwise set from credences if setOriginals
+        originalCredences: qState.originalCredences
+          ? { ...qState.originalCredences }
+          : setOriginals
+            ? { ...qState.credences }
             : null,
         inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
         lockedKey: qState.lockedKey || null,

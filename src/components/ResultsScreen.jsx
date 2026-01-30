@@ -150,6 +150,7 @@ function ResultsScreen() {
           credences: qState.credences,
           inputMode: qState.inputMode,
           lockedKey: qState.lockedKey,
+          originalCredences: qState.originalCredences,
         };
       }
       worldviewsForShare[worldviewId] = { questions: questionStates };

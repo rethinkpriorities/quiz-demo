@@ -45,8 +45,6 @@ function EditPanel({
     setCredences({ ...originalCredences });
   };
 
-  const previewText = configs.map((c) => `${c.short}:${credences[c.key]}%`).join(' ');
-
   return (
     <div className={`${styles.editPanel} ${isExpanded ? styles.expanded : ''}`}>
       <button onClick={onToggle} className={styles.toggleButton}>
@@ -56,7 +54,6 @@ function EditPanel({
           {panelChanged && (
             <span className={styles.modifiedBadge}>{copy.editPanel.modifiedBadge}</span>
           )}
-          {!isExpanded && <span className={styles.preview}>{previewText}</span>}
         </div>
         <span className={styles.chevron}>
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
