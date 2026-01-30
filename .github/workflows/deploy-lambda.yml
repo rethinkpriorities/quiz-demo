@@ -1,0 +1,57 @@
+name: Deploy Lambda
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lambda/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Install Lambda dependencies
+        run: cd lambda/share && npm ci
+
+      - name: SAM build
+        run: cd lambda && sam build
+
+      - name: SAM deploy
+        run: |
+          cd lambda
+          sam deploy \
+            --stack-name quiz-demo-share \
+            --capabilities CAPABILITY_IAM \
+            --resolve-s3 \
+            --parameter-overrides \
+              TursoDatabaseUrl="${{ secrets.TURSO_DATABASE_URL }}" \
+              TursoAuthToken="${{ secrets.TURSO_AUTH_TOKEN }}" \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+      - name: Get Function URL
+        id: function-url
+        run: |
+          URL=$(aws cloudformation describe-stacks \
+            --stack-name quiz-demo-share \
+            --query 'Stacks[0].Outputs[?OutputKey==`ShareFunctionUrl`].OutputValue' \
+            --output text)
+          echo "function_url=$URL" >> $GITHUB_OUTPUT
+          echo "Function URL: $URL"

@@ -1,5 +1,6 @@
 import questionsConfig from '../../config/questions.json';
 import { getOrCreateSessionId } from './session';
+import { endpoints } from '../config/api';
 
 const { questions } = questionsConfig;
 
@@ -64,7 +65,7 @@ export async function generateShareUrl(worldviews, activeWorldviewId, options = 
     ...(marketplaceBudget && { marketplaceBudget }),
   };
 
-  const response = await fetch('/api/share', {
+  const response = await fetch(endpoints.share, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -90,7 +91,7 @@ export async function generateShareUrl(worldviews, activeWorldviewId, options = 
  */
 async function fetchShareData(shortId) {
   try {
-    const response = await fetch(`/api/share?id=${encodeURIComponent(shortId)}`);
+    const response = await fetch(`${endpoints.share}?id=${encodeURIComponent(shortId)}`);
 
     if (!response.ok) {
       if (response.status === 404) return null;

@@ -24,7 +24,12 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      - name: Copy index.html to 404.html for SPA routing
+        run: cp dist/index.html dist/404.html
       - name: Copy prototypes to dist
         run: |
           if [ -d "prototypes" ]; then
