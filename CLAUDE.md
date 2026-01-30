@@ -6,6 +6,80 @@ Production-ready. Refactored from single 816-line file to 25-file modular archit
 
 ---
 
+## Work in Progress: New Questions & Causes
+
+Replacing the original demo questions/causes with real content. Original configs backed up to `config_archive/`.
+
+### Architecture Changes Made
+- Questions can now have different option keys (previously all questions shared the same keys)
+- Default credences now derived per-question from options (equal split) instead of global `defaultCredences`
+- `generateWorldviews` updated to handle different option keys per dimension
+- MaxEV calculation now always winner-take-all (ignores diminishing returns config)
+- Added `context` field to questions (renders above instructions on QuestionScreen)
+- InfoTooltip now supports markdown (use `[link text](url)` in `info` fields)
+- Selection questions use separate instructions (no "Custom Mix" mention)
+- Calculation method order configurable via `features.json` → `calculations.order`
+- Renamed "Merged Favorites" to "Proportional Allocation" in copy.json
+
+### Questions Implemented (6 of 7)
+All questions are `type: "selection"` (pick one, no sliders).
+
+| # | ID | Topic | Pattern | Multiplier range |
+|---|-----|-------|---------|------------------|
+| 1 | `disability` | Human disability vs saving lives | `appliesWhen: preventsDisability` | 0 - 0.086 |
+| 2 | `income` | Income vs saving lives | `appliesWhen: increasesIncome` | 0 - 0.0172 |
+| 3 | `chicken` | Chicken vs human welfare | `appliesWhen: helpsChickens` | 0 - 0.0172 |
+| 4 | `shrimp` | Shrimp vs human welfare | `appliesWhen: helpsShrimp` | 0 - 0.0172 |
+| 5 | `timeframes` | Short vs. long-term effects | `appliesTo: timeframe` | per-timeframe (0-1) |
+| 6 | `xrisk` | Existential risk priority | `appliesWhen: isNonXRisk` | 0 - 1 |
+
+### Causes Implemented (6)
+| Cause | Key properties | scaleFactor |
+|-------|----------------|-------------|
+| Blindness Prevention | `preventsDisability`, `isNonXRisk`, `timeframe: short` | 1 |
+| Basic Income | `increasesIncome`, `isNonXRisk`, `timeframe: short` | 1 |
+| Chicken Welfare | `helpsChickens`, `isNonXRisk`, `timeframe: short` | 100 |
+| Shrimp Welfare | `helpsShrimp`, `isNonXRisk`, `timeframe: short` | 1000 |
+| AI Safety Research | `timeframe: long`, x-risk | 1 |
+| Pandemic Prevention | `timeframe: short`, x-risk | 1 |
+
+### Config Settings
+- `diminishingReturns: "extreme"` (power = 0.1)
+- All causes have `points: 100`
+
+### Pending/Notes
+- Question spec mentions chicken/shrimp weights should depend on Q1 answer (not implemented - using fixed 0.0172 default)
+- **Q6 (risk) - NOT IMPLEMENTED**: Removed pending manager feedback. Requires architectural changes - causes need probability distributions and calculation methodology changes (upside skepticism = truncate 99th percentile, loss aversion = 3x weight on negative outcomes). See `question.txt` for full spec.
+- `scaleFactor` on animal causes represents relative population scale (not currently used in calculations)
+
+### WorldviewDimension Patterns
+Two patterns are supported for applying multipliers:
+
+**Pattern 1: `appliesWhen` (boolean flag)**
+```json
+"worldviewDimension": {
+  "appliesWhen": "helpsChickens",
+  "applyAs": "multiplier",
+  "options": { "equal": 1, "10x": 0.1, "100x": 0.01 }
+}
+```
+Multiplier applies only to causes where `cause.helpsChickens === true`.
+
+**Pattern 2: `appliesTo` (property value lookup)**
+```json
+"worldviewDimension": {
+  "appliesTo": "timeframe",
+  "applyAs": "multiplier",
+  "options": {
+    "equalAll": { "short": 1, "medium": 1, "long": 1 },
+    "prioritizeNearer": { "short": 1, "medium": 0.5, "long": 0.2 }
+  }
+}
+```
+Looks up `cause.timeframe` (e.g., "short") and uses that key to find the specific multiplier.
+
+---
+
 ## Development Notes
 
 ### Dev Server

@@ -119,6 +119,10 @@ const DIMENSIONS = buildDimensionsFromQuestions();
  * Generator that yields all worldview combinations from credences.
  * Each worldview includes the selected option for each dimension and its probability.
  *
+ * WARNING: This is O(product of option counts) which grows exponentially!
+ * With 7 questions × 4-5 options each = 25,600+ combinations.
+ * Use generateWorldviewsSampled() for better performance with many dimensions.
+ *
  * @param {Object} credences - Credences object keyed by dimension ID
  *   e.g., { animal: { equal: 33, '10x': 33, '100x': 34 }, future: {...}, ... }
  * @yields {{ options: Object, probability: number }}
@@ -127,9 +131,8 @@ export function* generateWorldviews(credences) {
   const dimensionIds = Object.keys(credences);
   if (dimensionIds.length === 0) return;
 
-  const optionKeys = Object.keys(credences[dimensionIds[0]]);
-
   // Recursive generator for cartesian product
+  // Each dimension can have different option keys
   function* cartesian(index, current) {
     if (index === dimensionIds.length) {
       // Calculate probability as product of all credences
@@ -142,7 +145,9 @@ export function* generateWorldviews(credences) {
     }
 
     const dimId = dimensionIds[index];
-    for (const optKey of optionKeys) {
+    // Get option keys for THIS dimension (not shared across all)
+    const dimOptionKeys = Object.keys(credences[dimId]);
+    for (const optKey of dimOptionKeys) {
       yield* cartesian(index + 1, { ...current, [dimId]: optKey });
     }
   }
@@ -150,9 +155,138 @@ export function* generateWorldviews(credences) {
   yield* cartesian(0, {});
 }
 
+// =============================================================================
+// OPTIMIZED SAMPLING-BASED WORLDVIEW GENERATION
+// =============================================================================
+
+/**
+ * Sample worldviews probabilistically using Monte Carlo method.
+ * Much faster than full enumeration for many dimensions.
+ *
+ * @param {Object} credences - Credences object keyed by dimension ID
+ * @param {number} numSamples - Number of samples to generate (default: 2000)
+ * @yields {{ options: Object, probability: number }}
+ */
+export function* generateWorldviewsSampled(credences, numSamples = 2000) {
+  const dimensionIds = Object.keys(credences);
+  if (dimensionIds.length === 0) return;
+
+  // Pre-compute cumulative probabilities for each dimension
+  const cumulatives = {};
+  for (const dimId of dimensionIds) {
+    const options = Object.entries(credences[dimId]);
+    let cumsum = 0;
+    cumulatives[dimId] = options.map(([key, value]) => {
+      cumsum += value / 100;
+      return { key, cumsum };
+    });
+  }
+
+  // Sample function: pick an option based on random value
+  const sampleOption = (dimId, rand) => {
+    const cumArr = cumulatives[dimId];
+    for (const { key, cumsum } of cumArr) {
+      if (rand <= cumsum) return key;
+    }
+    return cumArr[cumArr.length - 1].key; // Fallback to last
+  };
+
+  // Each sample has equal weight (1/numSamples)
+  const sampleWeight = 1 / numSamples;
+
+  for (let i = 0; i < numSamples; i++) {
+    const options = {};
+    for (const dimId of dimensionIds) {
+      options[dimId] = sampleOption(dimId, Math.random());
+    }
+    yield { options, probability: sampleWeight };
+  }
+}
+
+/**
+ * Calculate the total number of worldview combinations.
+ * Useful for deciding whether to use full enumeration or sampling.
+ *
+ * @param {Object} credences - Credences object keyed by dimension ID
+ * @returns {number} Total number of combinations
+ */
+export function countWorldviewCombinations(credences) {
+  return Object.values(credences).reduce(
+    (product, dimCredences) => product * Object.keys(dimCredences).length,
+    1
+  );
+}
+
+/**
+ * Check if credences are deterministic (one option at 100% per dimension).
+ * This is the case for selection-type questions.
+ *
+ * @param {Object} credences - Credences object keyed by dimension ID
+ * @returns {boolean} True if all dimensions have exactly one option at 100%
+ */
+export function isDeterministicCredences(credences) {
+  for (const dimCredences of Object.values(credences)) {
+    const values = Object.values(dimCredences);
+    const hasOneHundred = values.filter((v) => v === 100).length === 1;
+    const restZero = values.filter((v) => v === 0).length === values.length - 1;
+    if (!hasOneHundred || !restZero) return false;
+  }
+  return true;
+}
+
+/**
+ * Generate the single deterministic worldview when all credences are 100/0.
+ *
+ * @param {Object} credences - Credences object keyed by dimension ID
+ * @yields {{ options: Object, probability: number }}
+ */
+export function* generateDeterministicWorldview(credences) {
+  const options = {};
+  for (const [dimId, dimCredences] of Object.entries(credences)) {
+    for (const [optKey, value] of Object.entries(dimCredences)) {
+      if (value === 100) {
+        options[dimId] = optKey;
+        break;
+      }
+    }
+  }
+  yield { options, probability: 1 };
+}
+
+/**
+ * Smart worldview generator that chooses the best strategy:
+ * 1. Deterministic: If all credences are 100/0, yield single worldview
+ * 2. Small space: Full enumeration for < threshold combinations
+ * 3. Large space: Monte Carlo sampling
+ *
+ * @param {Object} credences - Credences object keyed by dimension ID
+ * @param {number} threshold - Max combinations before switching to sampling (default: 500)
+ * @param {number} numSamples - Number of samples if sampling (default: 2000)
+ * @yields {{ options: Object, probability: number }}
+ */
+export function* generateWorldviewsSmart(credences, threshold = 500, numSamples = 2000) {
+  // Fast path: selection-type questions with one option at 100%
+  if (isDeterministicCredences(credences)) {
+    yield* generateDeterministicWorldview(credences);
+    return;
+  }
+
+  const totalCombinations = countWorldviewCombinations(credences);
+
+  if (totalCombinations <= threshold) {
+    yield* generateWorldviews(credences);
+  } else {
+    yield* generateWorldviewsSampled(credences, numSamples);
+  }
+}
+
 /**
  * Calculate the value of a cause for a specific worldview combination.
  * Uses dimension configuration to determine how multipliers apply.
+ *
+ * Supports two multiplier patterns:
+ * 1. appliesWhen (boolean flag): multiplier applies if cause[flag] is true
+ * 2. appliesTo (property lookup): multiplier is an object keyed by cause[property] value
  *
  * @param {Object} cause - Cause object from worldviews config
  * @param {Object} options - Selected options { animal: 'equal', future: '10x', ... }
@@ -168,8 +302,18 @@ export function calculateCauseValue(cause, options, dimensions) {
     const multiplier = dimension.options[selectedOption];
 
     if (dimension.applyAs === 'multiplier') {
-      // Conditional multiplier: only applies if cause has the flag
-      if (dimension.appliesWhen && cause[dimension.appliesWhen]) {
+      // Pattern 2: appliesTo - lookup multiplier by property value
+      if (dimension.appliesTo) {
+        const propertyValue = cause[dimension.appliesTo];
+        if (propertyValue && typeof multiplier === 'object') {
+          const specificMultiplier = multiplier[propertyValue];
+          if (specificMultiplier !== undefined) {
+            value *= specificMultiplier;
+          }
+        }
+      }
+      // Pattern 1: appliesWhen - boolean flag check
+      else if (dimension.appliesWhen && cause[dimension.appliesWhen]) {
         value *= multiplier;
       }
     } else if (dimension.applyAs === 'exponent') {
@@ -222,10 +366,64 @@ function initCauseValues(causes) {
 }
 
 /**
- * Calculate max expected value allocation across all causes.
+ * Calculate expected multiplier for a cause from a single dimension.
+ * Uses linearity of expectation: E[multiplier] = sum(credence[opt] * multiplier[opt])
  *
- * Without diminishing returns: Allocates 100% to the cause with highest EV.
- * With diminishing returns: Spreads allocation analytically based on EVs.
+ * Supports two patterns:
+ * 1. appliesWhen (boolean flag): multiplier applies if cause[flag] is true
+ * 2. appliesTo (property lookup): multiplier is an object keyed by cause[property] value
+ *
+ * @param {Object} cause - Cause object
+ * @param {Object} dimension - Dimension config with appliesWhen/appliesTo, applyAs, options
+ * @param {Object} dimCredences - Credences for this dimension { optKey: percentage }
+ * @returns {number} Expected multiplier for this dimension
+ */
+function calculateExpectedMultiplier(cause, dimension, dimCredences) {
+  if (dimension.applyAs === 'multiplier') {
+    // Pattern 2: appliesTo - lookup multiplier by property value
+    // e.g., cause.timeframe = "short", dimension.options.equalAll = { short: 1, medium: 1, long: 1 }
+    if (dimension.appliesTo) {
+      const propertyValue = cause[dimension.appliesTo];
+      if (!propertyValue) return 1; // Cause doesn't have this property
+
+      let expectedMult = 0;
+      for (const [optKey, credence] of Object.entries(dimCredences)) {
+        const multiplierObj = dimension.options[optKey];
+        // multiplierObj is like { short: 1, medium: 0.5, long: 0.2 }
+        const specificMultiplier =
+          typeof multiplierObj === 'object'
+            ? (multiplierObj[propertyValue] ?? 1)
+            : (multiplierObj ?? 1);
+        expectedMult += (credence / 100) * specificMultiplier;
+      }
+      return expectedMult;
+    }
+
+    // Pattern 1: appliesWhen - boolean flag check
+    if (!dimension.appliesWhen || !cause[dimension.appliesWhen]) {
+      return 1; // No effect on this cause
+    }
+
+    // E[multiplier] = sum(credence * multiplier) for each option
+    let expectedMult = 0;
+    for (const [optKey, credence] of Object.entries(dimCredences)) {
+      const multiplier = dimension.options[optKey] ?? 1;
+      expectedMult += (credence / 100) * multiplier;
+    }
+    return expectedMult;
+  }
+
+  // For other apply types, return 1 (no change)
+  return 1;
+}
+
+/**
+ * Calculate max expected value allocation across all causes.
+ * OPTIMIZED: Uses linearity of expectation to compute EVs directly,
+ * avoiding exponential enumeration of worldview combinations.
+ *
+ * Always allocates 100% to the cause with highest EV (winner-take-all).
+ * This is the "pure" MaxEV approach - no diminishing returns applied.
  *
  * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
@@ -234,23 +432,32 @@ function initCauseValues(causes) {
 export function calculateMaxEV(credences, config) {
   const causes = config?.causes || CAUSES;
   const dimensions = config?.dimensions || DIMENSIONS;
-  const power = getDiminishingReturnsPower(config);
   const causeKeys = Object.keys(causes);
-  const causeEVs = initCauseValues(causes);
+  const causeEVs = {};
 
-  // Calculate expected value for each cause across all worldview combinations
-  for (const { options, probability } of generateWorldviews(credences)) {
-    const values = calculateAllCauseValues(options, causes, dimensions);
-    for (const [causeKey, value] of Object.entries(values)) {
-      causeEVs[causeKey] += probability * value;
+  // For each cause, calculate EV using linearity of expectation
+  // EV(cause) = basePoints * E[mult_dim1] * E[mult_dim2] * ... * E[mult_dimN]
+  // This is O(causes * dimensions * options) instead of O(causes * options^dimensions)
+  for (const causeKey of causeKeys) {
+    const cause = causes[causeKey];
+    let ev = cause.points;
+
+    // Apply expected multiplier from each dimension
+    for (const [dimId, dimension] of Object.entries(dimensions)) {
+      const dimCredences = credences[dimId];
+      if (dimCredences) {
+        ev *= calculateExpectedMultiplier(cause, dimension, dimCredences);
+      }
     }
+
+    causeEVs[causeKey] = ev;
   }
 
   // Convert EVs to coefficient array (preserving cause order)
   const coefficients = causeKeys.map((key) => causeEVs[key]);
 
-  // Calculate optimal allocation using analytical solution
-  const allocationArray = optimalAllocationAnalytical(coefficients, 100, power);
+  // MaxEV always uses winner-take-all (power = 1), ignoring diminishing returns config
+  const allocationArray = optimalAllocationAnalytical(coefficients, 100, 1);
 
   // Build result object
   const result = { evs: causeEVs };
@@ -264,6 +471,7 @@ export function calculateMaxEV(credences, config) {
 /**
  * Calculate variance voting allocation (moral parliament approach).
  * Each worldview votes for its preferred cause(s), votes weighted by credence.
+ * Uses smart sampling for large worldview spaces.
  *
  * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
@@ -274,8 +482,8 @@ export function calculateVarianceVoting(credences, config) {
   const dimensions = config?.dimensions || DIMENSIONS;
   const votes = initCauseValues(causes);
 
-  // Each worldview combination casts votes
-  for (const { options, probability } of generateWorldviews(credences)) {
+  // Each worldview combination casts votes (uses sampling for large spaces)
+  for (const { options, probability } of generateWorldviewsSmart(credences)) {
     const values = calculateAllCauseValues(options, causes, dimensions);
     const maxCauses = findMaxCauses(values);
 
@@ -297,6 +505,7 @@ export function calculateVarianceVoting(credences, config) {
 
 /**
  * Calculate merged favorites allocation.
+ * Uses smart sampling for large worldview spaces.
  *
  * Without diminishing returns: Each worldview allocates 100% to its favorite cause.
  * With diminishing returns: Each worldview spreads its share analytically.
@@ -312,8 +521,8 @@ export function calculateMergedFavorites(credences, config) {
   const causeKeys = Object.keys(causes);
   const allocation = initCauseValues(causes);
 
-  // Each worldview combination allocates its share
-  for (const { options, probability } of generateWorldviews(credences)) {
+  // Each worldview combination allocates its share (uses sampling for large spaces)
+  for (const { options, probability } of generateWorldviewsSmart(credences)) {
     const values = calculateAllCauseValues(options, causes, dimensions);
 
     // This worldview's budget share (as percentage points)
@@ -337,6 +546,7 @@ export function calculateMergedFavorites(credences, config) {
 /**
  * Calculate maximin allocation.
  * Find allocation that maximizes the minimum utility any worldview receives.
+ * Uses smart sampling for large worldview spaces.
  *
  * @param {Object} credences - All credences keyed by dimension ID
  * @param {Object} config - Optional config override for debug purposes
@@ -350,16 +560,19 @@ export function calculateMaximin(credences, config) {
   // Generate candidate allocations dynamically based on number of causes
   const candidateAllocations = generateCandidateAllocations(causeKeys);
 
+  // Pre-generate worldviews once (sampling for large spaces)
+  const worldviews = [...generateWorldviewsSmart(credences, 500, 1000)];
+
   let bestAllocation = candidateAllocations[0];
   let bestMinUtility = -Infinity;
 
   for (const allocation of candidateAllocations) {
     let minUtility = Infinity;
 
-    // Check minimum utility across all worldviews
-    for (const { options, probability } of generateWorldviews(credences)) {
-      // Skip very unlikely worldviews
-      if (probability < 0.001) continue;
+    // Check minimum utility across sampled worldviews
+    for (const { options, probability } of worldviews) {
+      // Skip very unlikely worldviews (less relevant with sampling)
+      if (probability < 0.0001) continue;
 
       const values = calculateAllCauseValues(options, causes, dimensions);
 
@@ -553,7 +766,7 @@ export function roundCredences(credences) {
 
 /**
  * Calculate expected value per cause for a single worldview's credences.
- * This "collapses" the N^K micro-worldviews into a single EV per cause.
+ * OPTIMIZED: Uses linearity of expectation to compute EVs directly.
  *
  * @param {Object} credences - Credences per dimension, e.g.:
  *   { animal: { equal: 33, '10x': 33, '100x': 34 }, future: {...}, ... }
@@ -571,18 +784,21 @@ export function calculateWorldviewEVs(credences, config) {
   const dimensions = config?.dimensions || DIMENSIONS;
   const causeKeys = Object.keys(causes);
 
-  // Initialize EVs to zero
+  // Use linearity of expectation for O(causes * dimensions) instead of O(options^dimensions)
   const evs = {};
   for (const causeKey of causeKeys) {
-    evs[causeKey] = 0;
-  }
+    const cause = causes[causeKey];
+    let ev = cause.points;
 
-  // Generate all worldview combinations and sum probability-weighted values
-  for (const { options, probability } of generateWorldviews(credences)) {
-    for (const causeKey of causeKeys) {
-      const value = calculateCauseValue(causes[causeKey], options, dimensions);
-      evs[causeKey] += probability * value;
+    // Apply expected multiplier from each dimension
+    for (const [dimId, dimension] of Object.entries(dimensions)) {
+      const dimCredences = credences[dimId];
+      if (dimCredences) {
+        ev *= calculateExpectedMultiplier(cause, dimension, dimCredences);
+      }
     }
+
+    evs[causeKey] = ev;
   }
 
   return evs;

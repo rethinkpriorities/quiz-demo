@@ -43,10 +43,18 @@ function QuestionScreen() {
   const showQuestionInfo = features.ui?.questionInfo !== false;
   const showAnswerInfo = features.ui?.answerInfo !== false;
 
-  const instructions =
-    effectiveInputMode === 'options'
+  const getInstructions = () => {
+    if (questionType === QUESTION_TYPES.SELECTION) {
+      return (
+        currentQuestion.instructionsSelection ||
+        'Choose the option that best represents your position.'
+      );
+    }
+    return effectiveInputMode === 'options'
       ? currentQuestion.instructionsOptions
       : currentQuestion.instructionsSliders;
+  };
+  const instructions = getInstructions();
 
   return (
     <div className="screen">
@@ -63,6 +71,8 @@ function QuestionScreen() {
             {currentQuestion.heading}
             {showQuestionInfo && <InfoTooltip content={currentQuestion.info} />}
           </h2>
+
+          {currentQuestion.context && <p className={styles.context}>{currentQuestion.context}</p>}
 
           <p className={styles.instructions}>{instructions}</p>
 

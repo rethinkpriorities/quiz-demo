@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Info } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import styles from '../../styles/components/InfoTooltip.module.css';
 
 /**
@@ -95,7 +96,17 @@ function InfoTooltip({ content, size = 14 }) {
         className={`${styles.popover} ${isVisible ? styles.popoverVisible : ''}`}
         style={{ top: position.top, left: position.left }}
       >
-        {content}
+        <ReactMarkdown
+          components={{
+            a: ({ href, children }) => (
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                {children}
+              </a>
+            ),
+          }}
+        >
+          {content}
+        </ReactMarkdown>
       </span>
     </span>
   );

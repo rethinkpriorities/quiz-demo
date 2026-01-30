@@ -10,6 +10,12 @@ import {
   optimalAllocationAnalytical,
   calculateWorldviewEVs,
   calculateMoralMarketplace,
+  generateWorldviews,
+  generateWorldviewsSampled,
+  generateWorldviewsSmart,
+  isDeterministicCredences,
+  countWorldviewCombinations,
+  calculateCauseValue,
   DIMINISHING_RETURNS_POWER,
 } from './calculations.js';
 
@@ -119,55 +125,31 @@ describe('optimalAllocationAnalytical', () => {
 });
 
 // =============================================================================
-// MaxEV WITH DIMINISHING RETURNS
+// MaxEV (ALWAYS WINNER-TAKE-ALL)
 // =============================================================================
 
-describe('calculateMaxEV with diminishing returns', () => {
-  it('with none: winner-take-all', () => {
+describe('calculateMaxEV', () => {
+  it('always does winner-take-all regardless of diminishing returns config', () => {
     const result = calculateMaxEV(ghFavoringCredences, {
       causes: testCauses,
       dimensions: testDimensions,
-      diminishingReturns: 'none',
+      diminishingReturns: 'extreme', // Should be ignored
     });
 
-    // Global health should get ~100%
+    // Global health should get ~100% (winner-take-all)
     expect(result.globalHealth).toBeGreaterThan(99);
   });
 
-  it('with sqrt: spreading across causes', () => {
+  it('splits equally when causes are tied', () => {
+    // With mixed credences, multiple causes may have equal EV
     const result = calculateMaxEV(mixedCredences, {
       causes: testCauses,
       dimensions: testDimensions,
-      diminishingReturns: 'sqrt',
     });
 
-    // Multiple causes should get allocation
-    const nonZeroCauses = Object.keys(testCauses).filter((k) => result[k] > 1);
-    expect(nonZeroCauses.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('extreme produces more equal distribution than sqrt', () => {
-    const sqrtResult = calculateMaxEV(mixedCredences, {
-      causes: testCauses,
-      dimensions: testDimensions,
-      diminishingReturns: 'sqrt',
-    });
-
-    const extremeResult = calculateMaxEV(mixedCredences, {
-      causes: testCauses,
-      dimensions: testDimensions,
-      diminishingReturns: 'extreme',
-    });
-
-    const sqrtRange =
-      Math.max(sqrtResult.globalHealth, sqrtResult.animalWelfare, sqrtResult.gcr) -
-      Math.min(sqrtResult.globalHealth, sqrtResult.animalWelfare, sqrtResult.gcr);
-
-    const extremeRange =
-      Math.max(extremeResult.globalHealth, extremeResult.animalWelfare, extremeResult.gcr) -
-      Math.min(extremeResult.globalHealth, extremeResult.animalWelfare, extremeResult.gcr);
-
-    expect(extremeRange).toBeLessThan(sqrtRange);
+    // Should sum to 100
+    const total = result.globalHealth + result.animalWelfare + result.gcr;
+    expect(total).toBeCloseTo(100, 5);
   });
 });
 
@@ -411,4 +393,415 @@ describe('calculateMoralMarketplace', () => {
     // None is winner-take-all
     expect(noneResult.allocation.globalHealth).toBeCloseTo(100, 1);
   });
+});
+
+// =============================================================================
+// MONTE CARLO SAMPLING ACCURACY
+// =============================================================================
+
+describe('Monte Carlo sampling accuracy', () => {
+  // Use a medium-sized problem where we can compute exact answer
+  const samplingTestCauses = {
+    causeA: { points: 100, flag1: true, flag2: false },
+    causeB: { points: 100, flag1: false, flag2: true },
+    causeC: { points: 100, flag1: false, flag2: false },
+  };
+
+  const samplingTestDimensions = {
+    dim1: {
+      appliesWhen: 'flag1',
+      applyAs: 'multiplier',
+      options: { high: 1, med: 0.5, low: 0.1 },
+    },
+    dim2: {
+      appliesWhen: 'flag2',
+      applyAs: 'multiplier',
+      options: { high: 1, med: 0.5, low: 0.1 },
+    },
+    dim3: {
+      appliesWhen: 'flag1',
+      applyAs: 'multiplier',
+      options: { boost: 2, normal: 1, penalty: 0.5 },
+    },
+  };
+
+  // 3 x 3 x 3 = 27 combinations (small enough to enumerate)
+  const samplingTestCredences = {
+    dim1: { high: 40, med: 35, low: 25 },
+    dim2: { high: 50, med: 30, low: 20 },
+    dim3: { boost: 30, normal: 50, penalty: 20 },
+  };
+
+  it('countWorldviewCombinations returns correct count', () => {
+    expect(countWorldviewCombinations(samplingTestCredences)).toBe(27);
+  });
+
+  it('full enumeration produces exact probabilities summing to 1', () => {
+    let totalProb = 0;
+    let count = 0;
+    for (const { probability } of generateWorldviews(samplingTestCredences)) {
+      totalProb += probability;
+      count++;
+    }
+    expect(count).toBe(27);
+    expect(totalProb).toBeCloseTo(1, 10);
+  });
+
+  it('sampling produces probabilities summing to 1', () => {
+    let totalProb = 0;
+    let count = 0;
+    for (const { probability } of generateWorldviewsSampled(samplingTestCredences, 1000)) {
+      totalProb += probability;
+      count++;
+    }
+    expect(count).toBe(1000);
+    expect(totalProb).toBeCloseTo(1, 10);
+  });
+
+  it('compares merged favorites: sampling vs exact (with stats)', () => {
+    // Config object for reference (test uses individual components)
+    const _config = {
+      causes: samplingTestCauses,
+      dimensions: samplingTestDimensions,
+      diminishingReturns: 'sqrt',
+    };
+
+    // Calculate exact result using full enumeration
+    // (We need to temporarily use full enumeration)
+    const causeKeys = Object.keys(samplingTestCauses);
+    const exactAllocation = Object.fromEntries(causeKeys.map((k) => [k, 0]));
+
+    for (const { options, probability } of generateWorldviews(samplingTestCredences)) {
+      const values = {};
+      for (const [causeKey, cause] of Object.entries(samplingTestCauses)) {
+        values[causeKey] = calculateCauseValue(cause, options, samplingTestDimensions);
+      }
+      const share = probability * 100;
+      const coefficients = causeKeys.map((key) => values[key]);
+      const worldviewAllocation = optimalAllocationAnalytical(coefficients, share, 0.5);
+      causeKeys.forEach((key, i) => {
+        exactAllocation[key] += worldviewAllocation[i];
+      });
+    }
+
+    // Run sampling multiple times to get distribution
+    const numTrials = 10;
+    const sampledResults = [];
+
+    for (let trial = 0; trial < numTrials; trial++) {
+      const sampledAllocation = Object.fromEntries(causeKeys.map((k) => [k, 0]));
+
+      for (const { options, probability } of generateWorldviewsSampled(
+        samplingTestCredences,
+        2000
+      )) {
+        const values = {};
+        for (const [causeKey, cause] of Object.entries(samplingTestCauses)) {
+          values[causeKey] = calculateCauseValue(cause, options, samplingTestDimensions);
+        }
+        const share = probability * 100;
+        const coefficients = causeKeys.map((key) => values[key]);
+        const worldviewAllocation = optimalAllocationAnalytical(coefficients, share, 0.5);
+        causeKeys.forEach((key, i) => {
+          sampledAllocation[key] += worldviewAllocation[i];
+        });
+      }
+
+      sampledResults.push(sampledAllocation);
+    }
+
+    // Calculate average and max error across trials
+    const avgAllocation = Object.fromEntries(causeKeys.map((k) => [k, 0]));
+    for (const result of sampledResults) {
+      for (const key of causeKeys) {
+        avgAllocation[key] += result[key] / numTrials;
+      }
+    }
+
+    // Check that average is close to exact
+    for (const key of causeKeys) {
+      const error = Math.abs(avgAllocation[key] - exactAllocation[key]);
+      // Allow up to 3% error in allocation
+      expect(error).toBeLessThan(3);
+    }
+
+    // Log results for visibility
+    console.log('\n=== Sampling Accuracy Test ===');
+    console.log('Exact allocation:', exactAllocation);
+    console.log('Average sampled (10 trials, 2000 samples each):', avgAllocation);
+    console.log(
+      'Max error:',
+      Math.max(...causeKeys.map((k) => Math.abs(avgAllocation[k] - exactAllocation[k]))).toFixed(
+        2
+      ) + '%'
+    );
+  });
+
+  it('performance comparison: enumeration vs sampling on larger problem', () => {
+    // 4^5 = 1024 combinations - larger but still enumerable
+    // Causes and dimensions defined for documentation; test uses largeCredences only
+    const _largeCauses = {
+      causeA: { points: 100, f1: true, f2: false, f3: false },
+      causeB: { points: 100, f1: false, f2: true, f3: false },
+      causeC: { points: 100, f1: false, f2: false, f3: true },
+    };
+
+    const _largeDimensions = {
+      d1: { appliesWhen: 'f1', applyAs: 'multiplier', options: { a: 1, b: 0.5, c: 0.25, d: 0.1 } },
+      d2: { appliesWhen: 'f2', applyAs: 'multiplier', options: { a: 1, b: 0.5, c: 0.25, d: 0.1 } },
+      d3: { appliesWhen: 'f3', applyAs: 'multiplier', options: { a: 1, b: 0.5, c: 0.25, d: 0.1 } },
+      d4: { appliesWhen: 'f1', applyAs: 'multiplier', options: { a: 2, b: 1, c: 0.5, d: 0.25 } },
+      d5: { appliesWhen: 'f2', applyAs: 'multiplier', options: { a: 2, b: 1, c: 0.5, d: 0.25 } },
+    };
+
+    const largeCredences = {
+      d1: { a: 40, b: 30, c: 20, d: 10 },
+      d2: { a: 25, b: 25, c: 25, d: 25 },
+      d3: { a: 10, b: 20, c: 30, d: 40 },
+      d4: { a: 35, b: 35, c: 15, d: 15 },
+      d5: { a: 50, b: 30, c: 15, d: 5 },
+    };
+
+    const totalCombinations = countWorldviewCombinations(largeCredences);
+    console.log(`\n=== Performance Test (${totalCombinations} combinations) ===`);
+
+    // Time full enumeration
+    const enumStart = Date.now();
+    let enumCount = 0;
+    for (const _ of generateWorldviews(largeCredences)) {
+      enumCount++;
+    }
+    const enumTime = Date.now() - enumStart;
+
+    // Time sampling
+    const sampleStart = Date.now();
+    let sampleCount = 0;
+    for (const _ of generateWorldviewsSampled(largeCredences, 2000)) {
+      sampleCount++;
+    }
+    const sampleTime = Date.now() - sampleStart;
+
+    console.log(`Full enumeration: ${enumCount} worldviews in ${enumTime.toFixed(2)}ms`);
+    console.log(`Sampling: ${sampleCount} samples in ${sampleTime.toFixed(2)}ms`);
+    console.log(`Speedup: ${(enumTime / sampleTime).toFixed(1)}x`);
+
+    expect(enumCount).toBe(totalCombinations);
+    expect(sampleCount).toBe(2000);
+  });
+
+  it('handles selection-style credences (one option at 100%)', () => {
+    // This is what selection questions produce - exactly one option per dimension has 100%
+    const selectionCredences = {
+      dim1: { high: 100, med: 0, low: 0 },
+      dim2: { high: 0, med: 100, low: 0 },
+      dim3: { boost: 0, normal: 0, penalty: 100 },
+    };
+
+    // With selection, there's really only 1 worldview
+    // Enumeration generates 27 but 26 have probability 0
+    let nonZeroCount = 0;
+    let totalProb = 0;
+    for (const { probability } of generateWorldviews(selectionCredences)) {
+      if (probability > 0) nonZeroCount++;
+      totalProb += probability;
+    }
+    expect(nonZeroCount).toBe(1); // Only one worldview has non-zero probability
+    expect(totalProb).toBeCloseTo(1, 10);
+
+    // Sampling should work (always picks the 100% option)
+    const sampledOptions = new Set();
+    for (const { options } of generateWorldviewsSampled(selectionCredences, 100)) {
+      const key = JSON.stringify(options);
+      sampledOptions.add(key);
+    }
+    expect(sampledOptions.size).toBe(1); // All samples are identical
+
+    // MaxEV should give correct result
+    const result = calculateMaxEV(selectionCredences, {
+      causes: samplingTestCauses,
+      dimensions: samplingTestDimensions,
+    });
+
+    // With dim1=high (mult 1), dim3=penalty (mult 0.5) for causeA (flag1=true)
+    // causeA = 100 * 1 * 0.5 = 50
+    // With dim2=med (mult 0.5) for causeB (flag2=true)
+    // causeB = 100 * 0.5 = 50
+    // causeC has no flags, so = 100
+    expect(result.evs.causeA).toBeCloseTo(50, 1);
+    expect(result.evs.causeB).toBeCloseTo(50, 1);
+    expect(result.evs.causeC).toBeCloseTo(100, 1);
+
+    console.log('\n=== Selection-Style Credences Test ===');
+    console.log('Non-zero worldviews:', nonZeroCount, 'of 27');
+    console.log('Unique sampled worldviews:', sampledOptions.size);
+    console.log('EVs:', result.evs);
+  });
+
+  it('isDeterministicCredences detects selection-style correctly', () => {
+    const selectionStyle = {
+      dim1: { a: 100, b: 0, c: 0 },
+      dim2: { x: 0, y: 100 },
+    };
+    expect(isDeterministicCredences(selectionStyle)).toBe(true);
+
+    const mixedStyle = {
+      dim1: { a: 50, b: 50, c: 0 },
+      dim2: { x: 0, y: 100 },
+    };
+    expect(isDeterministicCredences(mixedStyle)).toBe(false);
+
+    const allMixed = {
+      dim1: { a: 33, b: 33, c: 34 },
+      dim2: { x: 50, y: 50 },
+    };
+    expect(isDeterministicCredences(allMixed)).toBe(false);
+  });
+
+  it('generateWorldviewsSmart uses fast path for selection-style', () => {
+    const selectionCredences = {
+      dim1: { high: 100, med: 0, low: 0 },
+      dim2: { high: 0, med: 100, low: 0 },
+      dim3: { boost: 0, normal: 0, penalty: 100 },
+    };
+
+    // Count iterations - should be exactly 1 for deterministic case
+    let count = 0;
+    for (const { options, probability } of generateWorldviewsSmart(selectionCredences)) {
+      count++;
+      expect(probability).toBe(1);
+      expect(options).toEqual({ dim1: 'high', dim2: 'med', dim3: 'penalty' });
+    }
+    expect(count).toBe(1);
+
+    console.log('\n=== Smart Generator Optimization ===');
+    console.log('Selection-style credences: 1 iteration (fast path)');
+  });
+});
+
+// =============================================================================
+// APPLIES-TO PATTERN (multi-value property lookup)
+// =============================================================================
+
+describe('appliesTo pattern for timeframe-style questions', () => {
+  const timeframeCauses = {
+    shortTermCause: { points: 100, timeframe: 'short' },
+    mediumTermCause: { points: 100, timeframe: 'medium' },
+    longTermCause: { points: 100, timeframe: 'long' },
+    noTimeframeCause: { points: 100 }, // No timeframe property
+  };
+
+  const timeframeDimension = {
+    timeframes: {
+      appliesTo: 'timeframe',
+      applyAs: 'multiplier',
+      options: {
+        equalAll: { short: 1, medium: 1, long: 1 },
+        prioritizeNearer: { short: 1, medium: 0.5, long: 0.2 },
+        discountDistant: { short: 1, medium: 0.2, long: 0 },
+        shortTermOnly: { short: 1, medium: 0, long: 0 },
+      },
+    },
+  };
+
+  it('applies different multipliers based on cause timeframe property', () => {
+    // Test with "prioritizeNearer" selected: short=1, medium=0.5, long=0.2
+    const options = { timeframes: 'prioritizeNearer' };
+
+    const shortValue = calculateCauseValue(
+      timeframeCauses.shortTermCause,
+      options,
+      timeframeDimension
+    );
+    const mediumValue = calculateCauseValue(
+      timeframeCauses.mediumTermCause,
+      options,
+      timeframeDimension
+    );
+    const longValue = calculateCauseValue(
+      timeframeCauses.longTermCause,
+      options,
+      timeframeDimension
+    );
+    const noTimeframeValue = calculateCauseValue(
+      timeframeCauses.noTimeframeCause,
+      options,
+      timeframeDimension
+    );
+
+    expect(shortValue).toBe(100); // 100 * 1
+    expect(mediumValue).toBe(50); // 100 * 0.5
+    expect(longValue).toBe(20); // 100 * 0.2
+    expect(noTimeframeValue).toBe(100); // No timeframe = no multiplier applied
+  });
+
+  it('shortTermOnly zeroes out medium and long term causes', () => {
+    const options = { timeframes: 'shortTermOnly' };
+
+    const shortValue = calculateCauseValue(
+      timeframeCauses.shortTermCause,
+      options,
+      timeframeDimension
+    );
+    const mediumValue = calculateCauseValue(
+      timeframeCauses.mediumTermCause,
+      options,
+      timeframeDimension
+    );
+    const longValue = calculateCauseValue(
+      timeframeCauses.longTermCause,
+      options,
+      timeframeDimension
+    );
+
+    expect(shortValue).toBe(100);
+    expect(mediumValue).toBe(0);
+    expect(longValue).toBe(0);
+  });
+
+  it('equalAll applies multiplier of 1 to all timeframes', () => {
+    const options = { timeframes: 'equalAll' };
+
+    const shortValue = calculateCauseValue(
+      timeframeCauses.shortTermCause,
+      options,
+      timeframeDimension
+    );
+    const mediumValue = calculateCauseValue(
+      timeframeCauses.mediumTermCause,
+      options,
+      timeframeDimension
+    );
+    const longValue = calculateCauseValue(
+      timeframeCauses.longTermCause,
+      options,
+      timeframeDimension
+    );
+
+    expect(shortValue).toBe(100);
+    expect(mediumValue).toBe(100);
+    expect(longValue).toBe(100);
+  });
+
+  it('works with MaxEV calculation', () => {
+    const credences = {
+      timeframes: { equalAll: 0, prioritizeNearer: 100, discountDistant: 0, shortTermOnly: 0 },
+    };
+
+    const result = calculateMaxEV(credences, {
+      causes: timeframeCauses,
+      dimensions: timeframeDimension,
+    });
+
+    // With prioritizeNearer (100% credence): short=1, medium=0.5, long=0.2
+    expect(result.evs.shortTermCause).toBe(100);
+    expect(result.evs.mediumTermCause).toBe(50);
+    expect(result.evs.longTermCause).toBe(20);
+    expect(result.evs.noTimeframeCause).toBe(100);
+
+    // Winner should be short-term (tied with noTimeframe at 100)
+    expect(result.shortTermCause + result.noTimeframeCause).toBe(100);
+  });
+
+  console.log('\n=== appliesTo Pattern Test ===');
+  console.log('Timeframe multipliers working correctly');
 });

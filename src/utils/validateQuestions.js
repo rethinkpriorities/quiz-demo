@@ -20,7 +20,8 @@ const REQUIRED_QUESTION_FIELDS = [
 const REQUIRED_OPTION_FIELDS = ['key', 'label', 'description', 'panelLabel', 'panelShort'];
 
 const VALID_APPLY_AS = ['multiplier', 'exponent'];
-const VALID_APPLIES_TO = ['scaleFactor', 'points'];
+// For exponent applyAs, appliesTo must be a numeric property
+const VALID_EXPONENT_APPLIES_TO = ['scaleFactor', 'points'];
 
 /**
  * Checks for missing required fields in an object
@@ -76,10 +77,27 @@ function validateWorldviewDimension(dimension, prefix, causesConfig) {
   }
 
   // Validate appliesTo references a valid cause property
-  if (dimension.appliesTo && !VALID_APPLIES_TO.includes(dimension.appliesTo)) {
-    errors.push(
-      `${prefix}: worldviewDimension.appliesTo must be one of: ${VALID_APPLIES_TO.join(', ')}`
-    );
+  if (dimension.appliesTo) {
+    // For exponent applyAs, must be a numeric property
+    if (
+      dimension.applyAs === 'exponent' &&
+      !VALID_EXPONENT_APPLIES_TO.includes(dimension.appliesTo)
+    ) {
+      errors.push(
+        `${prefix}: worldviewDimension.appliesTo for exponent must be one of: ${VALID_EXPONENT_APPLIES_TO.join(', ')}`
+      );
+    }
+    // For multiplier applyAs, check that at least one cause has this property
+    if (dimension.applyAs === 'multiplier' && causesConfig?.causes) {
+      const causesWithProperty = Object.values(causesConfig.causes).filter(
+        (cause) => cause[dimension.appliesTo] !== undefined
+      );
+      if (causesWithProperty.length === 0) {
+        errors.push(
+          `${prefix}: worldviewDimension.appliesTo '${dimension.appliesTo}' not found on any cause`
+        );
+      }
+    }
   }
 
   // Validate options
@@ -93,10 +111,31 @@ function validateWorldviewDimension(dimension, prefix, causesConfig) {
       errors.push(`${prefix}: worldviewDimension.options must have at least 2 options`);
     }
 
-    // Check all option values are numbers
+    // Check option values based on pattern
+    const isAppliesToPattern = !!dimension.appliesTo && dimension.applyAs === 'multiplier';
+
     for (const [key, value] of Object.entries(dimension.options)) {
-      if (typeof value !== 'number') {
-        errors.push(`${prefix}: worldviewDimension.options.${key} must be a number`);
+      if (isAppliesToPattern) {
+        // appliesTo pattern: options are objects with property-value keys
+        if (typeof value !== 'object' || value === null) {
+          errors.push(
+            `${prefix}: worldviewDimension.options.${key} must be an object for appliesTo pattern`
+          );
+        } else {
+          // Check all nested values are numbers
+          for (const [nestedKey, nestedValue] of Object.entries(value)) {
+            if (typeof nestedValue !== 'number') {
+              errors.push(
+                `${prefix}: worldviewDimension.options.${key}.${nestedKey} must be a number`
+              );
+            }
+          }
+        }
+      } else {
+        // appliesWhen pattern: options are numbers
+        if (typeof value !== 'number') {
+          errors.push(`${prefix}: worldviewDimension.options.${key} must be a number`);
+        }
       }
     }
   }

@@ -1,176 +1,361 @@
 {
   "questions": [
     {
-      "id": "animal",
+      "id": "disability",
+      "type": "selection",
       "worldviewDimension": {
-        "appliesWhen": "helpsAnimals",
+        "appliesWhen": "preventsDisability",
         "applyAs": "multiplier",
-        "options": { "equal": 1, "10x": 0.1, "100x": 0.01 }
+        "options": {
+          "livesOnly": 0,
+          "livesMore": 0.003,
+          "equal": 0.0172,
+          "disabilityMore": 0.086
+        }
       },
-      "categoryLabel": "Moral Weights",
-      "icon": "paw",
-      "previewText": "Animal vs. Human welfare",
-      "heading": "How do you value animal welfare relative to human welfare?",
-      "info": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore. Excepteur sint occaecat cupidatat non proident sunt in culpa.",
-      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
-      "instructionsSliders": "Distribute your credence (confidence) across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Animal Values",
+      "categoryLabel": "Disability Weights",
+      "icon": "heart-pulse",
+      "previewText": "Disability vs. saving lives",
+      "heading": "How much do you value saving Years of Life Lost to Disability versus Years of Life Lost due to death?",
+      "info": "Some projects relieve suffering from non-lethal diseases or disabilities. We can measure the impact of these diseases in terms of how much worse one's quality of life is with the disability compared to full health. If we alleviate that disability, we can estimate how many years of health we are restoring.\n\nThis is measured by Disability Adjusted Life Years (DALYs). Suppose living for a year with a particular serious disability means you lose 50% of your quality of life. If we relieve that disease for a year, that's saving ½ DALY. Estimates of how much a disease decreases quality of life typically come from the [Global Burden of Disease](https://www.healthdata.org/research-analysis/gbd). For example, GiveWell estimates that clubfoot has a disability weight of around 0.2. If we treat an infant and prevent them from suffering from 60 years of clubfoot, this intervention will save 12 DALYs. Severe multiple sclerosis is estimated to have a disability weight of 0.7. Preventing severe MS for 10 years would deliver 7 DALYs.\n\nSuppose that living with blindness reduces someone's quality of life by 25%. You could either choose to cure blindness in a group of people, restoring them to full health for some number of years. Or you could save a child's life, giving them 50 extra years to live. How many years of blindness would you need to relieve to make it as good as saving the one child's life?",
+      "context": "A person suffering from a disease or disability has their quality of life reduced. We can measure this in terms of the Years of Life Lost to Disability (YLD). For example, if I live with a disease that reduces my quality of life by 25% for 4 years, that totals 1 Year Lost to Disability. If someone dies, we can measure their loss in terms of Years of Life Lost (YLL) due to death.",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Disability Weights",
       "options": [
         {
+          "key": "livesOnly",
+          "label": "Saving lives only",
+          "description": "I only care about saving years of life due to death",
+          "info": "",
+          "panelLabel": "Lives only",
+          "panelShort": "0"
+        },
+        {
+          "key": "livesMore",
+          "label": "More weight on saving lives",
+          "description": "I put 5x as much value on saving a year of life lost to death than a year of life lost to disability",
+          "info": "",
+          "panelLabel": "5x lives",
+          "panelShort": "5×L"
+        },
+        {
           "key": "equal",
-          "label": "Animals and humans matter equally",
-          "description": "Equal weight to equivalent experiences",
-          "info": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-          "panelLabel": "Equal weight",
-          "panelShort": "Eq"
+          "label": "Equal weight",
+          "description": "I value a year of life lost equally, whether it is due to death or disability",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
         },
         {
-          "key": "10x",
-          "label": "Animals matter 10× less than humans",
-          "description": "Moderate speciesist view",
-          "info": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam. Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit. At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium.",
-          "panelLabel": "10× less",
-          "panelShort": "10×"
-        },
-        {
-          "key": "100x",
-          "label": "Animals matter 100× less than humans",
-          "description": "Strong speciesist view",
-          "info": "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit. Sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam. Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae.",
-          "panelLabel": "100× less",
-          "panelShort": "100×"
+          "key": "disabilityMore",
+          "label": "More weight on relieving disability",
+          "description": "I put 5x as much value on saving a year of life lost to disability than a year of life lost to death",
+          "info": "",
+          "panelLabel": "5x disability",
+          "panelShort": "5×D"
         }
       ]
     },
     {
-      "id": "future",
+      "id": "income",
+      "type": "selection",
       "worldviewDimension": {
-        "appliesWhen": "helpsFutureHumans",
+        "appliesWhen": "increasesIncome",
         "applyAs": "multiplier",
-        "options": { "equal": 1, "10x": 0.1, "100x": 0.01 }
+        "options": {
+          "livesOnly": 0,
+          "lives10x": 0.0017,
+          "lives2x": 0.0086,
+          "equal": 0.0172
+        }
       },
-      "categoryLabel": "Time Preference",
-      "icon": "hourglass",
-      "previewText": "Current vs. Future generations",
-      "heading": "How do you value future human welfare relative to current human welfare?",
-      "info": "Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet. Ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores. Nam libero tempore cum soluta nobis est eligendi optio cumque nihil impedit.",
-      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
+      "categoryLabel": "Income Weights",
+      "icon": "banknote",
+      "previewText": "Income vs. saving lives",
+      "heading": "How much do you value doubling someone's income for a year compared to adding one year to someone's life?",
+      "info": "Some projects have the effect of increasing people's income. While this may have indirect effects on health or lifespan, here we are just measuring the increase in the resources people have (or, alternatively, in their levels of consumption). Typically, this is measured in units of how many people had their income doubled for a single year.",
+      "instructionsOptions": "Choose the view that best represents your position.",
       "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Future Values",
+      "editPanelTitle": "Income Weights",
       "options": [
         {
-          "key": "equal",
-          "label": "Future and current humans matter equally",
-          "description": "No time discounting",
-          "info": "Et harum quidem rerum facilis est et expedita distinctio, nam libero tempore soluta nobis eligendi. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim donec pede justo fringilla vel aliquet.",
-          "panelLabel": "Equal weight",
-          "panelShort": "Eq"
+          "key": "livesOnly",
+          "label": "Saving lives only",
+          "description": "I only care about adding years of life",
+          "info": "",
+          "panelLabel": "Lives only",
+          "panelShort": "0"
         },
         {
-          "key": "10x",
-          "label": "Future humans matter 10× less",
-          "description": "Moderate time preference",
-          "info": "Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim aliquam lorem ante dapibus. In enim justo, rhoncus ut, imperdiet a, venenatis vitae justo nullam dictum felis eu pede. Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero sit amet. Adipiscing ante aenean commodo ligula eget dolor massa sociis natoque penatibus.",
-          "panelLabel": "10× less",
+          "key": "lives10x",
+          "label": "Much more weight on a year of life",
+          "description": "I put 10x as much value on a year of life compared to a year of doubled income",
+          "info": "",
+          "panelLabel": "10x lives",
           "panelShort": "10×"
         },
         {
-          "key": "100x",
-          "label": "Future humans matter 100× less",
-          "description": "Strong present focus",
-          "info": "Cum sociis natoque penatibus et magnis dis parturient montes nascetur ridiculus mus donec quam felis. Ultricies nec pellentesque eu pretium quis sem nulla consequat massa quis enim. Donec pede justo fringilla vel aliquet nec vulputate eget arcu in enim justo rhoncus ut. Imperdiet a venenatis vitae justo nullam dictum felis eu pede mollis pretium.",
-          "panelLabel": "100× less",
-          "panelShort": "100×"
+          "key": "lives2x",
+          "label": "Some more weight on a year of life",
+          "description": "I put 2x as much value on a year of life compared to a year of doubled income",
+          "info": "",
+          "panelLabel": "2x lives",
+          "panelShort": "2×"
+        },
+        {
+          "key": "equal",
+          "label": "Equal weight",
+          "description": "I put the same value on a year of life compared to a year of doubled income",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
         }
       ]
     },
     {
-      "id": "intermission1",
-      "type": "_intermission",
-      "title": "Halfway There",
-      "body": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Based on your answers so far, we're calculating how your worldview might influence your giving priorities. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-    },
-    {
-      "id": "scale",
+      "id": "chicken",
+      "type": "selection",
       "worldviewDimension": {
-        "appliesTo": "scaleFactor",
-        "applyAs": "exponent",
-        "options": { "equal": 0, "10x": 0.5, "100x": 1 }
-      },
-      "categoryLabel": "Scale Sensitivity",
-      "icon": "bar-chart",
-      "previewText": "Helping one vs. helping millions",
-      "heading": "How much does the scale of impact matter?",
-      "info": "Maecenas nec odio et ante tincidunt tempus donec vitae sapien ut libero venenatis faucibus. Nullam quis ante etiam sit amet orci eget eros faucibus tincidunt duis leo. Sed fringilla mauris sit amet nibh donec sodales sagittis magna sed consequat leo. Aenean massa cum sociis natoque penatibus et magnis dis parturient montes nascetur.",
-      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
-      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Scale Sensitivity",
-      "options": [
-        {
-          "key": "equal",
-          "label": "Helping one person matters as much as helping millions",
-          "description": "Numbers don't multiply moral value",
-          "info": "Fusce vulputate eleifend sapien vestibulum purus quam scelerisque ut mollis sed nonummy id metus. Nullam accumsan lorem in dui cras ultricies mi eu turpis hendrerit fringilla vestibulum ante ipsum. Primis in faucibus orci luctus et ultrices posuere cubilia curae in ac dui quis mi. Consectetuer lacinia vitae elementum semper rutrum tellus pellentesque eu tincidunt.",
-          "panelLabel": "Irrelevant",
-          "panelShort": "Eq"
-        },
-        {
-          "key": "10x",
-          "label": "Helping 10× more beings is significantly better",
-          "description": "Scale matters, but not linearly",
-          "info": "Phasellus viverra nulla ut metus varius laoreet quisque rutrum aenean imperdiet etiam ultricies nisi vel. Augue curabitur ullamcorper ultricies nisi nam eget dui etiam rhoncus maecenas tempus tellus. Eget condimentum rhoncus sem quam semper libero sit amet adipiscing sem neque sed ipsum. Nam quam nunc blandit vel luctus pulvinar hendrerit id lorem maecenas nec.",
-          "panelLabel": "Matters",
-          "panelShort": "10×"
-        },
-        {
-          "key": "100x",
-          "label": "Helping 10× more beings is 10× better",
-          "description": "Full utilitarian aggregation",
-          "info": "Proin sapien ipsum porta a auctor quis euismod ac felis donec posuere vulputate arcu phasellus. Accumsan cursus velit morbi a ipsum integer a nibh in quis justo maecenas rhoncus aliquam. Lacus morbi quis tortor id nulla ut metus molestie placerat vivamus dapibus fermentum. Nullam vel sem praesent libero sed cursus ante dapibus diam sed nisi.",
-          "panelLabel": "Dominates",
-          "panelShort": "100×"
-        }
-      ]
-    },
-    {
-      "id": "certainty",
-      "worldviewDimension": {
-        "appliesWhen": "isSpeculative",
+        "appliesWhen": "helpsChickens",
         "applyAs": "multiplier",
-        "options": { "equal": 1, "10x": 0.1, "100x": 0.01 }
+        "options": {
+          "humanEqual": 0.0172,
+          "human10x": 0.00172,
+          "human100x": 0.000172,
+          "human1000x": 0.0000172,
+          "noValue": 0
+        }
       },
-      "categoryLabel": "Evidence Preference",
-      "icon": "microscope",
-      "previewText": "Proven vs. speculative interventions",
-      "heading": "How much do you value proven interventions over speculative ones?",
-      "info": "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae sed aliquam. Nisi quis eleifend quam adipiscing vitae proin sagittis nisl rhoncus mattis rhoncus urna neque. Viverra justo nec ultrices dui sapien eget mi proin sed libero enim sed faucibus. Turpis in eu mi bibendum neque egestas congue quisque egestas diam.",
-      "instructionsOptions": "Choose the view that best represents your position, or use \"Custom Mix\" to split your credence.",
+      "categoryLabel": "Animal Welfare",
+      "icon": "bird",
+      "previewText": "Chicken vs. human welfare",
+      "heading": "Which of these positions best describes your view?",
+      "info": "It can be difficult to compare the value of helping humans versus helping animals. For now, let's consider animals that most people believe are capable of suffering (such as pigs, dogs, or cows) and use chickens as a test case.\n\nThere are some conditions that decrease chickens' quality of life, which we can measure in terms of chicken Disability Adjusted Life Years. For example, suppose living in hurtful pain for a year reduces a chicken's quality of life by 25%. Therefore, if we improve a chicken's living conditions to relieve this suffering, this would result in a gain of 0.25 chicken DALYs. Likewise, some human conditions reduce a human's quality of life by 25%, so relieving this for a year would result in 0.25 human DALYs.\n\nHow much do you value chicken DALYs versus human DALYs? In other words, how much do you care about a quality of life reduction in chickens compared to a similar proportional quality of life reduction in humans? Note that there are two different reasons you might give chicken DALYs lower weight. Perhaps you think a 25% reduction in a chicken's quality of life involves less suffering (or loss of meaningful experiences) than a 25% reduction in a human's quality of life. Alternatively, you could think the amount of suffering is the same, but you think it is morally more important to alleviate human suffering.",
+      "context": "How much do you value improving the welfare of chickens (and other large, familiar farmed animals like pigs and cows), compared to how much you value improving the welfare of humans?",
+      "instructionsOptions": "Choose the view that best represents your position.",
       "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Evidence Preference",
+      "editPanelTitle": "Chicken Weights",
       "options": [
         {
-          "key": "equal",
-          "label": "Speculative and proven interventions matter equally",
-          "description": "Expected value is all that matters",
-          "info": "Mauris blandit aliquet elit eget tincidunt nibh pulvinar a pellentesque sit amet porttitor eget dolor. Morbi tristique senectus et netus et malesuada fames ac turpis egestas proin eget tortor risus. Praesent sapien massa convallis a pellentesque nec egestas non nisi cras ultricies ligula sed. Magna dictum porta lorem ipsum dolor sit amet consectetur adipiscing elit.",
-          "panelLabel": "Equal weight",
-          "panelShort": "Eq"
+          "key": "humanEqual",
+          "label": "Equal to humans",
+          "description": "I treat a year of disability in a chicken the same as a year of disability in a human",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
         },
         {
-          "key": "10x",
-          "label": "Proven interventions are worth 10× more",
-          "description": "Moderate certainty preference",
-          "info": "Donec sollicitudin molestie malesuada vivamus magna justo lacinia eget consectetur sed convallis at tellus. Curabitur arcu erat accumsan id imperdiet et porttitor at sem nulla at venenatis diam. Sollicitudin tempor id eu nisl nunc mi ipsum faucibus vitae aliquet nec ullamcorper sit amet risus. Nullam id dolor id nibh ultricies vehicula ut id elit non mi porta gravida.",
+          "key": "human10x",
+          "label": "10× less than humans",
+          "description": "I value a human year of disability about 10x as much as a year of disability in a chicken",
+          "info": "",
           "panelLabel": "10× less",
           "panelShort": "10×"
         },
         {
-          "key": "100x",
-          "label": "Proven interventions are worth 100× more",
-          "description": "Strong evidence focus",
-          "info": "Praesent commodo cursus magna vel scelerisque nisl consectetur et morbi leo risus porta ac consectetur. Vestibulum id ligula porta felis euismod semper fusce dapibus tellus ac cursus commodo. Maecenas sed diam eget risus varius blandit sit amet non magna aenean lacinia bibendum nulla. Sed consectetur cras mattis consectetur purus sit amet fermentum donec ullamcorper nulla non.",
+          "key": "human100x",
+          "label": "100× less than humans",
+          "description": "I value a human year of disability about 100x as much as a year of disability in a chicken",
+          "info": "",
           "panelLabel": "100× less",
           "panelShort": "100×"
+        },
+        {
+          "key": "human1000x",
+          "label": "1000× less than humans",
+          "description": "I value a human year of disability about 1000x as much as a year of disability in a chicken",
+          "info": "",
+          "panelLabel": "1000× less",
+          "panelShort": "1k×"
+        },
+        {
+          "key": "noValue",
+          "label": "No value",
+          "description": "I do not value chicken welfare",
+          "info": "",
+          "panelLabel": "None",
+          "panelShort": "0"
+        }
+      ]
+    },
+    {
+      "id": "shrimp",
+      "type": "selection",
+      "worldviewDimension": {
+        "appliesWhen": "helpsShrimp",
+        "applyAs": "multiplier",
+        "options": {
+          "humanEqual": 0.0172,
+          "human100x": 0.000172,
+          "human1000x": 0.0000172,
+          "human10000x": 0.00000172,
+          "noValue": 0
+        }
+      },
+      "categoryLabel": "Animal Welfare",
+      "icon": "shell",
+      "previewText": "Shrimp vs. human welfare",
+      "heading": "Which of these positions best describes your view?",
+      "info": "It can be difficult to compare the value of helping humans versus helping animals. This is even more difficult when we are uncertain whether the animals even have conscious experiences or what their experiences are like. For now, let's consider farmed invertebrates (such as shrimp or insects) and use shrimp as a test case.\n\nShrimp may experience conditions that reduce their quality of life. Assuming they are sentient, we can characterize their loss of quality of life via a shrimp DALY. How much do you value shrimp DALYs versus human DALYs? Note that there are three different reasons you might give shrimp DALYs lower weight. Perhaps you think a 25% reduction in a shrimp's quality of life involves less suffering (or loss of meaningful experiences) than a 25% reduction in a human's quality of life. Alternatively, you could think the amount of suffering is the same, but you think it is morally more important to alleviate human suffering. Lastly, you could doubt that shrimp are sentient and therefore doubt that they can suffer.",
+      "context": "How much do you value improving the welfare of shrimp (and other small, less understood farmed invertebrates like insects), compared to how much you value improving the welfare of humans?",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Shrimp Weights",
+      "options": [
+        {
+          "key": "humanEqual",
+          "label": "Equal to humans",
+          "description": "I treat a year of disability in shrimp the same as a year of disability in a human",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
+        },
+        {
+          "key": "human100x",
+          "label": "100× less than humans",
+          "description": "I value a human year of disability about 100x as much as a year of disability in a shrimp",
+          "info": "",
+          "panelLabel": "100× less",
+          "panelShort": "100×"
+        },
+        {
+          "key": "human1000x",
+          "label": "1000× less than humans",
+          "description": "I value a human year of disability about 1000x as much as a year of disability in a shrimp",
+          "info": "",
+          "panelLabel": "1000× less",
+          "panelShort": "1k×"
+        },
+        {
+          "key": "human10000x",
+          "label": "10,000× less than humans",
+          "description": "I value a human year of disability about 10,000x as much as a year of disability in a shrimp",
+          "info": "",
+          "panelLabel": "10k× less",
+          "panelShort": "10k×"
+        },
+        {
+          "key": "noValue",
+          "label": "No value",
+          "description": "I do not value shrimp welfare",
+          "info": "",
+          "panelLabel": "None",
+          "panelShort": "0"
+        }
+      ]
+    },
+    {
+      "id": "timeframes",
+      "type": "selection",
+      "worldviewDimension": {
+        "appliesTo": "timeframe",
+        "applyAs": "multiplier",
+        "options": {
+          "equalAll": { "short": 1, "medium": 1, "long": 1 },
+          "prioritizeNearer": { "short": 1, "medium": 0.5, "long": 0.2 },
+          "discountDistant": { "short": 1, "medium": 0.2, "long": 0 },
+          "shortTermOnly": { "short": 1, "medium": 0, "long": 0 }
+        }
+      },
+      "categoryLabel": "Time Preferences",
+      "icon": "clock",
+      "previewText": "Short vs. long-term effects",
+      "heading": "Which of these positions best describes your view when evaluating the effects of different projects?",
+      "info": "A project's effects play out over different timelines. Some effects, like malaria treatments, might occur right away. Others, like investments in education or infrastructure, could take years to arise. Other effects will arise in the longer run future.\n\nWhen you are evaluating projects, do you give extra weight to effects that will happen sooner (in the next decade) rather than later (decades or even centuries in the future)?\n\nThere are several reasons why you might give extra weight to near-term effects. First, you might think it's more morally important to help individuals that currently exist or will exist very soon than it is to help individuals that will potentially exist in the future. Alternatively, even if you think all beings matter equally, regardless of time, you might be so uncertain about a project's long-term effects that you'd rather focus on the more predictable near future. Lastly, you might have beliefs about how the future will go (e.g. that AI will change everything in 10 years) that make you want to just focus on projects whose effects will happen soon.",
+      "context": "Consider the following timeframes:\n- **Short-term:** before 2035\n- **Medium-term:** from 2035-2100\n- **Long-term:** after 2100",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Time Preferences",
+      "options": [
+        {
+          "key": "equalAll",
+          "label": "Equal across all timeframes",
+          "description": "I only care about how much good I could do, regardless of when it happens",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
+        },
+        {
+          "key": "prioritizeNearer",
+          "label": "Prioritize nearer term",
+          "description": "I care about the long-term, but put more priority on medium-term and even more on short-term",
+          "info": "",
+          "panelLabel": "Nearer",
+          "panelShort": "→"
+        },
+        {
+          "key": "discountDistant",
+          "label": "Discount the distant future",
+          "description": "I do not care about the distant future; I care a bit about medium-term but prioritize short-term",
+          "info": "",
+          "panelLabel": "Discount",
+          "panelShort": "↓"
+        },
+        {
+          "key": "shortTermOnly",
+          "label": "Short-term only",
+          "description": "I only care about effects in the short-term",
+          "info": "",
+          "panelLabel": "Short",
+          "panelShort": "ST"
+        }
+      ]
+    },
+    {
+      "id": "xrisk",
+      "type": "selection",
+      "worldviewDimension": {
+        "appliesWhen": "isNonXRisk",
+        "applyAs": "multiplier",
+        "options": {
+          "evaluateSame": 1,
+          "discount10": 0.9,
+          "discount50": 0.5,
+          "xriskOnly": 0
+        }
+      },
+      "categoryLabel": "Existential Risk",
+      "icon": "alert-triangle",
+      "previewText": "Existential risk priority",
+      "heading": "Do you want to treat near-term existential risk mitigation projects differently than other projects?",
+      "info": "Some projects aim to reduce the chances of an event that poses existential or catastrophic risk (such as an engineered pandemic or AI takeover). If an event like this occurs, then it could severely mitigate the beneficial effects of other kinds of philanthropic projects (such as global health interventions). This can make it hard to compare the value of existential risk mitigation to the value of other projects.\n\nIf you think there is a high chance of a catastrophic risk in the near future (say, the next 10 years), then you may think that we need to act now to try to reduce these threats. You may care a lot about the longer-run future and what the world is like decades from now, but you want to prioritize actions now to ensure that humanity is around to enjoy that future.",
+      "context": "How much do you want to prioritize efforts to mitigate near-term existential risks which demand action in the next several years, compared to other kinds of projects you might fund?",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "X-Risk Priority",
+      "options": [
+        {
+          "key": "evaluateSame",
+          "label": "Evaluate the same way",
+          "description": "I want to evaluate x-risk projects the same way I evaluate all other projects",
+          "info": "",
+          "panelLabel": "Same",
+          "panelShort": "="
+        },
+        {
+          "key": "discount10",
+          "label": "Discount other projects somewhat",
+          "description": "I think there's about a 10% probability that an existential risk in the next decade renders other projects useless",
+          "info": "",
+          "panelLabel": "10% risk",
+          "panelShort": "10%"
+        },
+        {
+          "key": "discount50",
+          "label": "Discount other projects greatly",
+          "description": "I think there's about a 50% probability that an existential risk in the next decade renders other projects useless",
+          "info": "",
+          "panelLabel": "50% risk",
+          "panelShort": "50%"
+        },
+        {
+          "key": "xriskOnly",
+          "label": "Only x-risk reduction",
+          "description": "I only care about reducing near-term existential risk",
+          "info": "",
+          "panelLabel": "X-risk only",
+          "panelShort": "X"
         }
       ]
     }

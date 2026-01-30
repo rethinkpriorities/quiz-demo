@@ -60,3 +60,22 @@
   visibility: visible;
   pointer-events: auto;
 }
+
+/* Markdown content styling */
+.popover p {
+  margin: 0 0 0.75rem 0;
+}
+
+.popover p:last-child {
+  margin-bottom: 0;
+}
+
+.popover a {
+  color: #5eb3d4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.popover a:hover {
+  color: #8ad4f0;
+}

@@ -1,37 +1,83 @@
 {
-  "diminishingReturns": "sqrt",
+  "diminishingReturns": "extreme",
   "causes": {
-    "globalHealth": {
-      "name": "Global Health",
-      "color": "#f2cc8f",
+    "blindnessPrevention": {
+      "name": "Blindness Prevention",
+      "color": "#5eb3d4",
       "points": 100,
       "scaleFactor": 1,
-      "helpsAnimals": false,
-      "helpsFutureHumans": false,
-      "isSpeculative": false
+      "preventsDisability": true,
+      "increasesIncome": false,
+      "helpsChickens": false,
+      "helpsShrimp": false,
+      "timeframe": "short",
+      "isNonXRisk": true
     },
-    "animalWelfare": {
-      "name": "Animal Welfare",
+    "basicIncome": {
+      "name": "Basic Income",
       "color": "#81b29a",
       "points": 100,
-      "scaleFactor": 10,
-      "helpsAnimals": true,
-      "helpsFutureHumans": false,
-      "isSpeculative": false
+      "scaleFactor": 1,
+      "preventsDisability": false,
+      "increasesIncome": true,
+      "helpsChickens": false,
+      "helpsShrimp": false,
+      "timeframe": "short",
+      "isNonXRisk": true
     },
-    "gcr": {
-      "name": "GCR (Future)",
-      "color": "#3d5a80",
+    "chickenWelfare": {
+      "name": "Chicken Welfare",
+      "color": "#f4a261",
       "points": 100,
       "scaleFactor": 100,
-      "helpsAnimals": false,
-      "helpsFutureHumans": true,
-      "isSpeculative": true
+      "preventsDisability": false,
+      "increasesIncome": false,
+      "helpsChickens": true,
+      "helpsShrimp": false,
+      "timeframe": "short",
+      "isNonXRisk": true
+    },
+    "shrimpWelfare": {
+      "name": "Shrimp Welfare",
+      "color": "#e76f51",
+      "points": 100,
+      "scaleFactor": 1000,
+      "preventsDisability": false,
+      "increasesIncome": false,
+      "helpsChickens": false,
+      "helpsShrimp": true,
+      "timeframe": "short",
+      "isNonXRisk": true
+    },
+    "aiSafety": {
+      "name": "AI Safety Research",
+      "color": "#9b5de5",
+      "points": 1,
+      "scaleFactor": 0.9,
+      "preventsDisability": false,
+      "increasesIncome": false,
+      "helpsChickens": false,
+      "helpsShrimp": false,
+      "timeframe": "long",
+      "isNonXRisk": false
+    },
+    "pandemicPrevention": {
+      "name": "Pandemic Prevention",
+      "color": "#00b4d8",
+      "points": 1,
+      "scaleFactor": 0.8,
+      "preventsDisability": false,
+      "increasesIncome": false,
+      "helpsChickens": false,
+      "helpsShrimp": false,
+      "timeframe": "short",
+      "isNonXRisk": false
     }
   },
   "defaultCredences": {
-    "equal": 33,
-    "10x": 33,
-    "100x": 34
+    "livesOnly": 25,
+    "livesMore": 25,
+    "equal": 25,
+    "disabilityMore": 25
   }
 }
