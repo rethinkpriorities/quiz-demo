@@ -120,7 +120,7 @@ input[type='range']::-moz-range-thumb {
 /* ===== UTILITY CLASSES ===== */
 
 .container {
-  max-width: 900px;
+  max-width: 56.25rem;
   margin: 0 auto;
   padding: 0 var(--spacing-8);
 }

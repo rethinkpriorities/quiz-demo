@@ -9,7 +9,7 @@
 }
 
 .inner {
-  max-width: 900px;
+  max-width: 56.25rem;
   margin: 0 auto;
 }
 
@@ -313,14 +313,14 @@
 }
 
 .calculationSelectContainer > .calculationSelect {
-  max-width: 450px;
+  max-width: 28.125rem;
   margin: 0 auto var(--spacing-3);
   display: block;
 }
 
 /* Single calculation card wrapper */
 .singleResultCard {
-  max-width: 450px;
+  max-width: 28.125rem;
   margin: 0 auto;
 }
 
