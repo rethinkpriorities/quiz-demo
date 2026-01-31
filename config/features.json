@@ -11,7 +11,8 @@
     "moralMarketplace": false,
     "questionInfo": true,
     "answerInfo": true,
-    "calculationSelect": true
+    "calculationSelect": true,
+    "feedbackCard": true
   },
 
   "calculations": {

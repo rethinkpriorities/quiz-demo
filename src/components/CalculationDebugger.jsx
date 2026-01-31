@@ -69,7 +69,10 @@ const CalculationDebugger = ({ onConfigChange }) => {
         <div className={styles.overlay} onClick={() => setIsOpen(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.header}>
-              <h2>Calculation Debugger</h2>
+              <div>
+                <h2>Calculation Debugger</h2>
+                <p className={styles.warning}>For advanced users only, may break webapp</p>
+              </div>
               <button className={styles.closeButton} onClick={() => setIsOpen(false)}>
                 x
               </button>
