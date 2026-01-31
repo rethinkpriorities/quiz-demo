@@ -3,6 +3,7 @@
   "_instructions": "Set flags to true to enable features, false to disable. If a feature flag doesn't exist, code should handle it gracefully with appropriate default behavior.",
 
   "ui": {
+    "disclaimerPage": true,
     "resetButton": false,
     "sliderLock": true,
     "questionTypes": true,

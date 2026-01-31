@@ -1,3 +1,4 @@
+import DisclaimerScreen from './DisclaimerScreen';
 import WelcomeScreen from './WelcomeScreen';
 import QuestionScreen from './QuestionScreen';
 import IntermissionScreen from './IntermissionScreen';
@@ -36,6 +37,7 @@ function MoralParliamentQuiz() {
 
   // Determine which screen to render
   function getScreenContent() {
+    if (currentStep === 'disclaimer') return <DisclaimerScreen />;
     if (currentStep === 'welcome') return <WelcomeScreen />;
     if (currentStep === 'results') return <ResultsScreen />;
     if (currentStep === 'marketplace') return <MoralMarketplaceScreen />;

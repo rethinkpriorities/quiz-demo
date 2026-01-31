@@ -2,6 +2,12 @@
   "branding": {
     "title": "Donor Compass"
   },
+  "disclaimer": {
+    "heading": "This is a prototype of Rethink Priorities's Donor Compass",
+    "content": "**Donor Compass helps you find the optimal distribution of donations across funds based on your values.** The tool asks for your personal preferences about things that matter when assessing different charitable projects – things like how much you weigh animal suffering or effects on the distant future – then calculates which funds best match those preferences. Importantly, it accounts for diminishing returns, so recommendations update as large amounts of money go into specific funds.\n\n**This version is a prototype.** The funds, underlying data, and calculations in this version are placeholders meant to illustrate the type of behavior you can expect from the tool. All of these will change in future versions.\n\n**What we're seeking feedback on:** The types of inputs and questions we ask, the general workflow and layout, and what changes would make this tool more useful for your decision making.\n\n**Future iterations will include:**\n- A usable version ready in early February 2026, including funds such as GiveWell Top Charities Fund, EA Animal Welfare Fund, and Longview Philanthropy Fund\n- Detailed cost-effectiveness estimates for included funds\n- Detailed explanations of all calculations\n- Different methods for aggregating your inputs into recommended allocations\n- A power user version that is more freely configurable\n\n**Share your feedback:** Please email any thoughts, however brief, to {{EMAIL}}, [book a call](https://calendly.com/hayley-clatterbuck/30min) with Hayley Clatterbuck, or fill in [this form](https://forms.gle/kJmEqdGFaoKdPcKB7).\n\n**Sign up** [**here**](https://mailchi.mp/4da0acddedce/rethink-priorities-donor-compass) if you'd like to get an email when the next version of this tool is ready.",
+    "email": ["carmen", "rethinkpriorities", "org"],
+    "continueButton": "Continue →"
+  },
   "welcome": {
     "timeEstimate": "~3 minutes",
     "headingLine1": "Where Should Your",

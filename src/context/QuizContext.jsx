@@ -183,8 +183,13 @@ function createInitialWorldviewNames() {
 
 const DEFAULT_MARKETPLACE_BUDGET = 10_000_000;
 
+// Determine initial step based on disclaimer feature flag
+const getInitialStep = () => {
+  return features.ui?.disclaimerPage ? 'disclaimer' : 'welcome';
+};
+
 const initialState = {
-  currentStep: 'welcome',
+  currentStep: getInitialStep(),
   worldviews: createInitialWorldviews(),
   worldviewNames: createInitialWorldviewNames(),
   activeWorldviewId: '1',
@@ -289,6 +294,7 @@ function quizReducer(state, action) {
     case ACTIONS.RESET_QUIZ:
       return {
         ...initialState,
+        currentStep: getInitialStep(),
         worldviews: createInitialWorldviews(),
         worldviewNames: createInitialWorldviewNames(),
       };
@@ -619,8 +625,9 @@ export function QuizProvider({ children }) {
 
   // Persistence effect: save state to sessionStorage on changes (debounced)
   useEffect(() => {
-    // Don't save during hydration or if on welcome screen
-    if (isHydrating || state.currentStep === 'welcome') return;
+    // Don't save during hydration or if on disclaimer/welcome screens
+    if (isHydrating || state.currentStep === 'welcome' || state.currentStep === 'disclaimer')
+      return;
 
     // Clear any pending save
     if (saveTimeoutRef.current) {
