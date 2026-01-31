@@ -9,3 +9,6 @@ afterEach(() => {
 
 // Mock window.confirm for tests
 globalThis.confirm = vi.fn(() => true);
+
+// Mock window.scrollTo (not implemented in jsdom)
+window.scrollTo = vi.fn();

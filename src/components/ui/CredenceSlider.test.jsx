@@ -20,12 +20,12 @@ const mockCredences = {
 
 describe('CredenceSlider - Lock Feature', () => {
   let mockOnChange;
-  let mockSetLockedKey;
+  let mockSetLockedKeys;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockOnChange = vi.fn();
-    mockSetLockedKey = vi.fn();
+    mockSetLockedKeys = vi.fn();
   });
 
   it('displays lock button when feature flag is enabled', () => {
@@ -38,8 +38,8 @@ describe('CredenceSlider - Lock Feature', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey={null}
-        setLockedKey={mockSetLockedKey}
+        lockedKeys={[]}
+        setLockedKeys={mockSetLockedKeys}
       />
     );
 
@@ -58,15 +58,15 @@ describe('CredenceSlider - Lock Feature', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey={null}
-        setLockedKey={mockSetLockedKey}
+        lockedKeys={[]}
+        setLockedKeys={mockSetLockedKeys}
       />
     );
 
     const lockButton = screen.getByRole('button', { name: /lock slider/i });
     await user.click(lockButton);
 
-    expect(mockSetLockedKey).toHaveBeenCalledWith('equal');
+    expect(mockSetLockedKeys).toHaveBeenCalledWith(['equal']);
   });
 
   it('unlocks slider when lock button is clicked on locked slider', async () => {
@@ -80,15 +80,15 @@ describe('CredenceSlider - Lock Feature', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey="equal"
-        setLockedKey={mockSetLockedKey}
+        lockedKeys={['equal']}
+        setLockedKeys={mockSetLockedKeys}
       />
     );
 
     const lockButton = screen.getByRole('button', { name: /unlock slider/i });
     await user.click(lockButton);
 
-    expect(mockSetLockedKey).toHaveBeenCalledWith(null);
+    expect(mockSetLockedKeys).toHaveBeenCalledWith([]);
   });
 
   it('disables input when slider is locked', () => {
@@ -101,8 +101,8 @@ describe('CredenceSlider - Lock Feature', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey="equal"
-        setLockedKey={mockSetLockedKey}
+        lockedKeys={['equal']}
+        setLockedKeys={mockSetLockedKeys}
       />
     );
 
@@ -120,8 +120,8 @@ describe('CredenceSlider - Lock Feature', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey={null}
-        setLockedKey={mockSetLockedKey}
+        lockedKeys={[]}
+        setLockedKeys={mockSetLockedKeys}
       />
     );
 
@@ -129,9 +129,9 @@ describe('CredenceSlider - Lock Feature', () => {
     expect(slider).not.toBeDisabled();
   });
 
-  it('passes lockedKey to onChange handler', async () => {
+  it('passes lockedKeys to onChange handler', async () => {
     const user = userEvent.setup();
-    const lockedKey = '100x';
+    const lockedKeys = ['100x'];
 
     render(
       <CredenceSlider
@@ -142,18 +142,42 @@ describe('CredenceSlider - Lock Feature', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey={lockedKey}
-        setLockedKey={mockSetLockedKey}
+        lockedKeys={lockedKeys}
+        setLockedKeys={mockSetLockedKeys}
       />
     );
 
     const slider = screen.getByRole('slider');
     await user.type(slider, '50');
 
-    // Check that onChange was called with lockedKey parameter
+    // Check that onChange was called with lockedKeys parameter
     expect(mockOnChange).toHaveBeenCalled();
     const lastCall = mockOnChange.mock.calls[mockOnChange.mock.calls.length - 1];
-    expect(lastCall[3]).toBe(lockedKey);
+    expect(lastCall[3]).toEqual(lockedKeys);
+  });
+
+  it('prevents locking when n-2 sliders are already locked', async () => {
+    const user = userEvent.setup();
+    // With 3 sliders, only 1 can be locked (n-2 = 1)
+    render(
+      <CredenceSlider
+        label="Test Slider"
+        description="Test description"
+        value={33}
+        onChange={mockOnChange}
+        color="#81B29A"
+        credences={mockCredences}
+        sliderKey="equal"
+        lockedKeys={['10x']}
+        setLockedKeys={mockSetLockedKeys}
+      />
+    );
+
+    const lockButton = screen.getByRole('button', { name: /lock slider/i });
+    expect(lockButton).toBeDisabled();
+
+    await user.click(lockButton);
+    expect(mockSetLockedKeys).not.toHaveBeenCalled();
   });
 });
 
@@ -183,8 +207,8 @@ describe('CredenceSlider - Lock Feature Disabled', () => {
         color="#81B29A"
         credences={mockCredences}
         sliderKey="equal"
-        lockedKey={null}
-        setLockedKey={vi.fn()}
+        lockedKeys={[]}
+        setLockedKeys={vi.fn()}
       />
     );
 

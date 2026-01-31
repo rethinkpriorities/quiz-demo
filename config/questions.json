@@ -1,8 +1,391 @@
 {
   "questions": [
     {
+      "id": "timeframes",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "next-decade",
+          "name": "Focused on next decade (until 2035)",
+          "description": "Evaluates projects primarily by their effects over the next decade.",
+          "credences": { "equalAll": 0, "prioritizeNearer": 0, "discountDistant": 25, "shortTermOnly": 75 }
+        },
+        {
+          "id": "next-generations",
+          "name": "Focused on next generations (until 2100)",
+          "description": "Emphasizes effects on the next few generations, including individuals who do not currently exist.",
+          "credences": { "equalAll": 20, "prioritizeNearer": 50, "discountDistant": 30, "shortTermOnly": 0 }
+        },
+        {
+          "id": "longtermist",
+          "name": "Longtermist",
+          "description": "Concerned with the longterm future, valuing effects equally regardless of when they occur.",
+          "credences": { "equalAll": 80, "prioritizeNearer": 20, "discountDistant": 0, "shortTermOnly": 0 }
+        }
+      ],
+      "worldviewDimension": {
+        "appliesTo": "timeframe",
+        "applyAs": "multiplier",
+        "options": {
+          "equalAll": { "short": 1, "medium": 1, "long": 1 },
+          "prioritizeNearer": { "short": 1, "medium": 0.5, "long": 0.2 },
+          "discountDistant": { "short": 1, "medium": 0.2, "long": 0 },
+          "shortTermOnly": { "short": 1, "medium": 0, "long": 0 }
+        }
+      },
+      "categoryLabel": "Time Preferences",
+      "icon": "clock",
+      "previewText": "Short vs. long-term effects",
+      "heading": "When evaluating projects, how much consideration do you give to projects' near-term, medium-term, or longer-term effects?",
+      "info": "A project's effects play out over different timelines. Some effects, like malaria treatments, might occur right away. Others, like investments in education or infrastructure, could take years to arise. Other effects will arise in the longer run future. When you are evaluating projects, do you give extra weight to effects that will happen sooner (in the next decade) rather than later (decades or even centuries in the future)?\n\nThere are several reasons why you might give extra weight to near-term effects. First, you might think it's more morally important to help individuals that currently exist or will exist very soon than it is to help individuals that will potentially exist in the future. Alternatively, even if you think all beings matter equally, regardless of time, you might be so uncertain about a project's long-term effects that you'd rather focus on the more predictable near future. Lastly, you might have beliefs about how the future will go (e.g. that AI will change everything in 10 years) that make you want to just focus on projects whose effects will happen soon.",
+      "context": "Consider the following timeframes:\n\n- **Short-term:** before 2035\n- **Medium-term:** from 2035-2100\n- **Long-term:** after 2100\n\nWhich of these positions best describes your view when evaluating the effects of different projects?",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Time Preferences",
+      "options": [
+        {
+          "key": "equalAll",
+          "label": "Equal across all timeframes",
+          "description": "I only care about how much good I could possibly do, and I don't care whether that good happens in the short-term, medium-term, or long-term",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
+        },
+        {
+          "key": "prioritizeNearer",
+          "label": "Prioritize nearer term",
+          "description": "I care a bit about the long-term future, but I put more priority on the medium-term and even more priority on the short-term",
+          "info": "",
+          "panelLabel": "Nearer",
+          "panelShort": ">"
+        },
+        {
+          "key": "discountDistant",
+          "label": "Discount the distant future",
+          "description": "I do not care about the distant future. I care a bit about the medium-term, but I put more priority on the short-term",
+          "info": "",
+          "panelLabel": "Discount",
+          "panelShort": ">>"
+        },
+        {
+          "key": "shortTermOnly",
+          "label": "Short-term only",
+          "description": "I only care about effects in the short-term",
+          "info": "",
+          "panelLabel": "Short",
+          "panelShort": "ST"
+        }
+      ]
+    },
+    {
+      "id": "risk",
+      "type": "credence",
+      "worldviewDimension": {
+        "appliesWhen": "isDummyRisk",
+        "applyAs": "multiplier",
+        "options": {
+          "riskNeutral": 1,
+          "upsideSkepticism": 1,
+          "lossAversion": 1,
+          "both": 1
+        }
+      },
+      "categoryLabel": "Risk Attitudes",
+      "icon": "dice",
+      "previewText": "Attitudes toward risk",
+      "heading": "Are you averse to taking certain kinds of risks in your philanthropic giving?",
+      "info": "The expected value of a project is a weighted average of all the effects that the project might have. Two projects can have the same expected value but otherwise be very different. For example, a \"safe\" project may be almost guaranteed to do X amount of good, so its expected value is X. A \"risky\" project might have a 1/100 chance of delivering 100 x X amount of good and a 99/100 of doing nothing, so its expected value is also X. A different kind of \"risky\" project might have a 1/2 chance of backfiring, creating -X value, and a 1/2 chance of creating 3X value, so its expected value is also X.\n\nIf you only care about maximizing expected value, you will treat these projects the same way. However, if you are risk averse, you may dislike one or both of the risky projects. There are a few ways to be risk averse, including:\n\n- **Upside skepticism:** you are wary of spending your money on bets that have very small chances of success. You want to focus on what will probably happen, not what will happen in the most optimistic of outcomes.\n- **Loss aversion:** you want to avoid situations where your money does nothing, and you are even more keen to avoid situations where your actions made things worse. You want to penalize projects that have decent chances of failure or backfire.\n- **Both skeptical of upsides and averse to losses**",
+      "context": "Which of these best describes your perspective:",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Risk Attitudes",
+      "options": [
+        {
+          "key": "riskNeutral",
+          "label": "Risk neutral",
+          "description": "I prefer to invest in options that have the highest expected value",
+          "info": "",
+          "panelLabel": "Neutral",
+          "panelShort": "EV"
+        },
+        {
+          "key": "upsideSkepticism",
+          "label": "Skeptical of optimistic scenarios",
+          "description": "I am skeptical of projects' most optimistic scenarios and decide where to give based on scenarios that are more likely to occur",
+          "info": "",
+          "panelLabel": "Skeptical",
+          "panelShort": "S"
+        },
+        {
+          "key": "lossAversion",
+          "label": "Avoid losses",
+          "description": "I want to avoid losses and am motivated to avoid projects that have significant chances of failure or backfire (even if those projects have high expected value)",
+          "info": "",
+          "panelLabel": "Loss averse",
+          "panelShort": "LA"
+        },
+        {
+          "key": "both",
+          "label": "Both skeptical and loss averse",
+          "description": "I am both skeptical of projects' most optimistic scenarios and motivated to avoid losses",
+          "info": "",
+          "panelLabel": "Both",
+          "panelShort": "B"
+        }
+      ]
+    },
+    {
+      "id": "xrisk",
+      "type": "credence",
+      "worldviewDimension": {
+        "appliesWhen": "isNonXRisk",
+        "applyAs": "multiplier",
+        "options": {
+          "evaluateSame": 1,
+          "discount10": 0.9,
+          "discount50": 0.5,
+          "xriskOnly": 0
+        }
+      },
+      "categoryLabel": "Existential Risk",
+      "icon": "alert-triangle",
+      "previewText": "Existential risk priority",
+      "heading": "How much do you want to prioritize efforts to mitigate near-term existential risks which demand action in the next several years, compared to other kinds of projects you might fund?",
+      "info": "Some projects aim to reduce the chances of an event that poses existential or catastrophic risk (such as an engineered pandemic or AI takeover). If an event like this occurs, then it could severely mitigate the beneficial effects of other kinds of philanthropic projects (such as global health interventions). This can make it hard to compare the value of existential risk mitigation to the value of other projects.\n\nIf you think there is a high chance of a catastrophic risk in the near future (say, the next 10 years), then you may think that we need to act now to try to reduce these threats. You may care a lot about the longer-run future and what the world is like decades from now, but you want to prioritize actions now to ensure that humanity is around to enjoy that future.",
+      "context": "Do you want to treat near-term existential risk mitigation projects differently than other projects?",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "X-Risk Priority",
+      "options": [
+        {
+          "key": "evaluateSame",
+          "label": "Evaluate the same way",
+          "description": "I want to evaluate near-term existential risk projects the same way that I evaluate all other projects (e.g. by calculating their expected effects over the timeline I care about)",
+          "info": "",
+          "panelLabel": "Same",
+          "panelShort": "="
+        },
+        {
+          "key": "discount10",
+          "label": "Discount other projects somewhat",
+          "description": "I think there is about a 10% probability that an existential risk occurs in the next decade that renders other projects useless. Therefore, I want to discount the value of these other projects somewhat",
+          "info": "",
+          "panelLabel": "10% risk",
+          "panelShort": "10%"
+        },
+        {
+          "key": "discount50",
+          "label": "Discount other projects greatly",
+          "description": "I think there is about a 50% probability that an existential risk occurs in the next decade that renders other projects useless. Therefore, I want to greatly discount the value of these other projects",
+          "info": "",
+          "panelLabel": "50% risk",
+          "panelShort": "50%"
+        },
+        {
+          "key": "xriskOnly",
+          "label": "Only x-risk reduction",
+          "description": "I only care about reducing near-term existential risk",
+          "info": "",
+          "panelLabel": "X-risk only",
+          "panelShort": "X"
+        }
+      ]
+    },
+    {
+      "id": "animal",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "animal-friendly",
+          "name": "Animal friendly view",
+          "description": "Emphasizes equal consideration for animal and human suffering.",
+          "credences": { "humanEqual": 75, "human10x": 25, "human100x": 0, "human1000x": 0, "noValue": 0 }
+        },
+        {
+          "id": "rethink-priorities",
+          "name": "Rethink Priorities default",
+          "description": "Based on empirical research on animal welfare ranges, gives animals somewhat lower weight than humans.",
+          "credences": { "humanEqual": 20, "human10x": 50, "human100x": 20, "human1000x": 10, "noValue": 0 }
+        },
+        {
+          "id": "animal-skeptic",
+          "name": "Animal skeptic view",
+          "description": "Gives strong priority to human welfare, based on their unique capacities or our special moral obligations to other humans.",
+          "credences": { "humanEqual": 0, "human10x": 10, "human100x": 60, "human1000x": 30, "noValue": 0 }
+        }
+      ],
+      "worldviewDimension": {
+        "appliesWhen": "helpsAnimals",
+        "applyAs": "multiplier",
+        "options": {
+          "humanEqual": 0.0172,
+          "human10x": 0.00172,
+          "human100x": 0.000172,
+          "human1000x": 0.0000172,
+          "noValue": 0
+        }
+      },
+      "categoryLabel": "Animal Welfare",
+      "icon": "paw",
+      "previewText": "Animal welfare",
+      "heading": "How much do you value reducing suffering in animals compared to reducing suffering in humans?",
+      "info": "It can be difficult to compare the value of helping humans versus helping animals. For now, let's consider animals that most people believe are capable of suffering (such as pigs, dogs, or cows) and use chickens as a test case.\n\nThere are some conditions that decrease chickens' quality of life, which we can measure in terms of chicken Disability Adjusted Life Years. For example, suppose living in hurtful pain for a year reduces a chicken's quality of life by 25%. Therefore, if we improve a chicken's living conditions to relieve this suffering, this would result in a gain of 0.25 chicken DALYs. Likewise, some human conditions reduce a human's quality of life by 25%, so relieving this for a year would result in 0.25 human DALYs.\n\nHow much do you value chicken DALYs versus human DALYs? In other words, how much do you care about a quality of life reduction in chickens compared to a similar proportional quality of life reduction in humans? Note that there are a few different reasons you might give chicken DALYs lower weight. Perhaps you think a 25% reduction in a chicken's quality of life involves less suffering (or loss of meaningful experiences) than a 25% reduction in a human's quality of life. Alternatively, you could think the amount of suffering is the same, but you think it is morally more important to alleviate human suffering.",
+      "context": "For this question, we'll focus on familiar farmed animals—chickens, pigs, and cows—that most people agree can experience pain and distress.\n\nWhich of these positions best describes your view?",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Animal Welfare Weights",
+      "options": [
+        {
+          "key": "humanEqual",
+          "label": "Equal to humans",
+          "description": "I treat a year of disability in an animal the same as a year of disability in a human",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
+        },
+        {
+          "key": "human10x",
+          "label": "10x less than humans",
+          "description": "I value a human year of disability about 10x as much as a year of disability in an animal",
+          "info": "",
+          "panelLabel": "10x less",
+          "panelShort": "10x"
+        },
+        {
+          "key": "human100x",
+          "label": "100x less than humans",
+          "description": "I value a human year of disability about 100x as much as a year of disability in an animal",
+          "info": "",
+          "panelLabel": "100x less",
+          "panelShort": "100x"
+        },
+        {
+          "key": "human1000x",
+          "label": "1000x less than humans",
+          "description": "I value a human year of disability about 1000x as much as a year of disability in an animal",
+          "info": "",
+          "panelLabel": "1000x less",
+          "panelShort": "1kx"
+        },
+        {
+          "key": "noValue",
+          "label": "No value",
+          "description": "I do not value animal welfare",
+          "info": "",
+          "panelLabel": "None",
+          "panelShort": "0"
+        }
+      ]
+    },
+    {
+      "id": "invertebrate",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "invertebrate-friendly",
+          "name": "Invertebrate friendly view",
+          "description": "Emphasizes roughly equal consideration for invertebrate and human suffering, tempered by uncertainty about invertebrate sentience.",
+          "credences": { "humanEqual": 40, "human100x": 40, "human1000x": 20, "human10000x": 0, "noValue": 0 }
+        },
+        {
+          "id": "rethink-priorities",
+          "name": "Rethink Priorities default",
+          "description": "Based on empirical research on animal welfare ranges and likelihoods of invertebrate sentience, gives animals significantly lower weight than humans.",
+          "credences": { "humanEqual": 10, "human100x": 40, "human1000x": 30, "human10000x": 10, "noValue": 10 }
+        },
+        {
+          "id": "invertebrate-skeptic",
+          "name": "Invertebrate skeptic view",
+          "description": "Gives strong priority to human welfare, highly skeptical about invertebrates' capacity for welfare.",
+          "credences": { "humanEqual": 0, "human100x": 0, "human1000x": 10, "human10000x": 40, "noValue": 50 }
+        }
+      ],
+      "worldviewDimension": {
+        "appliesWhen": "helpsInvertebrates",
+        "applyAs": "multiplier",
+        "options": {
+          "humanEqual": 0.0172,
+          "human100x": 0.000172,
+          "human1000x": 0.0000172,
+          "human10000x": 0.00000172,
+          "noValue": 0
+        }
+      },
+      "categoryLabel": "Invertebrate Welfare",
+      "icon": "shell",
+      "previewText": "Invertebrate welfare",
+      "heading": "How much do you care about reducing the suffering of shrimp (or other small, less understood farmed invertebrates), compared to reducing the suffering of humans?",
+      "info": "It can be difficult to compare the value of helping humans versus helping animals. This is even more difficult when we are uncertain whether the animals even have conscious experiences or what their experiences are like. For now, let's consider farmed invertebrates (such as shrimp or insects) and use shrimp as a test case.\n\nShrimp may experience conditions that reduce their quality of life. Assuming they are sentient, we can characterize their loss of quality of life via a shrimp DALY. How much do you value shrimp DALYs versus human DALYs? Note that there are three different reasons you might give shrimp DALYs lower weight. Perhaps you think a 25% reduction in a shrimp's quality of life involves less suffering (or loss of meaningful experiences) than a 25% reduction in a human's quality of life. Alternatively, you could think the amount of suffering is the same, but you think it is morally more important to alleviate human suffering. Lastly, you could doubt that shrimp are sentient and therefore doubt that they can suffer.",
+      "context": "Which of these positions best describes your view?",
+      "instructionsOptions": "Choose the view that best represents your position.",
+      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
+      "editPanelTitle": "Invertebrate Weights",
+      "options": [
+        {
+          "key": "humanEqual",
+          "label": "Equal to humans",
+          "description": "I treat a year of disability in shrimp the same as a year of disability in a human",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
+        },
+        {
+          "key": "human100x",
+          "label": "100x less than humans",
+          "description": "I value a human year of disability about 100x as much as a year of disability in a shrimp",
+          "info": "",
+          "panelLabel": "100x less",
+          "panelShort": "100x"
+        },
+        {
+          "key": "human1000x",
+          "label": "1000x less than humans",
+          "description": "I value a human year of disability about 1000x as much as a year of disability in a shrimp",
+          "info": "",
+          "panelLabel": "1000x less",
+          "panelShort": "1kx"
+        },
+        {
+          "key": "human10000x",
+          "label": "10,000x less than humans",
+          "description": "I value a human year of disability about 10,000x as much as a year of disability in a shrimp",
+          "info": "",
+          "panelLabel": "10kx less",
+          "panelShort": "10kx"
+        },
+        {
+          "key": "noValue",
+          "label": "No value",
+          "description": "I do not value shrimp welfare",
+          "info": "",
+          "panelLabel": "None",
+          "panelShort": "0"
+        }
+      ]
+    },
+    {
       "id": "disability",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "prioritize-lives",
+          "name": "Prioritize saving lives",
+          "description": "Places more emphasis on preventing deaths than relieving suffering from non-fatal diseases and disabilities.",
+          "credences": { "livesOnly": 25, "livesMore": 75, "equal": 0, "disabilityMore": 0 }
+        },
+        {
+          "id": "equal-weight",
+          "name": "Equal weight",
+          "description": "Values saving lives the same as restoring quality of life lost to disability. Similar to GiveWell's moral weights.",
+          "credences": { "livesOnly": 0, "livesMore": 0, "equal": 100, "disabilityMore": 0 }
+        },
+        {
+          "id": "prioritize-quality",
+          "name": "Prioritize improving quality of life",
+          "description": "Places more emphasis on relieving suffering due to disease and disability, instead of saving lives.",
+          "credences": { "livesOnly": 0, "livesMore": 0, "equal": 25, "disabilityMore": 75 }
+        }
+      ],
       "worldviewDimension": {
         "appliesWhen": "preventsDisability",
         "applyAs": "multiplier",
@@ -16,9 +399,9 @@
       "categoryLabel": "Disability Weights",
       "icon": "heart-pulse",
       "previewText": "Disability vs. saving lives",
-      "heading": "How much do you value saving Years of Life Lost to Disability versus Years of Life Lost due to death?",
-      "info": "Some projects relieve suffering from non-lethal diseases or disabilities. We can measure the impact of these diseases in terms of how much worse one's quality of life is with the disability compared to full health. If we alleviate that disability, we can estimate how many years of health we are restoring.\n\nThis is measured by Disability Adjusted Life Years (DALYs). Suppose living for a year with a particular serious disability means you lose 50% of your quality of life. If we relieve that disease for a year, that's saving ½ DALY. Estimates of how much a disease decreases quality of life typically come from the [Global Burden of Disease](https://www.healthdata.org/research-analysis/gbd). For example, GiveWell estimates that clubfoot has a disability weight of around 0.2. If we treat an infant and prevent them from suffering from 60 years of clubfoot, this intervention will save 12 DALYs. Severe multiple sclerosis is estimated to have a disability weight of 0.7. Preventing severe MS for 10 years would deliver 7 DALYs.\n\nSuppose that living with blindness reduces someone's quality of life by 25%. You could either choose to cure blindness in a group of people, restoring them to full health for some number of years. Or you could save a child's life, giving them 50 extra years to live. How many years of blindness would you need to relieve to make it as good as saving the one child's life?",
-      "context": "A person suffering from a disease or disability has their quality of life reduced. We can measure this in terms of the Years of Life Lost to Disability (YLD). For example, if I live with a disease that reduces my quality of life by 25% for 4 years, that totals 1 Year Lost to Disability. If someone dies, we can measure their loss in terms of Years of Life Lost (YLL) due to death.",
+      "heading": "When you think about helping people, how do you weigh saving lives against making people's existing lives better by reducing disease or disability?",
+      "info": "Here's an example that may help you think through your options. Suppose that living with blindness reduces someone's quality of life by 25%. You could either choose to cure blindness in a group of people, restoring them to full health for some number of years. Or you could save a child's life, giving them 50 extra years to live. How many years of blindness would you need to relieve to make it as good as saving the one child's life?\n\nSome charitable projects save lives—preventing people from dying. Others relieve suffering from diseases or disabilities that aren't fatal but significantly reduce quality of life.\n\n**How we measure this:** We can estimate how much a disease or disability reduces someone's quality of life (estimates typically come from the [Global Burden of Disease](https://www.healthdata.org/research-analysis/gbd)). For example:\n\n- **Clubfoot** might reduce quality of life by 20%\n- **Blindness** might reduce quality of life by 25%\n- **Severe multiple sclerosis** might reduce quality of life by 75%\n\nIf a charity treats someone's blindness for 10 years, that's like restoring 2.5 \"full-health years\" (10 years × 25% improvement). If a charity corrects an infant's clubfeet and prevents them from suffering from 60 years of that condition, that's like restoring 12 full health years. We call these recovered years \"disability-adjusted life years\" or DALYs.",
+      "context": "Imagine you must choose between two projects:\n\n- **Project A:** Save one child's life, giving them 50 additional years to live\n- **Project B:** Cure or treat a serious disability for multiple people, restoring some number of \"full-health years\"\n\nHow many years of disability would you need to relieve to make it as good as saving the one child's life?",
       "instructionsOptions": "Choose the view that best represents your position.",
       "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
       "editPanelTitle": "Disability Weights",
@@ -35,15 +418,15 @@
           "key": "livesMore",
           "label": "More weight on saving lives",
           "description": "I put 5x as much value on saving a year of life lost to death than a year of life lost to disability",
-          "info": "",
+          "info": "I'd need to prevent 1000 years of blindness to equal saving 50 years of life.",
           "panelLabel": "5x lives",
-          "panelShort": "5×L"
+          "panelShort": "5xL"
         },
         {
           "key": "equal",
-          "label": "Equal weight",
+          "label": "Equal weight for saving lives and relieving disabilities",
           "description": "I value a year of life lost equally, whether it is due to death or disability",
-          "info": "",
+          "info": "I'd need to prevent 200 years of blindness to equal saving 50 years of life. For comparison, this is the weight given to disability by GiveWell.",
           "panelLabel": "Equal",
           "panelShort": "="
         },
@@ -51,15 +434,35 @@
           "key": "disabilityMore",
           "label": "More weight on relieving disability",
           "description": "I put 5x as much value on saving a year of life lost to disability than a year of life lost to death",
-          "info": "",
+          "info": "I'd need to prevent 40 years of blindness to equal saving 50 years of life.",
           "panelLabel": "5x disability",
-          "panelShort": "5×D"
+          "panelShort": "5xD"
         }
       ]
     },
     {
       "id": "income",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "prioritize-lives",
+          "name": "Prioritize saving lives",
+          "description": "Places much more emphasis on preventing deaths than improving material conditions for people living in poverty.",
+          "credences": { "livesOnly": 25, "lives10x": 75, "lives2x": 0, "equal": 0 }
+        },
+        {
+          "id": "balanced",
+          "name": "Balanced",
+          "description": "Gives more weight to saving lives than improving incomes, but cares about both goals. Similar to GiveWell's moral weights.",
+          "credences": { "livesOnly": 0, "lives10x": 25, "lives2x": 75, "equal": 0 }
+        },
+        {
+          "id": "poverty-relief",
+          "name": "Poverty relief",
+          "description": "Prioritizes poverty relief as highly as saving lives.",
+          "credences": { "livesOnly": 0, "lives10x": 0, "lives2x": 25, "equal": 75 }
+        }
+      ],
       "worldviewDimension": {
         "appliesWhen": "increasesIncome",
         "applyAs": "multiplier",
@@ -73,8 +476,9 @@
       "categoryLabel": "Income Weights",
       "icon": "banknote",
       "previewText": "Income vs. saving lives",
-      "heading": "How much do you value doubling someone's income for a year compared to adding one year to someone's life?",
-      "info": "Some projects have the effect of increasing people's income. While this may have indirect effects on health or lifespan, here we are just measuring the increase in the resources people have (or, alternatively, in their levels of consumption). Typically, this is measured in units of how many people had their income doubled for a single year.",
+      "heading": "When you think about helping people, how do you weigh saving lives against increasing people's income, allowing them to improve their material quality of life?",
+      "info": "Here's an example that might help you think through your options. Suppose that you could make direct cash transfers that would double incomes for a group of people for a year. The same amount of money would save one child's life, giving them an extra 50 years to live. How many people's incomes would you have to double to make that option as good as saving the one child's life?",
+      "context": "**Imagine this scenario:** You could either:\n\n- **Option A:** Add one year of life to someone who would otherwise die\n- **Option B:** Double someone's income for one year, significantly improving their material circumstances\n\nHow much do you value doubling someone's income for a year compared to adding one year to someone's life?",
       "instructionsOptions": "Choose the view that best represents your position.",
       "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
       "editPanelTitle": "Income Weights",
@@ -91,271 +495,25 @@
           "key": "lives10x",
           "label": "Much more weight on a year of life",
           "description": "I put 10x as much value on a year of life compared to a year of doubled income",
-          "info": "",
+          "info": "I would need to double yearly income for 500 people to equal saving 50 years of life.",
           "panelLabel": "10x lives",
-          "panelShort": "10×"
+          "panelShort": "10x"
         },
         {
           "key": "lives2x",
           "label": "Some more weight on a year of life",
           "description": "I put 2x as much value on a year of life compared to a year of doubled income",
-          "info": "",
+          "info": "I would need to double yearly income for 100 people to equal saving 50 years of life. This is comparable to (but slightly higher than) the weight that GiveWell assigns to a year of income doubling compared to saving a year of life.",
           "panelLabel": "2x lives",
-          "panelShort": "2×"
+          "panelShort": "2x"
         },
         {
           "key": "equal",
           "label": "Equal weight",
           "description": "I put the same value on a year of life compared to a year of doubled income",
-          "info": "",
+          "info": "I would need to double yearly income for 50 people to equal saving 50 years of life.",
           "panelLabel": "Equal",
           "panelShort": "="
-        }
-      ]
-    },
-    {
-      "id": "chicken",
-      "type": "selection",
-      "worldviewDimension": {
-        "appliesWhen": "helpsChickens",
-        "applyAs": "multiplier",
-        "options": {
-          "humanEqual": 0.0172,
-          "human10x": 0.00172,
-          "human100x": 0.000172,
-          "human1000x": 0.0000172,
-          "noValue": 0
-        }
-      },
-      "categoryLabel": "Animal Welfare",
-      "icon": "bird",
-      "previewText": "Chicken vs. human welfare",
-      "heading": "Which of these positions best describes your view?",
-      "info": "It can be difficult to compare the value of helping humans versus helping animals. For now, let's consider animals that most people believe are capable of suffering (such as pigs, dogs, or cows) and use chickens as a test case.\n\nThere are some conditions that decrease chickens' quality of life, which we can measure in terms of chicken Disability Adjusted Life Years. For example, suppose living in hurtful pain for a year reduces a chicken's quality of life by 25%. Therefore, if we improve a chicken's living conditions to relieve this suffering, this would result in a gain of 0.25 chicken DALYs. Likewise, some human conditions reduce a human's quality of life by 25%, so relieving this for a year would result in 0.25 human DALYs.\n\nHow much do you value chicken DALYs versus human DALYs? In other words, how much do you care about a quality of life reduction in chickens compared to a similar proportional quality of life reduction in humans? Note that there are two different reasons you might give chicken DALYs lower weight. Perhaps you think a 25% reduction in a chicken's quality of life involves less suffering (or loss of meaningful experiences) than a 25% reduction in a human's quality of life. Alternatively, you could think the amount of suffering is the same, but you think it is morally more important to alleviate human suffering.",
-      "context": "How much do you value improving the welfare of chickens (and other large, familiar farmed animals like pigs and cows), compared to how much you value improving the welfare of humans?",
-      "instructionsOptions": "Choose the view that best represents your position.",
-      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Chicken Weights",
-      "options": [
-        {
-          "key": "humanEqual",
-          "label": "Equal to humans",
-          "description": "I treat a year of disability in a chicken the same as a year of disability in a human",
-          "info": "",
-          "panelLabel": "Equal",
-          "panelShort": "="
-        },
-        {
-          "key": "human10x",
-          "label": "10× less than humans",
-          "description": "I value a human year of disability about 10x as much as a year of disability in a chicken",
-          "info": "",
-          "panelLabel": "10× less",
-          "panelShort": "10×"
-        },
-        {
-          "key": "human100x",
-          "label": "100× less than humans",
-          "description": "I value a human year of disability about 100x as much as a year of disability in a chicken",
-          "info": "",
-          "panelLabel": "100× less",
-          "panelShort": "100×"
-        },
-        {
-          "key": "human1000x",
-          "label": "1000× less than humans",
-          "description": "I value a human year of disability about 1000x as much as a year of disability in a chicken",
-          "info": "",
-          "panelLabel": "1000× less",
-          "panelShort": "1k×"
-        },
-        {
-          "key": "noValue",
-          "label": "No value",
-          "description": "I do not value chicken welfare",
-          "info": "",
-          "panelLabel": "None",
-          "panelShort": "0"
-        }
-      ]
-    },
-    {
-      "id": "shrimp",
-      "type": "selection",
-      "worldviewDimension": {
-        "appliesWhen": "helpsShrimp",
-        "applyAs": "multiplier",
-        "options": {
-          "humanEqual": 0.0172,
-          "human100x": 0.000172,
-          "human1000x": 0.0000172,
-          "human10000x": 0.00000172,
-          "noValue": 0
-        }
-      },
-      "categoryLabel": "Animal Welfare",
-      "icon": "shell",
-      "previewText": "Shrimp vs. human welfare",
-      "heading": "Which of these positions best describes your view?",
-      "info": "It can be difficult to compare the value of helping humans versus helping animals. This is even more difficult when we are uncertain whether the animals even have conscious experiences or what their experiences are like. For now, let's consider farmed invertebrates (such as shrimp or insects) and use shrimp as a test case.\n\nShrimp may experience conditions that reduce their quality of life. Assuming they are sentient, we can characterize their loss of quality of life via a shrimp DALY. How much do you value shrimp DALYs versus human DALYs? Note that there are three different reasons you might give shrimp DALYs lower weight. Perhaps you think a 25% reduction in a shrimp's quality of life involves less suffering (or loss of meaningful experiences) than a 25% reduction in a human's quality of life. Alternatively, you could think the amount of suffering is the same, but you think it is morally more important to alleviate human suffering. Lastly, you could doubt that shrimp are sentient and therefore doubt that they can suffer.",
-      "context": "How much do you value improving the welfare of shrimp (and other small, less understood farmed invertebrates like insects), compared to how much you value improving the welfare of humans?",
-      "instructionsOptions": "Choose the view that best represents your position.",
-      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Shrimp Weights",
-      "options": [
-        {
-          "key": "humanEqual",
-          "label": "Equal to humans",
-          "description": "I treat a year of disability in shrimp the same as a year of disability in a human",
-          "info": "",
-          "panelLabel": "Equal",
-          "panelShort": "="
-        },
-        {
-          "key": "human100x",
-          "label": "100× less than humans",
-          "description": "I value a human year of disability about 100x as much as a year of disability in a shrimp",
-          "info": "",
-          "panelLabel": "100× less",
-          "panelShort": "100×"
-        },
-        {
-          "key": "human1000x",
-          "label": "1000× less than humans",
-          "description": "I value a human year of disability about 1000x as much as a year of disability in a shrimp",
-          "info": "",
-          "panelLabel": "1000× less",
-          "panelShort": "1k×"
-        },
-        {
-          "key": "human10000x",
-          "label": "10,000× less than humans",
-          "description": "I value a human year of disability about 10,000x as much as a year of disability in a shrimp",
-          "info": "",
-          "panelLabel": "10k× less",
-          "panelShort": "10k×"
-        },
-        {
-          "key": "noValue",
-          "label": "No value",
-          "description": "I do not value shrimp welfare",
-          "info": "",
-          "panelLabel": "None",
-          "panelShort": "0"
-        }
-      ]
-    },
-    {
-      "id": "timeframes",
-      "type": "selection",
-      "worldviewDimension": {
-        "appliesTo": "timeframe",
-        "applyAs": "multiplier",
-        "options": {
-          "equalAll": { "short": 1, "medium": 1, "long": 1 },
-          "prioritizeNearer": { "short": 1, "medium": 0.5, "long": 0.2 },
-          "discountDistant": { "short": 1, "medium": 0.2, "long": 0 },
-          "shortTermOnly": { "short": 1, "medium": 0, "long": 0 }
-        }
-      },
-      "categoryLabel": "Time Preferences",
-      "icon": "clock",
-      "previewText": "Short vs. long-term effects",
-      "heading": "Which of these positions best describes your view when evaluating the effects of different projects?",
-      "info": "A project's effects play out over different timelines. Some effects, like malaria treatments, might occur right away. Others, like investments in education or infrastructure, could take years to arise. Other effects will arise in the longer run future.\n\nWhen you are evaluating projects, do you give extra weight to effects that will happen sooner (in the next decade) rather than later (decades or even centuries in the future)?\n\nThere are several reasons why you might give extra weight to near-term effects. First, you might think it's more morally important to help individuals that currently exist or will exist very soon than it is to help individuals that will potentially exist in the future. Alternatively, even if you think all beings matter equally, regardless of time, you might be so uncertain about a project's long-term effects that you'd rather focus on the more predictable near future. Lastly, you might have beliefs about how the future will go (e.g. that AI will change everything in 10 years) that make you want to just focus on projects whose effects will happen soon.",
-      "context": "Consider the following timeframes:\n- **Short-term:** before 2035\n- **Medium-term:** from 2035-2100\n- **Long-term:** after 2100",
-      "instructionsOptions": "Choose the view that best represents your position.",
-      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "Time Preferences",
-      "options": [
-        {
-          "key": "equalAll",
-          "label": "Equal across all timeframes",
-          "description": "I only care about how much good I could do, regardless of when it happens",
-          "info": "",
-          "panelLabel": "Equal",
-          "panelShort": "="
-        },
-        {
-          "key": "prioritizeNearer",
-          "label": "Prioritize nearer term",
-          "description": "I care about the long-term, but put more priority on medium-term and even more on short-term",
-          "info": "",
-          "panelLabel": "Nearer",
-          "panelShort": "→"
-        },
-        {
-          "key": "discountDistant",
-          "label": "Discount the distant future",
-          "description": "I do not care about the distant future; I care a bit about medium-term but prioritize short-term",
-          "info": "",
-          "panelLabel": "Discount",
-          "panelShort": "↓"
-        },
-        {
-          "key": "shortTermOnly",
-          "label": "Short-term only",
-          "description": "I only care about effects in the short-term",
-          "info": "",
-          "panelLabel": "Short",
-          "panelShort": "ST"
-        }
-      ]
-    },
-    {
-      "id": "xrisk",
-      "type": "selection",
-      "worldviewDimension": {
-        "appliesWhen": "isNonXRisk",
-        "applyAs": "multiplier",
-        "options": {
-          "evaluateSame": 1,
-          "discount10": 0.9,
-          "discount50": 0.5,
-          "xriskOnly": 0
-        }
-      },
-      "categoryLabel": "Existential Risk",
-      "icon": "alert-triangle",
-      "previewText": "Existential risk priority",
-      "heading": "Do you want to treat near-term existential risk mitigation projects differently than other projects?",
-      "info": "Some projects aim to reduce the chances of an event that poses existential or catastrophic risk (such as an engineered pandemic or AI takeover). If an event like this occurs, then it could severely mitigate the beneficial effects of other kinds of philanthropic projects (such as global health interventions). This can make it hard to compare the value of existential risk mitigation to the value of other projects.\n\nIf you think there is a high chance of a catastrophic risk in the near future (say, the next 10 years), then you may think that we need to act now to try to reduce these threats. You may care a lot about the longer-run future and what the world is like decades from now, but you want to prioritize actions now to ensure that humanity is around to enjoy that future.",
-      "context": "How much do you want to prioritize efforts to mitigate near-term existential risks which demand action in the next several years, compared to other kinds of projects you might fund?",
-      "instructionsOptions": "Choose the view that best represents your position.",
-      "instructionsSliders": "Distribute your credence across these views. Sliders auto-balance to 100%.",
-      "editPanelTitle": "X-Risk Priority",
-      "options": [
-        {
-          "key": "evaluateSame",
-          "label": "Evaluate the same way",
-          "description": "I want to evaluate x-risk projects the same way I evaluate all other projects",
-          "info": "",
-          "panelLabel": "Same",
-          "panelShort": "="
-        },
-        {
-          "key": "discount10",
-          "label": "Discount other projects somewhat",
-          "description": "I think there's about a 10% probability that an existential risk in the next decade renders other projects useless",
-          "info": "",
-          "panelLabel": "10% risk",
-          "panelShort": "10%"
-        },
-        {
-          "key": "discount50",
-          "label": "Discount other projects greatly",
-          "description": "I think there's about a 50% probability that an existential risk in the next decade renders other projects useless",
-          "info": "",
-          "panelLabel": "50% risk",
-          "panelShort": "50%"
-        },
-        {
-          "key": "xriskOnly",
-          "label": "Only x-risk reduction",
-          "description": "I only care about reducing near-term existential risk",
-          "info": "",
-          "panelLabel": "X-risk only",
-          "panelShort": "X"
         }
       ]
     }

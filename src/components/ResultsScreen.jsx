@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
 import { RotateCcw, Share2, Check, Loader2, Layers } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import QuestionIcon from './ui/QuestionIcon';
 import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
+import InfoTooltip from './ui/InfoTooltip';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
 import { generateShareUrl } from '../utils/shareUrl';
+import {
+  useEmailCopy,
+  processEmailPlaceholder,
+  createEmailLinkComponent,
+} from '../hooks/useEmailCopy.jsx';
 import styles from '../styles/components/Results.module.css';
+import marketplaceStyles from '../styles/components/Marketplace.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
 
@@ -45,12 +53,24 @@ function ResultsScreen() {
     setSelectedCalculations,
     setWorldviewName,
     marketplaceBudget,
+    setMarketplaceBudget,
   } = useQuiz();
+
+  const DEFAULT_BUDGET = 10_000_000;
+  const budget = marketplaceBudget ?? DEFAULT_BUDGET;
+  const [budgetInput, setBudgetInput] = useState(budget.toLocaleString());
 
   const [copied, setCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareError, setShareError] = useState(null);
   const [showWorldviewModal, setShowWorldviewModal] = useState(false);
+
+  // Email copy functionality for feedback card
+  const {
+    email: feedbackEmail,
+    copied: feedbackEmailCopied,
+    handleEmailClick: handleFeedbackEmailClick,
+  } = useEmailCopy(copy.results.feedbackEmail);
 
   const causeEntries = Object.entries(causesConfig);
 
@@ -104,6 +124,27 @@ function ResultsScreen() {
     setSelectedCalculations({ [side]: methodKey });
   };
 
+  // Budget input handlers
+  const handleBudgetChange = (e) => {
+    setBudgetInput(e.target.value);
+  };
+
+  const handleBudgetBlur = () => {
+    const parsed = parseInt(budgetInput.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      setMarketplaceBudget(parsed);
+      setBudgetInput(parsed.toLocaleString());
+    } else {
+      setBudgetInput(budget.toLocaleString());
+    }
+  };
+
+  const handleBudgetKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
+  };
+
   const handleResetClick = () => {
     if (window.confirm(copy.results.resetConfirmation)) {
       resetQuiz();
@@ -149,7 +190,7 @@ function ResultsScreen() {
         questionStates[questionId] = {
           credences: qState.credences,
           inputMode: qState.inputMode,
-          lockedKey: qState.lockedKey,
+          lockedKeys: qState.lockedKeys,
           originalCredences: qState.originalCredences,
         };
       }
@@ -245,6 +286,7 @@ function ResultsScreen() {
         evs={method.hasEvs ? results.evs : null}
         causeEntries={causeEntries}
         simpleMode={simpleMode}
+        budget={budget}
       />
     );
   };
@@ -262,6 +304,7 @@ function ResultsScreen() {
             evs={method.hasEvs ? results.evs : null}
             causeEntries={causeEntries}
             simpleMode={true}
+            budget={budget}
           />
         );
       })}
@@ -282,6 +325,7 @@ function ResultsScreen() {
             originalResults={originalCalculationResults?.[method.key]}
             causeEntries={causeEntries}
             hasChanged={hasChanged}
+            budget={budget}
           />
         );
       })}
@@ -306,6 +350,24 @@ function ResultsScreen() {
               <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
             )}
           </h1>
+        </div>
+
+        <div className={styles.budgetRow}>
+          <label className={marketplaceStyles.settingsLabel}>
+            {copy.results.budgetLabel}
+            {copy.results.budgetInfo && <InfoTooltip content={copy.results.budgetInfo} />}
+            <div className={marketplaceStyles.budgetInputWrapper}>
+              <span className={marketplaceStyles.currencyPrefix}>$</span>
+              <input
+                type="text"
+                value={budgetInput}
+                onChange={handleBudgetChange}
+                onBlur={handleBudgetBlur}
+                onKeyDown={handleBudgetKeyDown}
+                className={marketplaceStyles.budgetInput}
+              />
+            </div>
+          </label>
         </div>
 
         {isCalculationSelectEnabled ? (
@@ -383,9 +445,11 @@ function ResultsScreen() {
                   onToggle={() =>
                     setExpandedPanel(expandedPanel === question.id ? null : question.id)
                   }
-                  lockedKey={state.lockedKey}
-                  setLockedKey={state.setLockedKey}
+                  lockedKeys={state.lockedKeys}
+                  setLockedKeys={state.setLockedKeys}
                   questionType={question.type}
+                  selectedPreset={state.selectedPreset}
+                  setSelectedPreset={state.setSelectedPreset}
                 />
               );
             })}
@@ -421,6 +485,22 @@ function ResultsScreen() {
             </button>
           )}
         </div>
+
+        {features.ui?.feedbackCard && (
+          <div className={styles.feedbackCard}>
+            <ReactMarkdown
+              components={{
+                a: createEmailLinkComponent(handleFeedbackEmailClick, styles.emailCopy),
+              }}
+            >
+              {processEmailPlaceholder(
+                copy.results.feedbackCard,
+                feedbackEmail,
+                feedbackEmailCopied
+              )}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
 
       {showWorldviewModal && (

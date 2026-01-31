@@ -35,6 +35,12 @@
   white-space: nowrap;
 }
 
+.budgetRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-4);
+}
+
 .resultsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -338,6 +344,46 @@
 .newResults .calculationSelect {
   max-width: 100%;
   margin: 0 0 var(--spacing-3);
+}
+
+.feedbackCard {
+  background: var(--overlay-subtle);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-subtle);
+  padding: var(--spacing-5);
+  margin-top: var(--spacing-6);
+  text-align: center;
+}
+
+.feedbackCard p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-gray-light);
+  font-family: var(--font-body);
+  line-height: var(--leading-relaxed);
+}
+
+.feedbackCard strong {
+  color: var(--text-primary);
+}
+
+.feedbackCard a {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.feedbackCard a:hover {
+  color: var(--text-white);
+}
+
+.emailCopy {
+  color: var(--text-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.emailCopy:hover {
+  color: var(--text-white);
 }
 
 @media (max-width: 768px) {

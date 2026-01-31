@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import CompactSlider from './CompactSlider';
 import CompactSelection from './CompactSelection';
@@ -12,6 +13,8 @@ import copy from '../../../config/copy.json';
  * Shows "modified" badge when values differ from original.
  * Includes individual reset button and inline preview when collapsed.
  */
+const CUSTOM_PRESET_ID = 'custom';
+
 function EditPanel({
   title,
   icon,
@@ -21,10 +24,26 @@ function EditPanel({
   configs,
   isExpanded,
   onToggle,
-  lockedKey,
-  setLockedKey,
+  lockedKeys = [],
+  setLockedKeys,
   questionType = QUESTION_TYPES.DEFAULT,
+  selectedPreset,
+  setSelectedPreset,
 }) {
+  // Local state for smooth slider display during drag
+  const [localCredences, setLocalCredences] = useState(null);
+  const syncTimeoutRef = useRef(null);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
+  }, []);
+
+  // Use local values for display if set, otherwise actual credences
+  const displayCredences = localCredences || credences;
+
   const panelChanged =
     originalCredences && JSON.stringify(credences) !== JSON.stringify(originalCredences);
 
@@ -92,22 +111,45 @@ function EditPanel({
                 <CompactSlider
                   key={config.key}
                   label={config.label}
-                  value={credences[config.key]}
-                  onChange={(val, baseCredences, shouldRound, currentLockedKey) => {
+                  value={displayCredences[config.key]}
+                  onChange={(val, baseCredences, shouldRound, currentLockedKeys) => {
+                    const sourceCredences = baseCredences || localCredences || credences;
                     const adjusted = adjustCredences(
                       config.key,
                       val,
-                      credences,
+                      sourceCredences,
                       baseCredences,
-                      currentLockedKey
+                      currentLockedKeys
                     );
-                    setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
+                    const newCredences = shouldRound ? roundCredences(adjusted) : adjusted;
+
+                    // Update local state immediately for smooth slider
+                    setLocalCredences(newCredences);
+
+                    // Switch to Custom preset when modifying credences
+                    if (setSelectedPreset && selectedPreset !== CUSTOM_PRESET_ID) {
+                      setSelectedPreset(CUSTOM_PRESET_ID);
+                    }
+
+                    // Debounce sync to context
+                    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+
+                    if (shouldRound) {
+                      // On drag end, sync immediately
+                      setCredences(newCredences);
+                      syncTimeoutRef.current = setTimeout(() => setLocalCredences(null), 50);
+                    } else {
+                      // During drag, debounce context sync
+                      syncTimeoutRef.current = setTimeout(() => {
+                        setCredences(newCredences);
+                      }, 100);
+                    }
                   }}
                   color={config.color}
-                  credences={credences}
+                  credences={displayCredences}
                   sliderKey={config.key}
-                  lockedKey={lockedKey}
-                  setLockedKey={setLockedKey}
+                  lockedKeys={lockedKeys}
+                  setLockedKeys={setLockedKeys}
                 />
               ))}
               <div className={styles.footer}>

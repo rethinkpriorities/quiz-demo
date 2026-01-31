@@ -37,7 +37,8 @@
 }
 
 .icon {
-  font-size: var(--text-2xl);
+  display: flex;
+  align-items: center;
 }
 
 .title {

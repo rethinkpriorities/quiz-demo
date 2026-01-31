@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   SKIP_CONFLICT: 'quiz_skip_conflict',
 };
 
-const STATE_VERSION = 3;
+const STATE_VERSION = 6;
 
 /**
  * Get or create a session ID for this browser tab.
@@ -44,7 +44,8 @@ export function saveQuizState(state) {
         credences: qState.credences,
         originalCredences: qState.originalCredences,
         inputMode: qState.inputMode,
-        lockedKey: qState.lockedKey,
+        lockedKeys: qState.lockedKeys,
+        selectedPreset: qState.selectedPreset,
       };
     }
     worldviewData[worldviewId] = { questions: questionData };

@@ -20,6 +20,7 @@ function IntermissionScreen() {
     causesConfig,
     goBack,
     goForward,
+    marketplaceBudget,
   } = useQuiz();
 
   if (!currentQuestion) return null;
@@ -65,6 +66,7 @@ function IntermissionScreen() {
                 results={calculationResults[method.key]}
                 evs={method.hasEvs ? calculationResults[method.key].evs : null}
                 causeEntries={causeEntries}
+                budget={marketplaceBudget}
               />
             ))}
           </div>

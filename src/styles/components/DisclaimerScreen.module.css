@@ -1,0 +1,64 @@
+/* Disclaimer Screen Styles */
+
+.container {
+  max-width: 700px;
+  text-align: center;
+}
+
+.heading {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--spacing-12);
+  letter-spacing: var(--tracking-tight);
+}
+
+.content {
+  background: var(--overlay-subtle);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  padding: var(--spacing-16);
+  margin-bottom: var(--spacing-24);
+  text-align: left;
+}
+
+.content p {
+  margin: 0 0 var(--spacing-8) 0;
+  font-size: var(--text-lg);
+  color: var(--text-gray-light);
+  font-family: var(--font-body);
+  line-height: var(--leading-relaxed);
+}
+
+.content p:last-child {
+  margin-bottom: 0;
+}
+
+.content ul {
+  margin: 0 0 var(--spacing-8) 0;
+  padding-left: var(--spacing-8);
+  list-style-position: outside;
+}
+
+.content li {
+  font-size: var(--text-lg);
+  color: var(--text-gray-light);
+  font-family: var(--font-body);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--spacing-2);
+}
+
+.content a {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.emailCopy {
+  color: var(--text-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.emailCopy:hover {
+  opacity: 0.8;
+}

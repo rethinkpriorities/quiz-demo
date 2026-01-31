@@ -130,7 +130,8 @@ function createQuestionState(question) {
     credences: getDefaultCredencesForQuestion(question),
     originalCredences: null,
     inputMode: INPUT_MODES.OPTIONS,
-    lockedKey: null,
+    lockedKeys: [], // Array of locked slider keys (supports n-2 locks)
+    selectedPreset: null, // null | 'preset-id' | 'custom'
   };
 }
 
@@ -183,8 +184,13 @@ function createInitialWorldviewNames() {
 
 const DEFAULT_MARKETPLACE_BUDGET = 10_000_000;
 
+// Determine initial step based on disclaimer feature flag
+const getInitialStep = () => {
+  return features.ui?.disclaimerPage ? 'disclaimer' : 'welcome';
+};
+
 const initialState = {
-  currentStep: 'welcome',
+  currentStep: getInitialStep(),
   worldviews: createInitialWorldviews(),
   worldviewNames: createInitialWorldviewNames(),
   activeWorldviewId: '1',
@@ -208,6 +214,7 @@ const ACTIONS = {
   SET_SELECTED_CALCULATIONS: 'SET_SELECTED_CALCULATIONS',
   SET_WORLDVIEW_NAME: 'SET_WORLDVIEW_NAME',
   SET_MARKETPLACE_BUDGET: 'SET_MARKETPLACE_BUDGET',
+  SET_SELECTED_PRESET: 'SET_SELECTED_PRESET',
 };
 
 /**
@@ -289,6 +296,7 @@ function quizReducer(state, action) {
     case ACTIONS.RESET_QUIZ:
       return {
         ...initialState,
+        currentStep: getInitialStep(),
         worldviews: createInitialWorldviews(),
         worldviewNames: createInitialWorldviewNames(),
       };
@@ -340,7 +348,9 @@ function quizReducer(state, action) {
             ? { ...qState.credences }
             : null,
         inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
-        lockedKey: qState.lockedKey || null,
+        // Support both old lockedKey (string) and new lockedKeys (array) formats
+        lockedKeys: qState.lockedKeys || (qState.lockedKey ? [qState.lockedKey] : []),
+        selectedPreset: qState.selectedPreset || null,
       });
 
       // Helper to restore worldviews with all slots ensured
@@ -619,8 +629,9 @@ export function QuizProvider({ children }) {
 
   // Persistence effect: save state to sessionStorage on changes (debounced)
   useEffect(() => {
-    // Don't save during hydration or if on welcome screen
-    if (isHydrating || state.currentStep === 'welcome') return;
+    // Don't save during hydration or if on disclaimer/welcome screens
+    if (isHydrating || state.currentStep === 'welcome' || state.currentStep === 'disclaimer')
+      return;
 
     // Clear any pending save
     if (saveTimeoutRef.current) {
@@ -657,6 +668,7 @@ export function QuizProvider({ children }) {
   // Action creators
   const goToStep = useCallback((step) => {
     dispatch({ type: ACTIONS.GO_TO_STEP, payload: step });
+    window.scrollTo(0, 0);
   }, []);
 
   const updateQuestionState = useCallback((questionId, updates) => {
@@ -673,8 +685,13 @@ export function QuizProvider({ children }) {
     [updateQuestionState]
   );
 
-  const setLockedKey = useCallback(
-    (questionId, lockedKey) => updateQuestionState(questionId, { lockedKey }),
+  const setLockedKeys = useCallback(
+    (questionId, lockedKeys) => updateQuestionState(questionId, { lockedKeys }),
+    [updateQuestionState]
+  );
+
+  const setSelectedPreset = useCallback(
+    (questionId, selectedPreset) => updateQuestionState(questionId, { selectedPreset }),
     [updateQuestionState]
   );
 
@@ -876,12 +893,14 @@ export function QuizProvider({ children }) {
           originalCredences: questionState.originalCredences,
           inputMode: questionState.inputMode,
           setInputMode: (mode) => setInputMode(q.id, mode),
-          lockedKey: questionState.lockedKey,
-          setLockedKey: (key) => setLockedKey(q.id, key),
+          lockedKeys: questionState.lockedKeys,
+          setLockedKeys: (keys) => setLockedKeys(q.id, keys),
+          selectedPreset: questionState.selectedPreset,
+          setSelectedPreset: (presetId) => setSelectedPreset(q.id, presetId),
         };
       });
     return map;
-  }, [activeQuestions, setCredences, setInputMode, setLockedKey]);
+  }, [activeQuestions, setCredences, setInputMode, setLockedKeys, setSelectedPreset]);
 
   // Context value
   const value = useMemo(
@@ -910,7 +929,8 @@ export function QuizProvider({ children }) {
       goToStep,
       setCredences,
       setInputMode,
-      setLockedKey,
+      setLockedKeys,
+      setSelectedPreset,
       setExpandedPanel,
       saveOriginals,
       resetToOriginal,
@@ -963,7 +983,8 @@ export function QuizProvider({ children }) {
       goToStep,
       setCredences,
       setInputMode,
-      setLockedKey,
+      setLockedKeys,
+      setSelectedPreset,
       setExpandedPanel,
       saveOriginals,
       resetToOriginal,

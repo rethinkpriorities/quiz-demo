@@ -1,4 +1,17 @@
-import { PawPrint, Hourglass, BarChart3, Microscope, HelpCircle } from 'lucide-react';
+import {
+  PawPrint,
+  Hourglass,
+  BarChart3,
+  Microscope,
+  HelpCircle,
+  HeartPulse,
+  Banknote,
+  Bird,
+  Shell,
+  Clock,
+  Dices,
+  AlertTriangle,
+} from 'lucide-react';
 
 /**
  * Maps question icon names to Lucide React components.
@@ -9,6 +22,13 @@ const ICON_MAP = {
   hourglass: Hourglass,
   'bar-chart': BarChart3,
   microscope: Microscope,
+  'heart-pulse': HeartPulse,
+  banknote: Banknote,
+  bird: Bird,
+  shell: Shell,
+  clock: Clock,
+  dice: Dices,
+  'alert-triangle': AlertTriangle,
 };
 
 function QuestionIcon({ name, size = 16, className = '' }) {

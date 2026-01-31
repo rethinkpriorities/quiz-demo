@@ -16,6 +16,11 @@
   color: var(--text-gray-light);
 }
 
+.dollarAmount {
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+
 .percentage {
   font-weight: var(--font-medium);
 }

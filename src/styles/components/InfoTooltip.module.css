@@ -79,3 +79,16 @@
 .popover a:hover {
   color: #8ad4f0;
 }
+
+.popover ul {
+  margin: 0.5rem 0 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.popover li {
+  margin-bottom: 0.25rem;
+}
+
+.popover li:last-child {
+  margin-bottom: 0;
+}

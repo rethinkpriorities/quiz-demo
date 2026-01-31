@@ -672,12 +672,13 @@ function generateCandidateAllocations(causeKeys) {
 /**
  * Auto-balance credences to maintain 100% total.
  * When one slider changes, proportionally adjusts others to keep sum at 100%.
+ * Supports multiple locked sliders (up to n-2 where n is total sliders).
  *
  * @param {string} changedKey - The key of the credence that was changed
  * @param {number} newValue - The new value for the changed credence (0-100)
  * @param {Object} credences - Current credence values { equal, 10x, 100x }
  * @param {Object} baseCredences - Optional: original credences when drag started
- * @param {string} lockedKey - Optional: key of the locked slider (will not be adjusted)
+ * @param {string|string[]} lockedKeys - Optional: key(s) of locked slider(s) (will not be adjusted)
  * @returns {Object} New credence object with all values summing to 100
  */
 export function adjustCredences(
@@ -685,10 +686,13 @@ export function adjustCredences(
   newValue,
   credences,
   baseCredences = null,
-  lockedKey = null
+  lockedKeys = null
 ) {
-  // If there's a locked slider, limit the max value for the changed slider
-  const lockedValue = lockedKey ? credences[lockedKey] : 0;
+  // Normalize lockedKeys to array (support legacy single key)
+  const lockedKeysArray = Array.isArray(lockedKeys) ? lockedKeys : lockedKeys ? [lockedKeys] : [];
+
+  // Calculate total locked value (sum of all locked sliders)
+  const lockedValue = lockedKeysArray.reduce((sum, key) => sum + (credences[key] || 0), 0);
   const maxAllowedValue = 100 - lockedValue;
 
   // Clamp new value between 0 and the maximum allowed value
@@ -697,17 +701,19 @@ export function adjustCredences(
   // Use baseCredences for ratio calculation if provided (during drag)
   const referenceCredences = baseCredences || credences;
 
-  // Filter out both the changed key AND the locked key
-  const otherKeys = Object.keys(credences).filter((k) => k !== changedKey && k !== lockedKey);
+  // Filter out both the changed key AND all locked keys
+  const otherKeys = Object.keys(credences).filter(
+    (k) => k !== changedKey && !lockedKeysArray.includes(k)
+  );
   const referenceOtherSum = otherKeys.reduce((sum, k) => sum + referenceCredences[k], 0);
 
-  // Calculate target sum for other sliders (excluding locked slider value)
+  // Calculate target sum for other sliders (excluding locked slider values)
   const targetOtherSum = 100 - newValue - lockedValue;
 
   const result = { [changedKey]: newValue };
 
-  // Preserve locked slider value if exists
-  if (lockedKey) {
+  // Preserve all locked slider values
+  for (const lockedKey of lockedKeysArray) {
     result[lockedKey] = credences[lockedKey];
   }
 

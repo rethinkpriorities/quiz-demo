@@ -15,6 +15,7 @@ function ResultCard({
   causeEntries,
   hasChanged = false,
   simpleMode = false,
+  budget = null,
 }) {
   const method = copy.results.methods[methodKey];
 
@@ -42,6 +43,7 @@ function ResultCard({
           color={cause.color}
           hasChanged={!simpleMode && hasChanged}
           simpleMode={simpleMode}
+          budget={budget}
         />
       ))}
       {!simpleMode && <div className={styles.cardFooter}>{footerContent}</div>}

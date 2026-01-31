@@ -75,6 +75,15 @@
   color: var(--text-primary);
 }
 
+.credenceSlider .lockButton.lockDisabled {
+  opacity: 0.15;
+  cursor: not-allowed;
+}
+
+.credenceSlider .lockButton.lockDisabled:hover {
+  opacity: 0.15;
+}
+
 .credenceSlider input[type='range'] {
   width: 100%;
   height: 8px;
@@ -150,6 +159,15 @@
 .compactSlider .lockButton.locked {
   opacity: 1;
   color: var(--text-primary);
+}
+
+.compactSlider .lockButton.lockDisabled {
+  opacity: 0.15;
+  cursor: not-allowed;
+}
+
+.compactSlider .lockButton.lockDisabled:hover {
+  opacity: 0.15;
 }
 
 .compactSlider input[type='range'] {

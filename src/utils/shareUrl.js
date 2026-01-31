@@ -5,7 +5,7 @@ import { endpoints } from '../config/api';
 const { questions } = questionsConfig;
 
 // Current quiz version - increment when config changes significantly
-const QUIZ_VERSION = 1;
+const QUIZ_VERSION = 2;
 
 // Get valid question IDs and their option keys (excluding intermissions)
 function getValidQuestions() {
@@ -42,7 +42,7 @@ function validateQuestionsConfig(questionsToValidate) {
  * Generate a shareable URL via backend API.
  * Includes full worldviews state (all worldviews with question states).
  *
- * @param {Object} worldviews - { worldviewId: { questions: { questionId: { credences, inputMode, lockedKey } } } }
+ * @param {Object} worldviews - { worldviewId: { questions: { questionId: { credences, inputMode, lockedKeys } } } }
  * @param {string} activeWorldviewId - Active worldview ID
  * @param {Object} options - Optional parameters
  * @param {Object} options.selectedCalculations - { left: string|null, right: string|null } selected calculation keys
@@ -123,7 +123,7 @@ export function detectShareUrl() {
  * Convert credences-only format to full question state.
  * Used for backward compatibility with old stored data.
  * @param {Object} credences - { questionId: { optionKey: value } }
- * @returns {Object} { questionId: { credences, inputMode, lockedKey } }
+ * @returns {Object} { questionId: { credences, inputMode, lockedKeys } }
  */
 function credencesToQuestionState(credences) {
   const questionsState = {};
@@ -131,7 +131,7 @@ function credencesToQuestionState(credences) {
     questionsState[questionId] = {
       credences: creds,
       inputMode: 'options',
-      lockedKey: null,
+      lockedKeys: [],
     };
   }
   return questionsState;
