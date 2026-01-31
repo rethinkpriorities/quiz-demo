@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useTransition } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
@@ -30,7 +30,6 @@ function PresetQuestion() {
   const [localCredences, setLocalCredences] = useState(null);
   const animationRef = useRef(null);
   const syncTimeoutRef = useRef(null);
-  const [, startTransition] = useTransition();
 
   // Clean up on unmount
   useEffect(() => {

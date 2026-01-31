@@ -38,7 +38,6 @@ const CauseBar = ({
   const showChange =
     !simpleMode && hasChanged && originalPercentage !== null && percentage !== originalPercentage;
   const isIncrease = showChange && percentage > originalPercentage;
-  const _isDecrease = showChange && percentage < originalPercentage; // Unused: deferred to UX designer
 
   // Calculate dollar amount if budget is provided
   const dollarAmount = budget

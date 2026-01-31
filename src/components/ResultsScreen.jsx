@@ -11,6 +11,11 @@ import InfoTooltip from './ui/InfoTooltip';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
 import { generateShareUrl } from '../utils/shareUrl';
+import {
+  useEmailCopy,
+  processEmailPlaceholder,
+  createEmailLinkComponent,
+} from '../hooks/useEmailCopy.jsx';
 import styles from '../styles/components/Results.module.css';
 import marketplaceStyles from '../styles/components/Marketplace.module.css';
 import features from '../../config/features.json';
@@ -59,7 +64,13 @@ function ResultsScreen() {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareError, setShareError] = useState(null);
   const [showWorldviewModal, setShowWorldviewModal] = useState(false);
-  const [emailCopied, setEmailCopied] = useState(false);
+
+  // Email copy functionality for feedback card
+  const {
+    email: feedbackEmail,
+    copied: feedbackEmailCopied,
+    handleEmailClick: handleFeedbackEmailClick,
+  } = useEmailCopy(copy.results.feedbackEmail);
 
   const causeEntries = Object.entries(causesConfig);
 
@@ -477,44 +488,17 @@ function ResultsScreen() {
 
         {features.ui?.feedbackCard && (
           <div className={styles.feedbackCard}>
-            {(() => {
-              const [user, domain, tld] = copy.results.feedbackEmail || [];
-              const email = user ? `${user}@${domain}.${tld}` : null;
-
-              const handleEmailClick = (e) => {
-                e.preventDefault();
-                navigator.clipboard.writeText(email);
-                setEmailCopied(true);
-                setTimeout(() => setEmailCopied(false), 2000);
-              };
-
-              // Replace {{EMAIL}} with a fake link that we intercept
-              const processedText = email
-                ? copy.results.feedbackCard.replace(
-                    '{{EMAIL}}',
-                    `[${emailCopied ? 'Copied!' : email}](#copy-email)`
-                  )
-                : copy.results.feedbackCard;
-
-              return (
-                <ReactMarkdown
-                  components={{
-                    a: ({ href, children }) =>
-                      href === '#copy-email' ? (
-                        <span onClick={handleEmailClick} className={styles.emailCopy}>
-                          {children}
-                        </span>
-                      ) : (
-                        <a href={href} target="_blank" rel="noopener noreferrer">
-                          {children}
-                        </a>
-                      ),
-                  }}
-                >
-                  {processedText}
-                </ReactMarkdown>
-              );
-            })()}
+            <ReactMarkdown
+              components={{
+                a: createEmailLinkComponent(handleFeedbackEmailClick, styles.emailCopy),
+              }}
+            >
+              {processEmailPlaceholder(
+                copy.results.feedbackCard,
+                feedbackEmail,
+                feedbackEmailCopied
+              )}
+            </ReactMarkdown>
           </div>
         )}
       </div>

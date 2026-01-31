@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useTransition } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import CompactSlider from './CompactSlider';
 import CompactSelection from './CompactSelection';
@@ -33,7 +33,6 @@ function EditPanel({
   // Local state for smooth slider display during drag
   const [localCredences, setLocalCredences] = useState(null);
   const syncTimeoutRef = useRef(null);
-  const [, startTransition] = useTransition();
 
   // Clean up on unmount
   useEffect(() => {
@@ -142,9 +141,7 @@ function EditPanel({
                     } else {
                       // During drag, debounce context sync
                       syncTimeoutRef.current = setTimeout(() => {
-                        startTransition(() => {
-                          setCredences(newCredences);
-                        });
+                        setCredences(newCredences);
                       }, 100);
                     }
                   }}
