@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   SKIP_CONFLICT: 'quiz_skip_conflict',
 };
 
-const STATE_VERSION = 3;
+const STATE_VERSION = 4;
 
 /**
  * Get or create a session ID for this browser tab.

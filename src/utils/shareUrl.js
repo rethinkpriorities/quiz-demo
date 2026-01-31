@@ -5,7 +5,7 @@ import { endpoints } from '../config/api';
 const { questions } = questionsConfig;
 
 // Current quiz version - increment when config changes significantly
-const QUIZ_VERSION = 1;
+const QUIZ_VERSION = 2;
 
 // Get valid question IDs and their option keys (excluding intermissions)
 function getValidQuestions() {

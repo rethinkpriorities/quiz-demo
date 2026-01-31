@@ -7,7 +7,7 @@ import { QuizContext } from '../context/QuizContext';
 vi.mock('../../config/copy.json', () => ({
   default: {
     branding: {
-      title: 'Moral Parliament',
+      title: 'Donor Compass',
     },
     navigation: {
       back: 'Back',

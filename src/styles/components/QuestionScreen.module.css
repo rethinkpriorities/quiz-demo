@@ -28,6 +28,27 @@
   font-family: var(--font-body);
 }
 
+.context p {
+  margin: 0 0 0.75rem 0;
+}
+
+.context p:last-child {
+  margin-bottom: 0;
+}
+
+.context ul {
+  margin: 0.5rem 0 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.context li {
+  margin-bottom: 0.25rem;
+}
+
+.context li:last-child {
+  margin-bottom: 0;
+}
+
 .instructions {
   font-size: var(--text-2xl);
   opacity: 0.6;

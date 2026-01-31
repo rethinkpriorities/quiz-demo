@@ -29,10 +29,8 @@ async function getDbClient() {
   return createClient({ url, authToken });
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+// Only set Content-Type; CORS headers are handled by AWS Function URL config
+const responseHeaders = {
   'Content-Type': 'application/json',
 };
 
@@ -40,9 +38,9 @@ export async function handler(event) {
   // Lambda Function URL uses requestContext.http.method
   const httpMethod = event.requestContext?.http?.method || event.httpMethod;
 
-  // Handle preflight
+  // Preflight is handled by AWS Function URL CORS config
   if (httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: corsHeaders, body: '' };
+    return { statusCode: 204, headers: responseHeaders, body: '' };
   }
 
   try {
@@ -55,7 +53,7 @@ export async function handler(event) {
     } else {
       return {
         statusCode: 405,
-        headers: corsHeaders,
+        headers: responseHeaders,
         body: JSON.stringify({ error: 'Method not allowed' }),
       };
     }
@@ -63,7 +61,7 @@ export async function handler(event) {
     console.error('Function error:', error);
     return {
       statusCode: 500,
-      headers: corsHeaders,
+      headers: responseHeaders,
       body: JSON.stringify({ error: error.message }),
     };
   }
@@ -82,7 +80,7 @@ async function createShare(event, db) {
   if (!worldviews || !activeWorldviewId) {
     return {
       statusCode: 400,
-      headers: corsHeaders,
+      headers: responseHeaders,
       body: JSON.stringify({ error: 'Missing worldviews or activeWorldviewId' }),
     };
   }
@@ -101,7 +99,7 @@ async function createShare(event, db) {
 
       return {
         statusCode: 201,
-        headers: corsHeaders,
+        headers: responseHeaders,
         body: JSON.stringify({ id: shortId }),
       };
     } catch (error) {
@@ -114,7 +112,7 @@ async function createShare(event, db) {
 
   return {
     statusCode: 500,
-    headers: corsHeaders,
+    headers: responseHeaders,
     body: JSON.stringify({ error: 'Failed to generate unique ID' }),
   };
 }
@@ -126,7 +124,7 @@ async function getShare(event, db) {
   if (!shareId) {
     return {
       statusCode: 400,
-      headers: corsHeaders,
+      headers: responseHeaders,
       body: JSON.stringify({ error: 'Missing share ID' }),
     };
   }
@@ -139,7 +137,7 @@ async function getShare(event, db) {
   if (result.rows.length === 0) {
     return {
       statusCode: 404,
-      headers: corsHeaders,
+      headers: responseHeaders,
       body: JSON.stringify({ error: 'Share not found' }),
     };
   }
@@ -166,7 +164,7 @@ async function getShare(event, db) {
   if (storedData.worldviews && storedData.activeWorldviewId) {
     return {
       statusCode: 200,
-      headers: corsHeaders,
+      headers: responseHeaders,
       body: JSON.stringify({
         ...baseResponse,
         worldviews: storedData.worldviews,
@@ -182,7 +180,7 @@ async function getShare(event, db) {
 
   return {
     statusCode: 200,
-    headers: corsHeaders,
+    headers: responseHeaders,
     body: JSON.stringify({
       ...baseResponse,
       ...(isQuestionsFormat ? { questions: storedData } : { credences: storedData }),

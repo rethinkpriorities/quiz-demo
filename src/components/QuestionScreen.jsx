@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import ModeToggle from './ui/ModeToggle';
@@ -72,7 +73,11 @@ function QuestionScreen() {
             {showQuestionInfo && <InfoTooltip content={currentQuestion.info} />}
           </h2>
 
-          {currentQuestion.context && <p className={styles.context}>{currentQuestion.context}</p>}
+          {currentQuestion.context && (
+            <div className={styles.context}>
+              <ReactMarkdown>{currentQuestion.context}</ReactMarkdown>
+            </div>
+          )}
 
           <p className={styles.instructions}>{instructions}</p>
 

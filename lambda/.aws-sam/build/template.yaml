@@ -28,7 +28,45 @@ Resources:
             Ref: TursoAuthToken
     Metadata:
       SamResourceId: ShareFunction
+  ShareFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn:
+        Fn::GetAtt:
+        - ShareFunction
+        - Arn
+      Cors:
+        AllowOrigins:
+        - '*'
+        AllowMethods:
+        - GET
+        - POST
+        - OPTIONS
+        AllowHeaders:
+        - Content-Type
+  ShareFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: ShareFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+  ShareFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: ShareFunction
+      Action: lambda:InvokeFunction
+      Principal: '*'
 Outputs:
+  ShareFunctionUrl:
+    Description: Function URL for the Share API
+    Value:
+      Fn::GetAtt:
+      - ShareFunctionUrl
+      - FunctionUrl
   ShareFunctionArn:
     Description: ARN of the Share function
     Value:
