@@ -31,6 +31,7 @@
   "results": {
     "heading": "Recommended Allocations",
     "budgetLabel": "Total Budget",
+    "budgetInfo": "Future diminishing returns calculations will change depending on total money spent, not in this prototype",
     "feedbackCard": "**Share your feedback:** Please email any thoughts, however brief, to {{EMAIL}}, [book a call](https://calendly.com/hayley-clatterbuck/30min) with Hayley Clatterbuck, or fill in [this form](https://forms.gle/kJmEqdGFaoKdPcKB7).\n\n**Sign up** [**here**](https://mailchi.mp/4da0acddedce/rethink-priorities-donor-compass) if you'd like to get an email when the next version of this tool is ready.",
     "feedbackEmail": ["carmen", "rethinkpriorities", "org"],
     "modifiedIndicator": "(modified)",

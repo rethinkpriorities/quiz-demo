@@ -664,6 +664,7 @@ export function QuizProvider({ children }) {
   // Action creators
   const goToStep = useCallback((step) => {
     dispatch({ type: ACTIONS.GO_TO_STEP, payload: step });
+    window.scrollTo(0, 0);
   }, []);
 
   const updateQuestionState = useCallback((questionId, updates) => {

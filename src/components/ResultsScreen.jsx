@@ -7,6 +7,7 @@ import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import QuestionIcon from './ui/QuestionIcon';
 import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
+import InfoTooltip from './ui/InfoTooltip';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
 import { generateShareUrl } from '../utils/shareUrl';
@@ -343,6 +344,7 @@ function ResultsScreen() {
         <div className={styles.budgetRow}>
           <label className={marketplaceStyles.settingsLabel}>
             {copy.results.budgetLabel}
+            {copy.results.budgetInfo && <InfoTooltip content={copy.results.budgetInfo} />}
             <div className={marketplaceStyles.budgetInputWrapper}>
               <span className={marketplaceStyles.currencyPrefix}>$</span>
               <input
