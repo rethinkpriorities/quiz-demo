@@ -2,7 +2,27 @@
   "questions": [
     {
       "id": "timeframes",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "next-decade",
+          "name": "Focused on next decade (until 2035)",
+          "description": "Evaluates projects primarily by their effects over the next decade.",
+          "credences": { "equalAll": 0, "prioritizeNearer": 0, "discountDistant": 25, "shortTermOnly": 75 }
+        },
+        {
+          "id": "next-generations",
+          "name": "Focused on next generations (until 2100)",
+          "description": "Emphasizes effects on the next few generations, including individuals who do not currently exist.",
+          "credences": { "equalAll": 20, "prioritizeNearer": 50, "discountDistant": 30, "shortTermOnly": 0 }
+        },
+        {
+          "id": "longtermist",
+          "name": "Longtermist",
+          "description": "Concerned with the longterm future, valuing effects equally regardless of when they occur.",
+          "credences": { "equalAll": 80, "prioritizeNearer": 20, "discountDistant": 0, "shortTermOnly": 0 }
+        }
+      ],
       "worldviewDimension": {
         "appliesTo": "timeframe",
         "applyAs": "multiplier",
@@ -59,7 +79,7 @@
     },
     {
       "id": "risk",
-      "type": "selection",
+      "type": "credence",
       "worldviewDimension": {
         "appliesWhen": "isDummyRisk",
         "applyAs": "multiplier",
@@ -116,7 +136,7 @@
     },
     {
       "id": "xrisk",
-      "type": "selection",
+      "type": "credence",
       "worldviewDimension": {
         "appliesWhen": "isNonXRisk",
         "applyAs": "multiplier",
@@ -173,7 +193,27 @@
     },
     {
       "id": "animal",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "animal-friendly",
+          "name": "Animal friendly view",
+          "description": "Emphasizes equal consideration for animal and human suffering.",
+          "credences": { "humanEqual": 75, "human10x": 25, "human100x": 0, "human1000x": 0, "noValue": 0 }
+        },
+        {
+          "id": "rethink-priorities",
+          "name": "Rethink Priorities default",
+          "description": "Based on empirical research on animal welfare ranges, gives animals somewhat lower weight than humans.",
+          "credences": { "humanEqual": 20, "human10x": 50, "human100x": 20, "human1000x": 10, "noValue": 0 }
+        },
+        {
+          "id": "animal-skeptic",
+          "name": "Animal skeptic view",
+          "description": "Gives strong priority to human welfare, based on their unique capacities or our special moral obligations to other humans.",
+          "credences": { "humanEqual": 0, "human10x": 10, "human100x": 60, "human1000x": 30, "noValue": 0 }
+        }
+      ],
       "worldviewDimension": {
         "appliesWhen": "helpsAnimals",
         "applyAs": "multiplier",
@@ -239,7 +279,27 @@
     },
     {
       "id": "invertebrate",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "invertebrate-friendly",
+          "name": "Invertebrate friendly view",
+          "description": "Emphasizes roughly equal consideration for invertebrate and human suffering, tempered by uncertainty about invertebrate sentience.",
+          "credences": { "humanEqual": 40, "human100x": 40, "human1000x": 20, "human10000x": 0, "noValue": 0 }
+        },
+        {
+          "id": "rethink-priorities",
+          "name": "Rethink Priorities default",
+          "description": "Based on empirical research on animal welfare ranges and likelihoods of invertebrate sentience, gives animals significantly lower weight than humans.",
+          "credences": { "humanEqual": 10, "human100x": 40, "human1000x": 30, "human10000x": 10, "noValue": 10 }
+        },
+        {
+          "id": "invertebrate-skeptic",
+          "name": "Invertebrate skeptic view",
+          "description": "Gives strong priority to human welfare, highly skeptical about invertebrates' capacity for welfare.",
+          "credences": { "humanEqual": 0, "human100x": 0, "human1000x": 10, "human10000x": 40, "noValue": 50 }
+        }
+      ],
       "worldviewDimension": {
         "appliesWhen": "helpsInvertebrates",
         "applyAs": "multiplier",
@@ -305,7 +365,27 @@
     },
     {
       "id": "disability",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "prioritize-lives",
+          "name": "Prioritize saving lives",
+          "description": "Places more emphasis on preventing deaths than relieving suffering from non-fatal diseases and disabilities.",
+          "credences": { "livesOnly": 25, "livesMore": 75, "equal": 0, "disabilityMore": 0 }
+        },
+        {
+          "id": "equal-weight",
+          "name": "Equal weight",
+          "description": "Values saving lives the same as restoring quality of life lost to disability. Similar to GiveWell's moral weights.",
+          "credences": { "livesOnly": 0, "livesMore": 0, "equal": 100, "disabilityMore": 0 }
+        },
+        {
+          "id": "prioritize-quality",
+          "name": "Prioritize improving quality of life",
+          "description": "Places more emphasis on relieving suffering due to disease and disability, instead of saving lives.",
+          "credences": { "livesOnly": 0, "livesMore": 0, "equal": 25, "disabilityMore": 75 }
+        }
+      ],
       "worldviewDimension": {
         "appliesWhen": "preventsDisability",
         "applyAs": "multiplier",
@@ -362,7 +442,27 @@
     },
     {
       "id": "income",
-      "type": "selection",
+      "type": "preset",
+      "presets": [
+        {
+          "id": "prioritize-lives",
+          "name": "Prioritize saving lives",
+          "description": "Places much more emphasis on preventing deaths than improving material conditions for people living in poverty.",
+          "credences": { "livesOnly": 25, "lives10x": 75, "lives2x": 0, "equal": 0 }
+        },
+        {
+          "id": "balanced",
+          "name": "Balanced",
+          "description": "Gives more weight to saving lives than improving incomes, but cares about both goals. Similar to GiveWell's moral weights.",
+          "credences": { "livesOnly": 0, "lives10x": 25, "lives2x": 75, "equal": 0 }
+        },
+        {
+          "id": "poverty-relief",
+          "name": "Poverty relief",
+          "description": "Prioritizes poverty relief as highly as saving lives.",
+          "credences": { "livesOnly": 0, "lives10x": 0, "lives2x": 25, "equal": 75 }
+        }
+      ],
       "worldviewDimension": {
         "appliesWhen": "increasesIncome",
         "applyAs": "multiplier",

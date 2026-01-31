@@ -7,11 +7,11 @@ import { useState, useCallback } from 'react';
  * @param {Object} params
  * @param {Object} params.credences - Current credence values
  * @param {boolean} params.isLocked - Whether this slider is locked
- * @param {string} params.lockedKey - Key of the locked slider (if any)
- * @param {Function} params.onChange - Callback with (value, baseCredences, shouldRound, lockedKey)
+ * @param {string[]} params.lockedKeys - Array of locked slider keys
+ * @param {Function} params.onChange - Callback with (value, baseCredences, shouldRound, lockedKeys)
  * @returns {Object} Drag state and handlers
  */
-export function useSliderDrag({ credences, isLocked, lockedKey, onChange }) {
+export function useSliderDrag({ credences, isLocked, lockedKeys, onChange }) {
   const [dragBaseCredences, setDragBaseCredences] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -27,19 +27,19 @@ export function useSliderDrag({ credences, isLocked, lockedKey, onChange }) {
       if (!isDragging) return;
       setIsDragging(false);
       const finalValue = parseFloat(e.target.value);
-      onChange(finalValue, dragBaseCredences, true, lockedKey);
+      onChange(finalValue, dragBaseCredences, true, lockedKeys);
       setDragBaseCredences(null);
     },
-    [isLocked, isDragging, dragBaseCredences, lockedKey, onChange]
+    [isLocked, isDragging, dragBaseCredences, lockedKeys, onChange]
   );
 
   const handleChange = useCallback(
     (e) => {
       if (isLocked) return;
       const newValue = parseFloat(e.target.value);
-      onChange(newValue, dragBaseCredences, false, lockedKey);
+      onChange(newValue, dragBaseCredences, false, lockedKeys);
     },
-    [isLocked, dragBaseCredences, lockedKey, onChange]
+    [isLocked, dragBaseCredences, lockedKeys, onChange]
   );
 
   return {

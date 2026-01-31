@@ -179,7 +179,7 @@ function ResultsScreen() {
         questionStates[questionId] = {
           credences: qState.credences,
           inputMode: qState.inputMode,
-          lockedKey: qState.lockedKey,
+          lockedKeys: qState.lockedKeys,
           originalCredences: qState.originalCredences,
         };
       }
@@ -434,9 +434,11 @@ function ResultsScreen() {
                   onToggle={() =>
                     setExpandedPanel(expandedPanel === question.id ? null : question.id)
                   }
-                  lockedKey={state.lockedKey}
-                  setLockedKey={state.setLockedKey}
+                  lockedKeys={state.lockedKeys}
+                  setLockedKeys={state.setLockedKeys}
                   questionType={question.type}
+                  selectedPreset={state.selectedPreset}
+                  setSelectedPreset={state.setSelectedPreset}
                 />
               );
             })}

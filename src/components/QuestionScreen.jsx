@@ -5,6 +5,7 @@ import ModeToggle from './ui/ModeToggle';
 import OptionButton from './ui/OptionButton';
 import CredenceSlider from './ui/CredenceSlider';
 import InfoTooltip from './ui/InfoTooltip';
+import PresetQuestion from './PresetQuestion';
 import { useQuiz } from '../context/useQuiz';
 import { adjustCredences, roundCredences } from '../utils/calculations';
 import { CATEGORY_LABEL_COLOR, QUESTION_TYPES } from '../constants/config';
@@ -32,13 +33,18 @@ function QuestionScreen() {
 
   if (!currentQuestion) return null;
 
+  // Route preset questions to dedicated component
+  const isQuestionTypesEnabled = features.ui?.questionTypes !== false;
+  if (isQuestionTypesEnabled && currentQuestion.type === QUESTION_TYPES.PRESET) {
+    return <PresetQuestion />;
+  }
+
   const state = stateMap[currentQuestion.id];
   if (!state) return null;
 
-  const { credences, setCredences, inputMode, setInputMode, lockedKey, setLockedKey } = state;
+  const { credences, setCredences, inputMode, setInputMode, lockedKeys, setLockedKeys } = state;
 
   const questionType = currentQuestion.type || QUESTION_TYPES.DEFAULT;
-  const isQuestionTypesEnabled = features.ui?.questionTypes !== false;
   const showModeToggle = !isQuestionTypesEnabled || questionType === QUESTION_TYPES.DEFAULT;
   const effectiveInputMode = getEffectiveInputMode(questionType, inputMode, isQuestionTypesEnabled);
   const showQuestionInfo = features.ui?.questionInfo !== false;
@@ -96,7 +102,7 @@ function QuestionScreen() {
                     setCredences={setCredences}
                     color={opt.color}
                     setInputMode={setInputMode}
-                    setLockedKey={setLockedKey}
+                    setLockedKeys={setLockedKeys}
                   />
                 ))
               : currentQuestion.options.map((opt) => (
@@ -106,21 +112,21 @@ function QuestionScreen() {
                     description={opt.description}
                     info={showAnswerInfo ? opt.info : null}
                     value={credences[opt.key]}
-                    onChange={(val, baseCredences, shouldRound, currentLockedKey) => {
+                    onChange={(val, baseCredences, shouldRound, currentLockedKeys) => {
                       const adjusted = adjustCredences(
                         opt.key,
                         val,
                         credences,
                         baseCredences,
-                        currentLockedKey
+                        currentLockedKeys
                       );
                       setCredences(shouldRound ? roundCredences(adjusted) : adjusted);
                     }}
                     color={opt.color}
                     credences={credences}
                     sliderKey={opt.key}
-                    lockedKey={lockedKey}
-                    setLockedKey={setLockedKey}
+                    lockedKeys={lockedKeys}
+                    setLockedKeys={setLockedKeys}
                   />
                 ))}
           </div>

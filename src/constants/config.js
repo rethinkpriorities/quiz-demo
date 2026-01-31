@@ -9,6 +9,13 @@ export const QUESTION_TYPE_COLORS = {
   default: [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR],
   selection: [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR],
   credence: [NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR, NEUTRAL_OPTION_COLOR],
+  preset: [
+    NEUTRAL_OPTION_COLOR,
+    NEUTRAL_OPTION_COLOR,
+    NEUTRAL_OPTION_COLOR,
+    NEUTRAL_OPTION_COLOR,
+    NEUTRAL_OPTION_COLOR,
+  ],
 };
 
 // Category label color (appears above question heading)
@@ -126,4 +133,5 @@ export const QUESTION_TYPES = {
   SELECTION: 'selection',
   CREDENCE: 'credence',
   INTERMISSION: 'intermission',
+  PRESET: 'preset',
 };

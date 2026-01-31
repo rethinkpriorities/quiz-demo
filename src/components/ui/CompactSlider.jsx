@@ -15,25 +15,31 @@ function CompactSlider({
   color,
   credences,
   sliderKey,
-  lockedKey,
-  setLockedKey,
+  lockedKeys = [],
+  setLockedKeys,
 }) {
-  const { isLocked, hasLockedSibling, thumbOffset, featureEnabled } = useLockedSlider({
+  const { isLocked, hasLockedSibling, thumbOffset, canLockMore, featureEnabled } = useLockedSlider({
     sliderKey,
-    lockedKey,
+    lockedKeys,
     credences,
   });
 
   const { isDragging, dragHandlers } = useSliderDrag({
     credences,
     isLocked,
-    lockedKey,
+    lockedKeys,
     onChange,
   });
 
   const handleLockClick = () => {
     if (!featureEnabled) return;
-    setLockedKey(lockedKey === sliderKey ? null : sliderKey);
+    if (isLocked) {
+      // Unlock: remove from array
+      setLockedKeys(lockedKeys.filter((k) => k !== sliderKey));
+    } else if (canLockMore) {
+      // Lock: add to array (only if we can lock more)
+      setLockedKeys([...lockedKeys, sliderKey]);
+    }
   };
 
   const sliderBackground = hasLockedSibling
@@ -68,10 +74,11 @@ function CompactSlider({
         </div>
         {featureEnabled && (
           <button
-            className={`${styles.lockButton} ${isLocked ? styles.locked : ''}`}
+            className={`${styles.lockButton} ${isLocked ? styles.locked : ''} ${!isLocked && !canLockMore ? styles.lockDisabled : ''}`}
             onClick={handleLockClick}
             title={isLocked ? copy.sliders.unlockTooltip : copy.sliders.lockTooltip}
             type="button"
+            disabled={!isLocked && !canLockMore}
           >
             <Lock size={14} />
           </button>

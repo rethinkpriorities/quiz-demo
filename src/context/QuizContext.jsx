@@ -130,7 +130,8 @@ function createQuestionState(question) {
     credences: getDefaultCredencesForQuestion(question),
     originalCredences: null,
     inputMode: INPUT_MODES.OPTIONS,
-    lockedKey: null,
+    lockedKeys: [], // Array of locked slider keys (supports n-2 locks)
+    selectedPreset: null, // null | 'preset-id' | 'custom'
   };
 }
 
@@ -213,6 +214,7 @@ const ACTIONS = {
   SET_SELECTED_CALCULATIONS: 'SET_SELECTED_CALCULATIONS',
   SET_WORLDVIEW_NAME: 'SET_WORLDVIEW_NAME',
   SET_MARKETPLACE_BUDGET: 'SET_MARKETPLACE_BUDGET',
+  SET_SELECTED_PRESET: 'SET_SELECTED_PRESET',
 };
 
 /**
@@ -346,7 +348,9 @@ function quizReducer(state, action) {
             ? { ...qState.credences }
             : null,
         inputMode: qState.inputMode || INPUT_MODES.OPTIONS,
-        lockedKey: qState.lockedKey || null,
+        // Support both old lockedKey (string) and new lockedKeys (array) formats
+        lockedKeys: qState.lockedKeys || (qState.lockedKey ? [qState.lockedKey] : []),
+        selectedPreset: qState.selectedPreset || null,
       });
 
       // Helper to restore worldviews with all slots ensured
@@ -681,8 +685,13 @@ export function QuizProvider({ children }) {
     [updateQuestionState]
   );
 
-  const setLockedKey = useCallback(
-    (questionId, lockedKey) => updateQuestionState(questionId, { lockedKey }),
+  const setLockedKeys = useCallback(
+    (questionId, lockedKeys) => updateQuestionState(questionId, { lockedKeys }),
+    [updateQuestionState]
+  );
+
+  const setSelectedPreset = useCallback(
+    (questionId, selectedPreset) => updateQuestionState(questionId, { selectedPreset }),
     [updateQuestionState]
   );
 
@@ -884,12 +893,14 @@ export function QuizProvider({ children }) {
           originalCredences: questionState.originalCredences,
           inputMode: questionState.inputMode,
           setInputMode: (mode) => setInputMode(q.id, mode),
-          lockedKey: questionState.lockedKey,
-          setLockedKey: (key) => setLockedKey(q.id, key),
+          lockedKeys: questionState.lockedKeys,
+          setLockedKeys: (keys) => setLockedKeys(q.id, keys),
+          selectedPreset: questionState.selectedPreset,
+          setSelectedPreset: (presetId) => setSelectedPreset(q.id, presetId),
         };
       });
     return map;
-  }, [activeQuestions, setCredences, setInputMode, setLockedKey]);
+  }, [activeQuestions, setCredences, setInputMode, setLockedKeys, setSelectedPreset]);
 
   // Context value
   const value = useMemo(
@@ -918,7 +929,8 @@ export function QuizProvider({ children }) {
       goToStep,
       setCredences,
       setInputMode,
-      setLockedKey,
+      setLockedKeys,
+      setSelectedPreset,
       setExpandedPanel,
       saveOriginals,
       resetToOriginal,
@@ -971,7 +983,8 @@ export function QuizProvider({ children }) {
       goToStep,
       setCredences,
       setInputMode,
-      setLockedKey,
+      setLockedKeys,
+      setSelectedPreset,
       setExpandedPanel,
       saveOriginals,
       resetToOriginal,
