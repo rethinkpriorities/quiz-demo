@@ -55,6 +55,42 @@ function getDiminishingReturnsPower(config) {
 }
 
 // =============================================================================
+// SEEDED PRNG (for deterministic Monte Carlo sampling)
+// =============================================================================
+
+/**
+ * Simple hash function to convert credences object to a numeric seed.
+ * @param {Object} credences - Credences object
+ * @returns {number} 32-bit integer seed
+ */
+function hashCredences(credences) {
+  const str = JSON.stringify(credences);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Mulberry32 seeded PRNG - fast, simple, good distribution.
+ * @param {number} seed - Initial seed value
+ * @returns {function} Function that returns next random number in [0, 1)
+ */
+function createSeededRandom(seed) {
+  let state = seed;
+  return function () {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// =============================================================================
 // ANALYTICAL ALLOCATION (for diminishing returns)
 // =============================================================================
 
@@ -171,6 +207,10 @@ export function* generateWorldviewsSampled(credences, numSamples = 2000) {
   const dimensionIds = Object.keys(credences);
   if (dimensionIds.length === 0) return;
 
+  // Create seeded PRNG for deterministic results
+  const seed = hashCredences(credences);
+  const random = createSeededRandom(seed);
+
   // Pre-compute cumulative probabilities for each dimension
   const cumulatives = {};
   for (const dimId of dimensionIds) {
@@ -197,7 +237,7 @@ export function* generateWorldviewsSampled(credences, numSamples = 2000) {
   for (let i = 0; i < numSamples; i++) {
     const options = {};
     for (const dimId of dimensionIds) {
-      options[dimId] = sampleOption(dimId, Math.random());
+      options[dimId] = sampleOption(dimId, random());
     }
     yield { options, probability: sampleWeight };
   }
