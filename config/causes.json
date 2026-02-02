@@ -14,19 +14,6 @@
       "isNonXRisk": true,
       "isDummyRisk": true
     },
-    "directCashTransfers": {
-      "name": "Direct Cash Transfers",
-      "color": "#81b29a",
-      "points": 100,
-      "scaleFactor": 1,
-      "preventsDisability": false,
-      "increasesIncome": true,
-      "helpsAnimals": false,
-      "helpsInvertebrates": false,
-      "timeframe": "short",
-      "isNonXRisk": true,
-      "isDummyRisk": true
-    },
     "givewellPortfolio": {
       "name": "GiveWell-Style Global Health Portfolio",
       "color": "#d4a25e",
@@ -42,7 +29,7 @@
     },
     "animalWelfare": {
       "name": "EA Animal Welfare-Style Fund",
-      "color": "#f4a261",
+      "color": "#ff6b9d",
       "points": 100,
       "scaleFactor": 100,
       "preventsDisability": false,
@@ -81,7 +68,7 @@
     },
     "bioriskPandemic": {
       "name": "Biorisk and Pandemic Prevention Fund",
-      "color": "#00b4d8",
+      "color": "#27ae60",
       "points": 1,
       "scaleFactor": 0.8,
       "preventsDisability": false,

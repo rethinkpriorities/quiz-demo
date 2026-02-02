@@ -230,7 +230,10 @@ function PresetQuestion() {
 
             {/* Right card: Sliders */}
             <div className={styles.sliderCard}>
-              <div className={styles.cardTitle}>Your Credences</div>
+              <div className={styles.cardTitle}>
+                {copy.credences.title}
+                <InfoTooltip content={copy.credences.tooltip} />
+              </div>
 
               <div className={`${styles.sliderList} ${isReadOnly ? styles.sliderDisabled : ''}`}>
                 {currentQuestion.options.map((opt) => (

@@ -258,18 +258,21 @@ function ResultsScreen() {
   // Filter out intermission questions for edit panels
   const editableQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
 
-  const renderCalculationSelect = (side) => (
-    <select
-      className={styles.calculationSelect}
-      value={selectedCalculations[side] || ''}
-      onChange={(e) => handleCalculationChange(side, e.target.value)}
-    >
-      {enabledMethods.map((method) => (
-        <option key={method.key} value={method.key}>
-          {copy.results.methods[method.key].title}
-        </option>
-      ))}
-    </select>
+  const renderCalculationSelect = (side, showTooltip = false) => (
+    <div className={styles.calculationSelectWrapper}>
+      <select
+        className={styles.calculationSelect}
+        value={selectedCalculations[side] || ''}
+        onChange={(e) => handleCalculationChange(side, e.target.value)}
+      >
+        {enabledMethods.map((method) => (
+          <option key={method.key} value={method.key}>
+            {copy.results.methods[method.key].title}
+          </option>
+        ))}
+      </select>
+      {showTooltip && <InfoTooltip content={copy.results.calculationSelectTooltip} />}
+    </div>
   );
 
   const renderSelectedCalculationCard = (resultsObj, side, simpleMode = true) => {
@@ -350,6 +353,9 @@ function ResultsScreen() {
               <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
             )}
           </h1>
+          {features.ui?.feedbackCard && (
+            <p className={styles.prototypeDisclaimer}>{copy.results.prototypeDisclaimer}</p>
+          )}
         </div>
 
         <div className={styles.budgetRow}>
@@ -376,7 +382,7 @@ function ResultsScreen() {
               <div className={styles.comparisonContainer}>
                 <div className={styles.originalResults}>
                   <div className={styles.sideLabel}>Original</div>
-                  {renderCalculationSelect('left')}
+                  {renderCalculationSelect('left', true)}
                   {renderSelectedCalculationCard(originalCalculationResults, 'left')}
                 </div>
                 <div className={styles.comparisonDivider}>
@@ -392,7 +398,7 @@ function ResultsScreen() {
               </div>
             ) : (
               <>
-                {renderCalculationSelect('left')}
+                {renderCalculationSelect('left', true)}
                 <div className={styles.singleResultCard}>
                   {renderSelectedCalculationCard(
                     originalCalculationResults || calculationResults,

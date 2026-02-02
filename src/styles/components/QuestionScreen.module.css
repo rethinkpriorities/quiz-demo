@@ -56,6 +56,15 @@
   font-family: var(--font-body);
 }
 
+.credencesHeader {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--spacing-8);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
 .buttonRow {
   margin-top: var(--spacing-20);
   display: flex;

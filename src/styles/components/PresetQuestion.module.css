@@ -181,8 +181,11 @@
 }
 
 .sliderDisabled {
-  opacity: 0.7;
   pointer-events: none;
+}
+
+.sliderDisabled input[type='range'] {
+  opacity: 0.5;
 }
 
 .sliderReadOnlyNote {

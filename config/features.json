@@ -26,6 +26,6 @@
   },
 
   "developer": {
-    "calculationDebugger": true
+    "calculationDebugger": false
   }
 }

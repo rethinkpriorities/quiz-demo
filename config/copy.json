@@ -4,12 +4,12 @@
   },
   "disclaimer": {
     "heading": "This is a prototype of Rethink Priorities's Donor Compass",
-    "content": "**Donor Compass helps you find the optimal distribution of donations across funds based on your values.** The tool asks for your personal preferences about things that matter when assessing different charitable projects – things like how much you weigh animal suffering or effects on the distant future – then calculates which funds best match those preferences. Importantly, it accounts for diminishing returns, so recommendations update as large amounts of money go into specific funds.\n\n**This version is a prototype.** The funds, underlying data, and calculations in this version are placeholders meant to illustrate the type of behavior you can expect from the tool. All of these will change in future versions.\n\n**What we're seeking feedback on:** The types of inputs and questions we ask, the general workflow and layout, and what changes would make this tool more useful for your decision making.\n\n**Future iterations will include:**\n- A usable version ready in early February 2026, including funds such as GiveWell Top Charities Fund, EA Animal Welfare Fund, and Longview Philanthropy Fund\n- Detailed cost-effectiveness estimates for included funds\n- Detailed explanations of all calculations\n- Different methods for aggregating your inputs into recommended allocations\n- A power user version that is more freely configurable\n\n**Share your feedback:** Please email any thoughts, however brief, to {{EMAIL}}, [book a call](https://calendly.com/hayley-clatterbuck/30min) with Hayley Clatterbuck, or fill in [this form](https://forms.gle/kJmEqdGFaoKdPcKB7).\n\n**Sign up** [**here**](https://mailchi.mp/4da0acddedce/rethink-priorities-donor-compass) if you'd like to get an email when the next version of this tool is ready.",
+    "content": "**This version is a prototype. The funds, underlying data, and calculations in this version are placeholders meant to illustrate the type of behavior you can expect from the tool. All of these will change in future versions.** \n\n **Donor Compass helps you find a distribution of donations across funds that fits your personal values.** The tool asks for your personal preferences about things that matter when assessing different charitable projects (like how much you weigh animal suffering or effects on the distant future) and then calculates which funds best match those preferences. Importantly, future versions will account for diminishing returns, so recommendations will update as large amounts of money go into specific funds.\n\n **What we're seeking feedback on:** The types of inputs and questions we ask, the general workflow and layout, and what changes would make this tool more useful for your decision making.\n\n **Future iterations will include:**\n- A usable version ready in early March 2026, including the GiveWell Top Charities Fund, EA Animal Welfare Fund, Longview Philanthropy Fund, and others\n- Detailed cost-effectiveness estimates for included funds\n- Detailed explanations of all calculations that account for diminishing returns\n- Different methods for aggregating your inputs into recommended allocations\n- A power user version that is more freely configurable \n- A fund, guided by the most recent research and funding insights, that distributes across cause areas  \n- Potentially: an LLM interface that helps you interpret the calculations and results.\n\n**Share your feedback:** Please share any thoughts, however brief, in [this form](https://rethinkpriorities.qualtrics.com/jfe/form/SV_9mJlFv7Tch8qMMC) or by email to {{EMAIL}}. If you’d like to talk to Marcus A. Davis (cofounder) in San Francisco you can [book a coffee chat with him using this link](https://calendar.app.google/rS74siwccp8mScvR7) for Thursday February 5th or 13th-15th. You can also [book an online call](https://calendly.com/hayley-clatterbuck/30min) with Hayley Clatterbuck.\n\n**Sign up** [**here**](https://mailchi.mp/4da0acddedce/rethink-priorities-donor-compass) if you'd like to get an email when the next version of this tool is ready.",
     "email": ["carmen", "rethinkpriorities", "org"],
     "continueButton": "Continue →"
   },
   "welcome": {
-    "timeEstimate": "~3 minutes",
+    "timeEstimate": "5-20 minutes",
     "headingLine1": "Where Should Your",
     "headingLine2": "Giving Go?",
     "intro": "Uncertain about your ethical views? This tool helps you allocate resources across different causes based on your moral credences—the probabilities you assign to different ethical perspectives.",
@@ -30,9 +30,10 @@
   },
   "results": {
     "heading": "Recommended Allocations",
+    "prototypeDisclaimer": "This version is a prototype. The funds, underlying data, and calculations in this version are placeholders meant to illustrate the type of behavior you can expect from the tool. All of these will change in future versions.",
     "budgetLabel": "Total Budget",
     "budgetInfo": "Future diminishing returns calculations will change depending on total money spent, not in this prototype",
-    "feedbackCard": "**Share your feedback:** Please email any thoughts, however brief, to {{EMAIL}}, [book a call](https://calendly.com/hayley-clatterbuck/30min) with Hayley Clatterbuck, or fill in [this form](https://forms.gle/kJmEqdGFaoKdPcKB7).\n\n**Sign up** [**here**](https://mailchi.mp/4da0acddedce/rethink-priorities-donor-compass) if you'd like to get an email when the next version of this tool is ready.",
+    "feedbackCard": "**Share your feedback:** Please share any thoughts, however brief, in [this form](https://rethinkpriorities.qualtrics.com/jfe/form/SV_9mJlFv7Tch8qMMC) or by email to {{EMAIL}}. If you’d like to talk to Marcus A. Davis (cofounder) in San Francisco you can [book a coffee chat with him using this link](https://calendar.app.google/rS74siwccp8mScvR7) for Thursday February 5th or 13th-15th. You can also [book an online call](https://calendly.com/hayley-clatterbuck/30min) with Hayley Clatterbuck. You can also help us by clicking the share button above, it will save the results to a database we can read (and copy a link to your clipboard that will take you back to these results).\n\n**Future iterations will include:**\n- A usable version ready in early March 2026, including the GiveWell Top Charities Fund, EA Animal Welfare Fund, Longview Philanthropy Fund, and others\n- Detailed cost-effectiveness estimates for included funds\n- Detailed explanations of all calculations that account for diminishing returns\n- Different methods for aggregating your inputs into recommended allocations\n- A power user version that is more freely configurable \n- A fund, guided by the most recent research and funding insights, that distributes across cause areas  \n- Potentially: an LLM interface that helps you interpret the calculations and results.\n\n\n\n**Sign up** [**here**](https://mailchi.mp/4da0acddedce/rethink-priorities-donor-compass) if you'd like to get an email when the next version of this tool is ready.",
     "feedbackEmail": ["carmen", "rethinkpriorities", "org"],
     "modifiedIndicator": "(modified)",
     "adjustCredencesHeading": "Adjust Your Credences",
@@ -40,6 +41,7 @@
     "resetConfirmation": "Are you sure? This will clear all your answers and return to the beginning.",
     "shareButton": "Share Results",
     "shareCopied": "Link copied!",
+    "calculationSelectTooltip": "There are different ways to advise allocations based on your inputs. The next version of the tool will let you compare different methods and explain clearly what is happening behind the scenes for each of these options. The current calculations are placeholders.",
     "methods": {
       "maxEV": {
         "icon": "target",
@@ -79,6 +81,10 @@
   "sliders": {
     "lockTooltip": "Lock slider",
     "unlockTooltip": "Unlock slider"
+  },
+  "credences": {
+    "title": "Your Credences",
+    "tooltip": "These questions don't have obvious right answers, so we're asking for your credences—how much you believe in each possible answer. You can select multiple options and split your belief between them. If you're certain about one answer, give it 100%. If you're split, you might put 80% on one and 20% on another, or 50/50 if you're truly torn."
   },
   "marketplace": {
     "heading": "Moral Marketplace",

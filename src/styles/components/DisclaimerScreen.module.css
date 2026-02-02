@@ -30,6 +30,10 @@
   line-height: var(--leading-relaxed);
 }
 
+.content p:first-child {
+  color: #f39c12;
+}
+
 .content p:last-child {
   margin-bottom: 0;
 }

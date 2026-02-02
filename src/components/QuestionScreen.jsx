@@ -90,6 +90,12 @@ function QuestionScreen() {
           {showModeToggle && <ModeToggle mode={inputMode} setMode={setInputMode} />}
 
           <div className="card">
+            {effectiveInputMode === 'sliders' && questionType === QUESTION_TYPES.CREDENCE && (
+              <div className={styles.credencesHeader}>
+                {copy.credences.title}
+                <InfoTooltip content={copy.credences.tooltip} />
+              </div>
+            )}
             {effectiveInputMode === 'options'
               ? currentQuestion.options.map((opt) => (
                   <OptionButton

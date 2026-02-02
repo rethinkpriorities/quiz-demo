@@ -23,6 +23,10 @@ vi.mock('../../config/copy.json', () => ({
       lockTooltip: 'Lock slider',
       unlockTooltip: 'Unlock slider',
     },
+    credences: {
+      title: 'Your Credences',
+      tooltip: 'Test tooltip text',
+    },
   },
 }));
 

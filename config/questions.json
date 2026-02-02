@@ -44,20 +44,12 @@
       "editPanelTitle": "Time Preferences",
       "options": [
         {
-          "key": "equalAll",
-          "label": "Equal across all timeframes",
-          "description": "I only care about how much good I could possibly do, and I don't care whether that good happens in the short-term, medium-term, or long-term",
+          "key": "shortTermOnly",
+          "label": "Short-term only",
+          "description": "I only care about effects in the short-term",
           "info": "",
-          "panelLabel": "Equal",
-          "panelShort": "="
-        },
-        {
-          "key": "prioritizeNearer",
-          "label": "Prioritize nearer term",
-          "description": "I care a bit about the long-term future, but I put more priority on the medium-term and even more priority on the short-term",
-          "info": "",
-          "panelLabel": "Nearer",
-          "panelShort": ">"
+          "panelLabel": "Short",
+          "panelShort": "ST"
         },
         {
           "key": "discountDistant",
@@ -68,12 +60,20 @@
           "panelShort": ">>"
         },
         {
-          "key": "shortTermOnly",
-          "label": "Short-term only",
-          "description": "I only care about effects in the short-term",
+          "key": "prioritizeNearer",
+          "label": "Prioritize nearer term",
+          "description": "I care a bit about the long-term future, but I put more priority on the medium-term and even more priority on the short-term",
           "info": "",
-          "panelLabel": "Short",
-          "panelShort": "ST"
+          "panelLabel": "Nearer",
+          "panelShort": ">"
+        },
+        {
+          "key": "equalAll",
+          "label": "Equal across all timeframes",
+          "description": "I only care about how much good I could possibly do, and I don't care whether that good happens in the short-term, medium-term, or long-term",
+          "info": "",
+          "panelLabel": "Equal",
+          "panelShort": "="
         }
       ]
     },
@@ -103,7 +103,7 @@
         {
           "key": "riskNeutral",
           "label": "Risk neutral",
-          "description": "I prefer to invest in options that have the highest expected value",
+          "description": "I prefer to invest in options that have the highest expected value, even if they have low success rates or risk of negative outcomes",
           "info": "",
           "panelLabel": "Neutral",
           "panelShort": "EV"
@@ -150,7 +150,7 @@
       "categoryLabel": "Existential Risk",
       "icon": "alert-triangle",
       "previewText": "Existential risk priority",
-      "heading": "How much do you want to prioritize efforts to mitigate near-term existential risks which demand action in the next several years, compared to other kinds of projects you might fund?",
+      "heading": "How much do you want to prioritize efforts to mitigate near-term existential risks that demand action in the next several years, compared to other kinds of projects you might fund?",
       "info": "Some projects aim to reduce the chances of an event that poses existential or catastrophic risk (such as an engineered pandemic or AI takeover). If an event like this occurs, then it could severely mitigate the beneficial effects of other kinds of philanthropic projects (such as global health interventions). This can make it hard to compare the value of existential risk mitigation to the value of other projects.\n\nIf you think there is a high chance of a catastrophic risk in the near future (say, the next 10 years), then you may think that we need to act now to try to reduce these threats. You may care a lot about the longer-run future and what the world is like decades from now, but you want to prioritize actions now to ensure that humanity is around to enjoy that future.",
       "context": "Do you want to treat near-term existential risk mitigation projects differently than other projects?",
       "instructionsOptions": "Choose the view that best represents your position.",
