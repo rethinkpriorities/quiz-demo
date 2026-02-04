@@ -162,7 +162,7 @@ Migrations are idempotent SQL files in `migrations/`. Uses `CREATE TABLE IF NOT 
 
 ## Completed Features
 
-Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementation notes.
+Summary of implemented features. See `docs/CLAUDE-ARCHIVE.md` for detailed implementation notes.
 
 | Feature | Flag | Description |
 |---------|------|-------------|
@@ -172,14 +172,19 @@ Summary of implemented features. See `CLAUDE-ARCHIVE.md` for detailed implementa
 | Question Config | N/A | Questions defined in `config/questions.json` |
 | Context API | N/A | Centralized state via `src/context/QuizContext.jsx` |
 | Calculation Display | `calculations.show*`, `calculations.sideBySideComparison` | Control which calculation cards appear and comparison mode |
-| Question Types | `ui.questionTypes` | Three presentation modes: default (toggle), selection (pick one only), credence (sliders only). **Defaults to ON.** |
+| Question Types | `ui.questionTypes` | Four presentation modes: default, selection, credence, preset. **Defaults to ON.** |
 | Intermission Type | N/A (requires `ui.questionTypes`) | Pause screen showing partial results + contextual copy. Excluded from progress count. |
 | Share Results | `ui.shareResults` | Share quiz results via URL using backend API. |
 | Session Persistence | N/A | Quiz progress persists across page reloads via sessionStorage. Conflict modal when share URL + existing session. |
-| Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. Configurable in Settings modal. |
+| Diminishing Returns | `causes.json` → `diminishingReturns` | Spread allocations instead of winner-take-all. Modes: `none`, `sqrt` (default), `extreme`. |
 | Donor Compass Branding | N/A | Visual revamp: Raleway font, teal gradient background, RP logo, white CTA buttons, consistent card styling. |
-| Calculation Select | `calculations.sideBySideComparison` | Dropdown selectors on result cards to switch between calculation types. Independent dropdowns in side-by-side mode. |
-| Moral Marketplace | `ui.moralMarketplace` | Combines multiple worldviews into unified allocation. Features: budget input ($10M default) with dollar amounts, diminishing returns toggle, named worldviews. |
+| Calculation Select | `ui.calculationSelect` | Dropdown selectors on result cards to switch between calculation types. |
+| Moral Marketplace | `ui.moralMarketplace` | Combines multiple worldviews into unified allocation. Currently disabled. |
+| Preset Credences | `type: "preset"` | Two-card layout with preset options and read-only sliders. Animated transitions. |
+| Multiple Worldviews | `ui.multipleWorldviews` | Save quiz as named worldview, retake, compare. WorldviewHub UI. Currently disabled. |
+| Disclaimer Page | `ui.disclaimerPage` | Initial disclaimer screen before welcome page. |
+| Info Tooltips | `ui.questionInfo`, `ui.answerInfo` | Markdown-enabled info tooltips on questions and answer options. |
+| Feedback Card | `ui.feedbackCard` | Feedback request card on results screen. |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
@@ -196,9 +201,17 @@ When `ui.questionTypes` is enabled, questions can have different presentation mo
 | `default` | Mode toggle available (Pick One / Custom Mix) | Omit `type` or set `"type": "default"` |
 | `selection` | Pick one option only, no sliders | `"type": "selection"` |
 | `credence` | Sliders only, no discrete choice | `"type": "credence"` |
+| `preset` | Two-card layout with preset options + read-only sliders | `"type": "preset"` with `presets` array |
 | `intermission` | Pause with partial results + copy | `"type": "intermission"` with `title` and `body` |
 
 Colors defined in `src/constants/config.js` as `QUESTION_TYPE_COLORS` (placeholder: same colors for all types).
+
+**Preset behavior:**
+- Two-card layout: preset options on left, sliders on right
+- Sliders become read-only when a preset is selected
+- Click "Custom" to enable manual slider adjustment
+- Auto-selects "Custom" when user starts dragging sliders
+- Animated transitions (300ms) between presets
 
 **Intermission behavior:**
 - Displays `ResultCard` components showing current calculation results
@@ -211,98 +224,7 @@ Colors defined in `src/constants/config.js` as `QUESTION_TYPE_COLORS` (placehold
 
 ## Planned Features
 
-### 1. Preset Credences Feature
-**Flag:** `ui.presets`
-
-Allow users to quickly set credences to predefined viewpoints (e.g., "Rethink Priorities' answer", "Classical Utilitarian").
-
-**Key Requirements:**
-- Per-question presets in `config/questions.json`
-- Click preset → sliders animate to values
-- Manual slider adjustment unselects active preset
-- Preset UI only appears if `question.presets?.length > 0`
-
-**Data Structure:**
-```json
-{
-  "presets": [
-    {
-      "id": "rethink-priorities",
-      "name": "Rethink Priorities",
-      "description": "The worldview of the organization running this quiz",
-      "credences": { "equal": 60, "10x": 30, "100x": 10 }
-    }
-  ]
-}
-```
-
----
-
-### 2. Welcome Screen Preview Toggle
-**Flag:** `ui.welcomePreview`
-
-Hide the "You'll be asked about:" preview box on welcome screen. Wrap `infoBox` div with conditional render.
-
----
-
-### 3. Difficulty Selection System
-**Flag:** `ui.difficultySelection`
-
-Choose between difficulty levels with different question sets (e.g., Socrates/simple, Kant/credence-based, Heidegger/complex).
-
-**Behavior:**
-- When enabled: Welcome → Difficulty Selection → Questions → Results
-- When disabled: uses `difficulties[0]` as default
-- Difficulty locked once selected
-
-**Config:**
-```json
-{
-  "difficulties": [
-    {
-      "id": "kant",
-      "title": "Kant",
-      "description": "Express uncertainty with credence distributions",
-      "estimatedMinutes": 5,
-      "questions": [...]
-    }
-  ]
-}
-```
-
----
-
-### 4. Multiple Worldviews
-**Flag:** `ui.multipleWorldviews`
-
-Save quiz results as a named worldview and retake the quiz to compare different perspectives.
-
-**Behavior:**
-- Results screen shows "Save Worldview" option
-- After saving, user can choose to retake quiz or view comparison
-- Maximum of 3 worldviews can be saved per session
-- After 2nd or 3rd completion, special comparison screen unlocks
-- Comparison screen displays all saved worldviews side-by-side
-
-**Flow:**
-1. Complete quiz → Results screen with "Save Worldview" button
-2. Save worldview (name it) → Option to "Retake Quiz" or "Compare Worldviews"
-3. Retake → Fresh quiz, loop back to step 1
-4. After 2-3 worldviews saved → Comparison screen available
-
-**State Requirements:**
-- Store array of saved worldviews in context: `savedWorldviews[]`
-- Each worldview contains: `{ id, name, credences, calculationResults, timestamp }`
-- Reset current quiz state when retaking, preserve saved worldviews
-
-**Comparison Screen:**
-- Side-by-side view of 2-3 worldviews
-- Show calculation results for each
-- Highlight differences between worldviews
-
----
-
-### 5. Stale URL Recovery (Share Results Layer 2)
+### 1. Stale URL Recovery (Share Results Layer 2)
 **Flag:** `ui.shareResults` (extends existing feature)
 
 Graceful handling when a shared URL references a quiz configuration that has changed.
@@ -330,7 +252,7 @@ Graceful handling when a shared URL references a quiz configuration that has cha
 
 ---
 
-### 6. Export Results as PDF
+### 2. Export Results as PDF
 **Flag:** `ui.exportPDF`
 
 Download quiz results as a PDF document. Hybrid approach: visual screenshot of results + text footer with data summary and shareable link.
@@ -377,7 +299,7 @@ const handleDownload = async () => {
 
 ---
 
-### 7. Results-Only Share Mode
+### 3. Results-Only Share Mode
 **Flag:** `ui.shareResultsOnly` (extends `ui.shareResults`)
 
 Share quiz results without exposing the underlying quiz answers. Recipients see only the final results, not the credences that produced them.
@@ -424,7 +346,7 @@ Same hash format as feature #5, but data payload includes the `resultsOnly` mark
 
 ---
 
-### 8. AI Results Explanation
+### 4. AI Results Explanation
 **Flag:** `ui.aiExplanation`
 
 Show an "Explain Results" button that generates a personalized explanation of why the user got their results, powered by Claude API.
@@ -489,16 +411,16 @@ Show an "Explain Results" button that generates a personalized explanation of wh
 | `config/features.json` | Feature flags |
 | `config/questions.json` | Question definitions + worldview dimensions |
 | `config/causes.json` | Cause definitions (points, colors, flags) + `diminishingReturns` setting |
+| `config/copy.json` | UI copy/text content |
 | `src/context/QuizContext.jsx` | React Context state management |
 | `src/utils/calculations.js` | Calculation functions |
 | `src/utils/shareUrl.js` | URL encoding/decoding for Share Results |
 | `src/utils/session.js` | Session persistence utilities (sessionStorage) |
+| `src/constants/config.js` | Constants: colors, input modes, question types |
 | `netlify.toml` | Netlify deployment config (build, redirects, functions) |
 | `netlify/functions/share.js` | Share URL serverless function |
 | `migrations/` | Database migrations (idempotent SQL) |
 | `scripts/snapshot.sh` | Prototype builder |
 | `scripts/init-dev-db.py` | Initialize local dev database |
-| `CLAUDE-ARCHIVE.md` | Detailed implementation notes for completed features |
+| `docs/CLAUDE-ARCHIVE.md` | Detailed implementation notes for completed features |
 | `example/` | Standalone calculation code for Moral Marketplace feature |
-| `example/moral-marketplace-calculations.js` | Reference implementation of marketplace calculations |
-| `example/test-calculations.js` | Test suite for marketplace calculations |

@@ -893,6 +893,147 @@ See `example/moral-marketplace-calculations.js` for standalone calculation modul
 
 ---
 
+## Preset Credences Feature
+**Date:** 2026-01-31
+**Category:** UI
+**Question Type:** `"type": "preset"`
+**Prototype:** N/A
+**Dependencies:** Question Types System
+
+**Description:**
+Two-card layout question type where users select from predefined credence distributions (presets) or customize manually. Designed for questions where common viewpoints can be pre-packaged.
+
+**Behavior:**
+- Left card shows preset options as buttons
+- Right card shows sliders (read-only when preset selected)
+- Clicking a preset animates sliders to those values (300ms easing)
+- "Custom" option enables manual slider adjustment
+- Dragging any slider auto-selects "Custom"
+- Slider locks cleared when switching presets
+
+**Question Config:**
+```json
+{
+  "id": "timeframes",
+  "type": "preset",
+  "presets": [
+    {
+      "id": "next-decade",
+      "name": "Focused on next decade (until 2035)",
+      "description": "Prioritize effects visible in the near term",
+      "credences": { "equalAll": 0, "prioritizeNearer": 0, "discountDistant": 25, "shortTermOnly": 75 }
+    }
+  ],
+  "options": [...]
+}
+```
+
+**Implementation:**
+1. `PresetQuestion.jsx` - Main component with two-card layout
+2. Routes via `QuestionScreen.jsx` when `type === QUESTION_TYPES.PRESET`
+3. `QUESTION_TYPES.PRESET` added to `src/constants/config.js`
+4. Credences stored in QuizContext like other question types
+5. CSS animations for smooth slider transitions
+
+**Files:**
+- `src/components/PresetQuestion.jsx` - NEW
+- `src/styles/components/PresetQuestion.module.css` - NEW
+- `src/constants/config.js` - Added `PRESET` to `QUESTION_TYPES`
+- `src/components/QuestionScreen.jsx` - Routes to PresetQuestion
+
+---
+
+## Multiple Worldviews Feature
+**Date:** 2026-01-26 (initial), 2026-02-03 (advanced mode merge)
+**Category:** UI / State Management
+**Flag:** `ui.multipleWorldviews` (disabled by default)
+**Prototype:** N/A
+**Dependencies:** None
+
+**Description:**
+Save quiz completions as named "worldviews" and retake the quiz to create alternative perspectives. Enables comparison between different moral frameworks and powers the Moral Marketplace feature.
+
+**Behavior:**
+- When enabled, quiz flow includes WorldviewHub as landing page
+- Users can create up to 4 worldview "slots"
+- Each slot holds a complete quiz state with custom name
+- Navigation between slots to compare or edit
+- Feeds into Moral Marketplace for combined analysis
+
+**State Management:**
+```js
+{
+  worldviewIds: ['default', 'wv-2', ...],     // Ordered list of worldview IDs
+  worldviewNames: { 'default': 'My Worldview', ... },
+  completedMap: { 'default': true, ... },     // Which worldviews have results
+  currentWorldviewId: 'default',
+  worldviewCredences: { 'default': {...}, ... }
+}
+```
+
+**Components:**
+- `WorldviewHub.jsx` - Hub screen showing worldview slots, add button
+- `WorldviewSlotModal.jsx` - Modal for editing/naming individual worldviews
+- `WorldviewSwitchModal.jsx` - Modal for switching between worldviews (includes Marketplace button)
+
+**Session/Share Integration:**
+- Worldview state persists to sessionStorage
+- Share URLs include full worldview data
+- Conflict modal handles share URL + existing session
+
+**Files:**
+- `src/components/WorldviewHub.jsx` - NEW
+- `src/components/ui/WorldviewSlotModal.jsx` - NEW
+- `src/components/ui/WorldviewSwitchModal.jsx` - NEW
+- `src/styles/components/WorldviewHub.module.css` - NEW
+- `src/context/QuizContext.jsx` - Added worldview state management
+
+---
+
+## Disclaimer Page Feature
+**Date:** 2026-01-27
+**Category:** UI
+**Flag:** `ui.disclaimerPage`
+**Prototype:** N/A
+**Dependencies:** None
+
+**Description:**
+Initial disclaimer screen shown before the welcome page. Informs users about the experimental nature of the quiz.
+
+**Behavior:**
+- When enabled, first screen is DisclaimerScreen
+- User clicks to acknowledge and proceed to Welcome
+- Skipped if flag is disabled
+
+**Files:**
+- `src/components/DisclaimerScreen.jsx` - NEW
+- `src/styles/components/DisclaimerScreen.module.css` - NEW
+- `config/copy.json` - Added `disclaimer.*` copy strings
+
+---
+
+## Info Tooltips Feature
+**Date:** 2026-01-29
+**Category:** UI
+**Flags:** `ui.questionInfo`, `ui.answerInfo`
+**Prototype:** N/A
+**Dependencies:** None
+
+**Description:**
+Info icons (ⓘ) that show tooltips with additional context. Can be added to questions and answer options. Supports markdown links.
+
+**Behavior:**
+- `ui.questionInfo`: Shows info icon next to question heading
+- `ui.answerInfo`: Shows info icons next to answer options
+- Tooltip content comes from `info` field in question/option config
+- Markdown links supported: `[link text](url)`
+
+**Files:**
+- `src/components/ui/InfoTooltip.jsx` - NEW
+- `src/styles/components/InfoTooltip.module.css` - NEW
+
+---
+
 ## Backlog: Code Quality & Enhancements
 
 These items are deprioritized but may be addressed when development pace slows down.

@@ -10,6 +10,7 @@ import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
 import InfoTooltip from './ui/InfoTooltip';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
+import { getEnabledMethods } from '../constants/calculationMethods';
 import { generateShareUrl } from '../utils/shareUrl';
 import {
   useEmailCopy,
@@ -73,28 +74,7 @@ function ResultsScreen() {
   } = useEmailCopy(copy.results.feedbackEmail);
 
   const causeEntries = Object.entries(causesConfig);
-
-  // Map feature flags to calculation result keys
-  const CALC_METHODS = [
-    { flag: 'showMaxEV', key: 'maxEV', hasEvs: true },
-    { flag: 'showParliament', key: 'parliament', hasEvs: false },
-    { flag: 'showMergedFavorites', key: 'mergedFavorites', hasEvs: false },
-    { flag: 'showMaximin', key: 'maximin', hasEvs: false },
-  ];
-
-  // Sort by config order if provided, otherwise use default order
-  const configOrder = features.calculations?.order || [];
-  const sortedMethods = [...CALC_METHODS].sort((a, b) => {
-    const aIndex = configOrder.indexOf(a.key);
-    const bIndex = configOrder.indexOf(b.key);
-    // Methods not in order array go to the end
-    if (aIndex === -1 && bIndex === -1) return 0;
-    if (aIndex === -1) return 1;
-    if (bIndex === -1) return -1;
-    return aIndex - bIndex;
-  });
-
-  const enabledMethods = sortedMethods.filter((m) => features.calculations?.[m.flag] === true);
+  const enabledMethods = getEnabledMethods();
 
   // Initialize selected calculations to first enabled method if not set or invalid
   useEffect(() => {
