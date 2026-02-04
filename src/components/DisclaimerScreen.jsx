@@ -14,11 +14,12 @@ import copy from '../../config/copy.json';
  * Displays markdown content with a clickable email that copies to clipboard.
  */
 function DisclaimerScreen() {
-  const { goToStep } = useQuiz();
+  const { goToStep, isAdvancedMode } = useQuiz();
   const { email, copied, handleEmailClick } = useEmailCopy(copy.disclaimer?.email);
 
   const handleContinue = () => {
-    goToStep('welcome');
+    // In advanced mode, go to hub; otherwise go to welcome
+    goToStep(isAdvancedMode ? 'hub' : 'welcome');
   };
 
   const processedContent = processEmailPlaceholder(copy.disclaimer.content, email, copied);

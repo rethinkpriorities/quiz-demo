@@ -134,4 +134,5 @@ export const QUESTION_TYPES = {
   CREDENCE: 'credence',
   INTERMISSION: 'intermission',
   PRESET: 'preset',
+  RATIO: 'ratio',
 };

@@ -1,0 +1,168 @@
+/* RatioQuestion Screen Styles */
+
+.container {
+  max-width: 50rem;
+  width: 100%;
+}
+
+.categoryLabel {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-8);
+  opacity: 0.8;
+  font-family: var(--font-body);
+}
+
+.heading {
+  font-size: var(--text-heading);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--spacing-16);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.context {
+  font-size: var(--text-2xl);
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-24);
+  line-height: var(--leading-relaxed);
+  font-family: var(--font-body);
+}
+
+.context p {
+  margin-bottom: var(--spacing-12);
+}
+
+.context p:last-child {
+  margin-bottom: 0;
+}
+
+.instructions {
+  font-size: var(--text-xl);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-24);
+  font-family: var(--font-body);
+}
+
+/* Ratio slider card */
+.sliderCard {
+  padding: var(--spacing-24);
+}
+
+.sliderLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-16);
+  font-size: var(--text-base);
+  font-family: var(--font-body);
+}
+
+.sliderLabelLeft {
+  text-align: left;
+  max-width: 40%;
+  color: var(--text-tertiary);
+}
+
+.sliderLabelRight {
+  text-align: right;
+  max-width: 40%;
+  color: var(--text-tertiary);
+}
+
+.sliderContainer {
+  position: relative;
+  padding: var(--spacing-16) 0;
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease;
+  margin-top: -7px; /* Center vertically: (thumb height - track height) / 2 */
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.4) var(--slider-progress, 50%),
+    rgba(255, 255, 255, 0.15) var(--slider-progress, 50%),
+    rgba(255, 255, 255, 0.15) 100%
+  );
+  border-radius: 3px;
+}
+
+.slider::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.slider::-moz-range-progress {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  height: 6px;
+}
+
+/* Value display */
+.valueDisplay {
+  text-align: center;
+  margin-top: var(--spacing-16);
+  font-size: var(--text-2xl);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+.valueNumber {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+/* Navigation buttons */
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  margin-top: var(--spacing-32);
+}

@@ -7,7 +7,8 @@ import {
   useState,
   useRef,
 } from 'react';
-import questionsConfig from '../../config/questions.json';
+import questionsConfigBasic from '../../config/questions.json';
+import questionsConfigAdvanced from '../../config/questions-advanced.json';
 import causesConfig from '../../config/causes.json';
 import features from '../../config/features.json';
 import { detectShareUrl, parseShareUrl, clearShareHash } from '../utils/shareUrl';
@@ -34,6 +35,9 @@ import {
   calculateMaximin,
 } from '../utils/calculations';
 
+// Load questions based on advanced mode flag
+const isAdvancedMode = features.advanced === true;
+const questionsConfig = isAdvancedMode ? questionsConfigAdvanced : questionsConfigBasic;
 const { questions: rawQuestions } = questionsConfig;
 const { causes: CAUSES, defaultCredences } = causesConfig;
 
@@ -94,11 +98,16 @@ const questionsWithColors = questions.map((question) => {
     return { ...question, type: QUESTION_TYPES.INTERMISSION };
   }
 
+  // Ratio questions don't have options array
+  if (question.type === QUESTION_TYPES.RATIO) {
+    return { ...question, type: QUESTION_TYPES.RATIO };
+  }
+
   const colors = getColorsForQuestion(question);
   return {
     ...question,
     type: question.type || QUESTION_TYPES.DEFAULT,
-    options: question.options.map((opt, index) => ({
+    options: question.options?.map((opt, index) => ({
       ...opt,
       color: colors[index] || colors[0],
     })),
@@ -108,12 +117,22 @@ const questionsWithColors = questions.map((question) => {
 /**
  * Get default credences for a question.
  * Uses question-specific defaults if provided, otherwise splits evenly across options.
+ * For ratio questions, returns { value: defaultValue }.
  */
 function getDefaultCredencesForQuestion(question) {
+  // Ratio questions use a single value
+  if (question.type === QUESTION_TYPES.RATIO) {
+    return { value: question.ratioConfig?.defaultValue ?? 0.5 };
+  }
+
   if (question.defaultCredences) {
     return { ...question.defaultCredences };
   }
+
   // Generate equal split from options
+  if (!question.options) {
+    return {};
+  }
   const optionKeys = question.options.map((opt) => opt.key);
   const equalShare = Math.floor(100 / optionKeys.length);
   const remainder = 100 - equalShare * optionKeys.length;
@@ -124,8 +143,20 @@ function getDefaultCredencesForQuestion(question) {
 
 /**
  * Create initial state for a single question.
+ * For ratio questions, stores { value: 0-1 } instead of multi-option credences.
  */
 function createQuestionState(question) {
+  // Ratio questions store a single value
+  if (question.type === QUESTION_TYPES.RATIO) {
+    return {
+      credences: { value: question.ratioConfig?.defaultValue ?? 0.5 },
+      originalCredences: null,
+      inputMode: INPUT_MODES.OPTIONS, // Not used for ratio, but keep for consistency
+      lockedKeys: [],
+      selectedPreset: null,
+    };
+  }
+
   return {
     credences: getDefaultCredencesForQuestion(question),
     originalCredences: null,
@@ -145,16 +176,24 @@ function createInitialQuestionsState() {
 }
 
 /**
- * Worldview IDs - fixed slots for storing quiz states.
+ * Maximum number of worldviews allowed (for testing; UI doesn't reveal limit).
  */
-const WORLDVIEW_IDS = ['1', '2', '3'];
+const MAX_WORLDVIEWS = 6;
 
 /**
- * Create initial worldviews structure with all slots.
+ * Initial worldview IDs - start with just 1 in advanced mode, 3 in basic mode.
+ */
+const INITIAL_WORLDVIEW_IDS = isAdvancedMode ? ['1'] : ['1', '2', '3'];
+
+/**
+ * Create initial worldviews structure.
  */
 function createInitialWorldviews() {
   return Object.fromEntries(
-    WORLDVIEW_IDS.map((id) => [id, { questions: createInitialQuestionsState() }])
+    INITIAL_WORLDVIEW_IDS.map((id) => [
+      id,
+      { questions: createInitialQuestionsState(), completed: false },
+    ])
   );
 }
 
@@ -176,17 +215,19 @@ function worldviewHasProgress(worldview) {
 }
 
 /**
- * Create initial worldview names (e.g., "Worldview 1", "Worldview 2", "Worldview 3")
+ * Create initial worldview names (e.g., "Worldview 1")
  */
 function createInitialWorldviewNames() {
-  return Object.fromEntries(WORLDVIEW_IDS.map((id) => [id, `Worldview ${id}`]));
+  return Object.fromEntries(INITIAL_WORLDVIEW_IDS.map((id) => [id, `Worldview ${id}`]));
 }
 
 const DEFAULT_MARKETPLACE_BUDGET = 10_000_000;
 
-// Determine initial step based on disclaimer feature flag
+// Determine initial step based on feature flags
 const getInitialStep = () => {
-  return features.ui?.disclaimerPage ? 'disclaimer' : 'welcome';
+  if (features.ui?.disclaimerPage) return 'disclaimer';
+  if (isAdvancedMode) return 'hub';
+  return 'welcome';
 };
 
 const initialState = {
@@ -198,6 +239,7 @@ const initialState = {
   debugConfig: null,
   selectedCalculations: { left: null, right: null },
   marketplaceBudget: DEFAULT_MARKETPLACE_BUDGET,
+  justCompletedWorldview: null, // ID of worldview just completed (for hub alert)
 };
 
 const ACTIONS = {
@@ -215,6 +257,10 @@ const ACTIONS = {
   SET_WORLDVIEW_NAME: 'SET_WORLDVIEW_NAME',
   SET_MARKETPLACE_BUDGET: 'SET_MARKETPLACE_BUDGET',
   SET_SELECTED_PRESET: 'SET_SELECTED_PRESET',
+  SET_JUST_COMPLETED_WORLDVIEW: 'SET_JUST_COMPLETED_WORLDVIEW',
+  CLEAR_JUST_COMPLETED_WORLDVIEW: 'CLEAR_JUST_COMPLETED_WORLDVIEW',
+  MARK_WORLDVIEW_COMPLETED: 'MARK_WORLDVIEW_COMPLETED',
+  ADD_WORLDVIEW: 'ADD_WORLDVIEW',
 };
 
 /**
@@ -229,11 +275,13 @@ function getActiveQuestions(state) {
  */
 function updateQuestion(state, questionId, updates) {
   const activeQuestions = getActiveQuestions(state);
+  const activeWorldview = state.worldviews[state.activeWorldviewId];
   return {
     ...state,
     worldviews: {
       ...state.worldviews,
       [state.activeWorldviewId]: {
+        ...activeWorldview,
         questions: {
           ...activeQuestions,
           [questionId]: {
@@ -259,11 +307,13 @@ function quizReducer(state, action) {
 
     case ACTIONS.SAVE_ORIGINALS: {
       const activeQuestions = getActiveQuestions(state);
+      const activeWorldview = state.worldviews[state.activeWorldviewId];
       return {
         ...state,
         worldviews: {
           ...state.worldviews,
           [state.activeWorldviewId]: {
+            ...activeWorldview,
             questions: Object.fromEntries(
               Object.entries(activeQuestions).map(([id, q]) => [
                 id,
@@ -277,11 +327,13 @@ function quizReducer(state, action) {
 
     case ACTIONS.RESET_TO_ORIGINAL: {
       const activeQuestions = getActiveQuestions(state);
+      const activeWorldview = state.worldviews[state.activeWorldviewId];
       return {
         ...state,
         worldviews: {
           ...state.worldviews,
           [state.activeWorldviewId]: {
+            ...activeWorldview,
             questions: Object.fromEntries(
               Object.entries(activeQuestions).map(([id, q]) => [
                 id,
@@ -302,14 +354,14 @@ function quizReducer(state, action) {
       };
 
     case ACTIONS.SWITCH_WORLDVIEW:
-      if (!WORLDVIEW_IDS.includes(action.payload)) {
+      if (!state.worldviews[action.payload]) {
         return state;
       }
       return { ...state, activeWorldviewId: action.payload };
 
     case ACTIONS.SET_WORLDVIEW_NAME: {
       const { worldviewId, name } = action.payload;
-      if (!WORLDVIEW_IDS.includes(worldviewId)) {
+      if (!state.worldviews[worldviewId]) {
         return state;
       }
       return {
@@ -323,6 +375,52 @@ function quizReducer(state, action) {
 
     case ACTIONS.SET_MARKETPLACE_BUDGET:
       return { ...state, marketplaceBudget: action.payload };
+
+    case ACTIONS.MARK_WORLDVIEW_COMPLETED: {
+      const worldviewId = action.payload;
+      if (!state.worldviews[worldviewId]) {
+        return state;
+      }
+      return {
+        ...state,
+        worldviews: {
+          ...state.worldviews,
+          [worldviewId]: {
+            ...state.worldviews[worldviewId],
+            completed: true,
+          },
+        },
+      };
+    }
+
+    case ACTIONS.ADD_WORLDVIEW: {
+      const existingIds = Object.keys(state.worldviews);
+      if (existingIds.length >= MAX_WORLDVIEWS) {
+        return state;
+      }
+      // Check all existing worldviews are complete
+      const allComplete = existingIds.every((id) => state.worldviews[id]?.completed);
+      if (!allComplete) {
+        return state;
+      }
+      // Generate next ID (find max existing ID and add 1)
+      const maxId = Math.max(...existingIds.map((id) => parseInt(id, 10)));
+      const newId = String(maxId + 1);
+      return {
+        ...state,
+        worldviews: {
+          ...state.worldviews,
+          [newId]: { questions: createInitialQuestionsState(), completed: false },
+        },
+        worldviewNames: {
+          ...state.worldviewNames,
+          [newId]: `Worldview ${newId}`,
+        },
+        // Switch to new worldview and start quiz
+        activeWorldviewId: newId,
+        currentStep: questions[0].id,
+      };
+    }
 
     case ACTIONS.RESTORE_FROM_URL:
     case ACTIONS.RESTORE_FROM_SESSION: {
@@ -361,21 +459,25 @@ function quizReducer(state, action) {
           for (const [questionId, qState] of Object.entries(worldview.questions)) {
             restoredQuestions[questionId] = restoreQuestion(qState, setOriginals);
           }
-          restored[worldviewId] = { questions: restoredQuestions };
+          restored[worldviewId] = {
+            questions: restoredQuestions,
+            completed: worldview.completed || false,
+          };
         }
-        // Ensure all worldview slots exist
-        for (const id of WORLDVIEW_IDS) {
-          if (!restored[id]) {
-            restored[id] = { questions: createInitialQuestionsState() };
-          }
+        // Ensure at least worldview '1' exists as fallback
+        if (!restored['1']) {
+          restored['1'] = { questions: createInitialQuestionsState(), completed: false };
         }
         return restored;
       };
 
-      // Helper to restore worldview names with defaults for missing IDs
-      const restoreWorldviewNames = (namesData) => {
+      // Helper to restore worldview names with defaults for any in the data
+      const restoreWorldviewNames = (namesData, worldviewsData) => {
         const restored = {};
-        for (const id of WORLDVIEW_IDS) {
+        const worldviewIds = Object.keys(worldviewsData || {});
+        // Ensure at least '1' is in the list
+        if (!worldviewIds.includes('1')) worldviewIds.push('1');
+        for (const id of worldviewIds) {
           restored[id] = namesData?.[id] || `Worldview ${id}`;
         }
         return restored;
@@ -383,11 +485,13 @@ function quizReducer(state, action) {
 
       // New worldviews format
       if (sourceWorldviews && sourceActiveId) {
+        // In advanced mode, restore to hub; in basic mode, restore to results
+        const urlRestoreStep = isAdvancedMode ? 'hub' : 'results';
         return {
           ...state,
-          currentStep: isUrlRestore ? 'results' : sessionStep,
+          currentStep: isUrlRestore ? urlRestoreStep : sessionStep,
           worldviews: restoreWorldviews(sourceWorldviews, isUrlRestore),
-          worldviewNames: restoreWorldviewNames(sourceWorldviewNames),
+          worldviewNames: restoreWorldviewNames(sourceWorldviewNames, sourceWorldviews),
           activeWorldviewId: sourceActiveId,
           selectedCalculations: sourceSelectedCalculations || state.selectedCalculations,
           marketplaceBudget: sourceMarketplaceBudget || DEFAULT_MARKETPLACE_BUDGET,
@@ -416,7 +520,7 @@ function quizReducer(state, action) {
         currentStep: isUrlRestore ? 'results' : sessionStep,
         worldviews: {
           ...createInitialWorldviews(),
-          1: { questions: newQuestions },
+          1: { questions: newQuestions, completed: false },
         },
         worldviewNames: createInitialWorldviewNames(),
         activeWorldviewId: '1',
@@ -426,6 +530,12 @@ function quizReducer(state, action) {
 
     case ACTIONS.SET_DEBUG_CONFIG:
       return { ...state, debugConfig: action.payload };
+
+    case ACTIONS.SET_JUST_COMPLETED_WORLDVIEW:
+      return { ...state, justCompletedWorldview: action.payload };
+
+    case ACTIONS.CLEAR_JUST_COMPLETED_WORLDVIEW:
+      return { ...state, justCompletedWorldview: null };
 
     case ACTIONS.SET_SELECTED_CALCULATIONS:
       return {
@@ -732,6 +842,22 @@ export function QuizProvider({ children }) {
     dispatch({ type: ACTIONS.SET_MARKETPLACE_BUDGET, payload: budget });
   }, []);
 
+  const setJustCompletedWorldview = useCallback((worldviewId) => {
+    dispatch({ type: ACTIONS.SET_JUST_COMPLETED_WORLDVIEW, payload: worldviewId });
+  }, []);
+
+  const clearJustCompletedWorldview = useCallback(() => {
+    dispatch({ type: ACTIONS.CLEAR_JUST_COMPLETED_WORLDVIEW });
+  }, []);
+
+  const markWorldviewCompleted = useCallback((worldviewId) => {
+    dispatch({ type: ACTIONS.MARK_WORLDVIEW_COMPLETED, payload: worldviewId });
+  }, []);
+
+  const addWorldview = useCallback(() => {
+    dispatch({ type: ACTIONS.ADD_WORLDVIEW });
+  }, []);
+
   // Navigation helpers
   const getQuestionIndex = useCallback(
     (questionId) => questions.findIndex((q) => q.id === questionId),
@@ -741,7 +867,9 @@ export function QuizProvider({ children }) {
   const getPrevStep = useCallback(
     (questionId) => {
       const index = getQuestionIndex(questionId);
-      return index === 0 ? 'welcome' : questions[index - 1].id;
+      // In advanced mode, first question goes back to hub; otherwise to welcome
+      const firstStep = isAdvancedMode ? 'hub' : 'welcome';
+      return index === 0 ? firstStep : questions[index - 1].id;
     },
     [getQuestionIndex]
   );
@@ -749,7 +877,9 @@ export function QuizProvider({ children }) {
   const getNextStep = useCallback(
     (questionId) => {
       const index = getQuestionIndex(questionId);
-      return index === questions.length - 1 ? 'results' : questions[index + 1].id;
+      // In advanced mode, last question goes to hub; otherwise to results
+      const lastStep = isAdvancedMode ? 'hub' : 'results';
+      return index === questions.length - 1 ? lastStep : questions[index + 1].id;
     },
     [getQuestionIndex]
   );
@@ -772,8 +902,21 @@ export function QuizProvider({ children }) {
     if (nextStep === 'results') {
       saveOriginals();
     }
+    // In advanced mode, mark the worldview as completed when returning to hub
+    if (isAdvancedMode && nextStep === 'hub') {
+      markWorldviewCompleted(state.activeWorldviewId);
+      setJustCompletedWorldview(state.activeWorldviewId);
+    }
     goToStep(nextStep);
-  }, [state.currentStep, goToStep, getNextStep, saveOriginals]);
+  }, [
+    state.currentStep,
+    state.activeWorldviewId,
+    goToStep,
+    getNextStep,
+    saveOriginals,
+    markWorldviewCompleted,
+    setJustCompletedWorldview,
+  ]);
 
   // Derive questions from active worldview for backward compatibility
   const activeQuestions = useMemo(
@@ -833,12 +976,28 @@ export function QuizProvider({ children }) {
     );
   }, [activeQuestions]);
 
+  // Derive worldview IDs from state (sorted numerically)
+  const worldviewIds = useMemo(() => {
+    return Object.keys(state.worldviews).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  }, [state.worldviews]);
+
   // Map of worldview IDs to whether they have progress
   const hasProgressMap = useMemo(() => {
     return Object.fromEntries(
-      WORLDVIEW_IDS.map((id) => [id, worldviewHasProgress(state.worldviews[id])])
+      worldviewIds.map((id) => [id, worldviewHasProgress(state.worldviews[id])])
     );
-  }, [state.worldviews]);
+  }, [state.worldviews, worldviewIds]);
+
+  // Map of worldview IDs to whether they've been completed (clicked through)
+  const completedMap = useMemo(() => {
+    return Object.fromEntries(
+      worldviewIds.map((id) => [id, state.worldviews[id]?.completed === true])
+    );
+  }, [state.worldviews, worldviewIds]);
+
+  // Whether more worldviews can be added (only if all existing are complete and under limit)
+  const allWorldviewsComplete = worldviewIds.every((id) => completedMap[id]);
+  const canAddWorldview = worldviewIds.length < MAX_WORLDVIEWS && allWorldviewsComplete;
 
   // Derived values
   const currentQuestionIndex = useMemo(() => {
@@ -915,15 +1074,21 @@ export function QuizProvider({ children }) {
       debugConfig: state.debugConfig,
       selectedCalculations: state.selectedCalculations,
       marketplaceBudget: state.marketplaceBudget,
+      justCompletedWorldview: state.justCompletedWorldview,
       shareUrlError,
       isHydrating,
       sessionId,
+      isAdvancedMode,
 
       // Config (static)
       questionsConfig: questionsWithColors,
       causesConfig: CAUSES,
       defaultCredences,
-      worldviewIds: WORLDVIEW_IDS,
+
+      // Worldview management
+      worldviewIds,
+      canAddWorldview,
+      addWorldview,
 
       // Actions
       goToStep,
@@ -940,6 +1105,7 @@ export function QuizProvider({ children }) {
       setSelectedCalculations,
       setWorldviewName,
       setMarketplaceBudget,
+      clearJustCompletedWorldview,
 
       // Navigation helpers
       getQuestionIndex,
@@ -959,6 +1125,7 @@ export function QuizProvider({ children }) {
       questionNumber,
       hasChanged,
       hasProgressMap,
+      completedMap,
 
       // Calculation results
       calculationResults,
@@ -977,6 +1144,7 @@ export function QuizProvider({ children }) {
       state.debugConfig,
       state.selectedCalculations,
       state.marketplaceBudget,
+      state.justCompletedWorldview,
       shareUrlError,
       isHydrating,
       sessionId,
@@ -994,6 +1162,7 @@ export function QuizProvider({ children }) {
       setSelectedCalculations,
       setWorldviewName,
       setMarketplaceBudget,
+      clearJustCompletedWorldview,
       getQuestionIndex,
       getPrevStep,
       getNextStep,
@@ -1006,9 +1175,13 @@ export function QuizProvider({ children }) {
       questionNumber,
       hasChanged,
       hasProgressMap,
+      completedMap,
       calculationResults,
       originalCalculationResults,
       stateMap,
+      worldviewIds,
+      canAddWorldview,
+      addWorldview,
     ]
   );
 

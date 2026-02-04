@@ -1,6 +1,8 @@
 import DisclaimerScreen from './DisclaimerScreen';
 import WelcomeScreen from './WelcomeScreen';
+import WorldviewHub from './WorldviewHub';
 import QuestionScreen from './QuestionScreen';
+import RatioQuestion from './RatioQuestion';
 import IntermissionScreen from './IntermissionScreen';
 import ResultsScreen from './ResultsScreen';
 import MoralMarketplaceScreen from './MoralMarketplaceScreen';
@@ -39,9 +41,15 @@ function MoralParliamentQuiz() {
   function getScreenContent() {
     if (currentStep === 'disclaimer') return <DisclaimerScreen />;
     if (currentStep === 'welcome') return <WelcomeScreen />;
+    if (currentStep === 'hub') return <WorldviewHub />;
     if (currentStep === 'results') return <ResultsScreen />;
     if (currentStep === 'marketplace') return <MoralMarketplaceScreen />;
     if (!currentQuestion) return null;
+
+    // Route ratio questions to RatioQuestion component
+    if (currentQuestion.type === QUESTION_TYPES.RATIO) {
+      return <RatioQuestion />;
+    }
 
     // Route intermission questions to IntermissionScreen
     if (currentQuestion.type === QUESTION_TYPES.INTERMISSION) {
