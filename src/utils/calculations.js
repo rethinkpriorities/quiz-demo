@@ -930,5 +930,117 @@ export function calculateMoralMarketplace(worldviews, options = {}) {
   };
 }
 
+// =============================================================================
+// RATIO QUESTION CALCULATIONS (Advanced Mode)
+// =============================================================================
+
+/**
+ * Convert a ratio slider value (0-1) to the actual multiplier based on scale config.
+ *
+ * @param {number} ratioValue - Slider value between 0 and 1
+ * @param {Object} ratioConfig - Configuration for the ratio question
+ * @param {string} ratioConfig.scale - 'linear' or 'logarithmic'
+ * @param {number} ratioConfig.min - Minimum value
+ * @param {number} ratioConfig.max - Maximum value
+ * @returns {number} The calculated multiplier
+ */
+export function ratioToMultiplier(ratioValue, ratioConfig) {
+  const { scale, min, max } = ratioConfig;
+
+  if (scale === 'logarithmic') {
+    // Logarithmic: min * (max/min)^ratioValue
+    // At ratioValue=0: returns min
+    // At ratioValue=1: returns max
+    return min * Math.pow(max / min, ratioValue);
+  }
+
+  // Linear: min + ratioValue * (max - min)
+  return min + ratioValue * (max - min);
+}
+
+/**
+ * Convert a ratio slider value (0-1) to a display-friendly value.
+ * Same as ratioToMultiplier but named for clarity in UI contexts.
+ *
+ * @param {number} ratioValue - Slider value between 0 and 1
+ * @param {Object} ratioConfig - Configuration for the ratio question
+ * @returns {number} The calculated display value
+ */
+export function ratioToDisplayValue(ratioValue, ratioConfig) {
+  return ratioToMultiplier(ratioValue, ratioConfig);
+}
+
+/**
+ * Calculate expected values for all causes using advanced mode inputs.
+ * Handles both ratio questions (single slider) and credence questions (multiple sliders).
+ *
+ * @param {Object} questionStates - States for all questions keyed by question ID
+ *   For ratio questions: { value: 0-1 }
+ *   For credence questions: { optionKey: percentage, ... }
+ * @param {Object[]} questionsConfig - Array of question configurations
+ * @param {Object} config - Optional config override
+ * @returns {Object} Expected values keyed by cause ID
+ */
+export function calculateAdvancedWorldviewEVs(questionStates, questionsConfig, config) {
+  const causes = config?.causes || CAUSES;
+  const causeKeys = Object.keys(causes);
+  const evs = {};
+
+  for (const causeKey of causeKeys) {
+    const cause = causes[causeKey];
+    let ev = cause.points;
+
+    // Apply multipliers from each question
+    for (const question of questionsConfig) {
+      const state = questionStates[question.id];
+      if (!state || !question.worldviewDimension) continue;
+
+      const dimension = question.worldviewDimension;
+
+      if (question.type === 'ratio' && question.ratioConfig) {
+        // Ratio question: single slider value
+        const ratioValue = state.credences?.value ?? question.ratioConfig.defaultValue ?? 0.5;
+        const multiplier = ratioToMultiplier(ratioValue, question.ratioConfig);
+
+        // For ratio questions, we need to invert the multiplier for most cases
+        // because higher slider values typically mean "less weight" on something
+        // The multiplier is applied if the dimension matches the cause
+        if (shouldApplyDimension(cause, dimension)) {
+          // For ratio questions, the multiplier IS the raw value
+          // The config's min/max determine the semantic meaning
+          ev *= 1 / multiplier; // Invert because higher multiplier = less valuable
+        }
+      } else if (state.credences) {
+        // Credence question: use expected multiplier calculation
+        const expectedMult = calculateExpectedMultiplier(cause, dimension, state.credences);
+        ev *= expectedMult;
+      }
+    }
+
+    evs[causeKey] = ev;
+  }
+
+  return evs;
+}
+
+/**
+ * Check if a dimension should apply to a cause.
+ *
+ * @param {Object} cause - Cause object
+ * @param {Object} dimension - Dimension configuration
+ * @returns {boolean} Whether the dimension applies
+ */
+function shouldApplyDimension(cause, dimension) {
+  if (dimension.appliesTo) {
+    // Property-based: check if cause has the property
+    return cause[dimension.appliesTo] !== undefined;
+  }
+  if (dimension.appliesWhen) {
+    // Boolean flag: check if cause has the flag set to true
+    return cause[dimension.appliesWhen] === true;
+  }
+  return false;
+}
+
 // Export config for use by other modules
 export { CAUSES, DIMENSIONS, DEFAULT_CREDENCES, DIMINISHING_RETURNS_POWER };

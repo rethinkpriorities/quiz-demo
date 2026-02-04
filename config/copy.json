@@ -107,5 +107,12 @@
     "currentLabel": "(current)",
     "marketplaceButton": "Moral Marketplace",
     "defaultName": "Worldview"
+  },
+  "hub": {
+    "heading": "Your Worldviews",
+    "subtitle": "Define up to three different perspectives, then see how they combine in the Moral Marketplace.",
+    "marketplaceButton": "View Moral Marketplace",
+    "marketplaceHint": "Complete at least 2 worldviews to unlock",
+    "backButton": "← Back to Hub"
   }
 }

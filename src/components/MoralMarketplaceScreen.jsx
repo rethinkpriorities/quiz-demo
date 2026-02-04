@@ -1,17 +1,27 @@
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import CauseBar from './ui/CauseBar';
+import ShareButton from './ui/ShareButton.jsx';
 import { useQuiz } from '../context/useQuiz';
 import {
   calculateWorldviewEVs,
+  calculateAdvancedWorldviewEVs,
   calculateMoralMarketplace,
   CAUSES,
   DIMINISHING_RETURNS_POWER,
 } from '../utils/calculations';
+import {
+  useEmailCopy,
+  processEmailPlaceholder,
+  createEmailLinkComponent,
+} from '../hooks/useEmailCopy.jsx';
+import { useShareUrl } from '../hooks/useShareUrl.js';
 import styles from '../styles/components/Results.module.css';
 import marketplaceStyles from '../styles/components/Marketplace.module.css';
 import copy from '../../config/copy.json';
+import features from '../../config/features.json';
 import causesConfig from '../../config/causes.json';
 
 const defaultDiminishingReturns = causesConfig.diminishingReturns || 'sqrt';
@@ -48,15 +58,38 @@ function MoralMarketplaceScreen() {
     worldviews,
     worldviewNames,
     worldviewIds,
-    hasProgressMap,
+    completedMap,
     goToStep,
     questionsConfig,
     marketplaceBudget,
     setMarketplaceBudget,
+    isAdvancedMode,
+    activeWorldviewId,
+    selectedCalculations,
   } = useQuiz();
 
   const [diminishingReturns, setDiminishingReturns] = useState(defaultDiminishingReturns);
   const [budgetInput, setBudgetInput] = useState(marketplaceBudget.toLocaleString());
+
+  const {
+    copied,
+    loading: shareLoading,
+    error: shareError,
+    handleShare: handleShareClick,
+  } = useShareUrl({
+    worldviews,
+    activeWorldviewId,
+    selectedCalculations,
+    worldviewNames,
+    marketplaceBudget,
+  });
+
+  // Email copy functionality for feedback card
+  const {
+    email: feedbackEmail,
+    copied: feedbackEmailCopied,
+    handleEmailClick: handleFeedbackEmailClick,
+  } = useEmailCopy(copy.results.feedbackEmail);
 
   const causeEntries = Object.entries(CAUSES);
 
@@ -85,19 +118,31 @@ function MoralMarketplaceScreen() {
 
   // Build worldviews with EVs for marketplace calculation
   const filledWorldviews = worldviewIds
-    .filter((id) => hasProgressMap[id])
+    .filter((id) => completedMap[id])
     .map((id) => {
       const worldview = worldviews[id];
       // Extract credences from worldview questions
-      const credences = {};
+      const questionStates = {};
       for (const [questionId, qState] of Object.entries(worldview.questions)) {
-        credences[questionId] = qState.credences;
+        questionStates[questionId] = qState;
       }
 
-      const evs = calculateWorldviewEVs(credences, {
-        causes: CAUSES,
-        dimensions: buildDimensionsFromQuestions(questionsConfig),
-      });
+      // Use advanced calculation if in advanced mode, otherwise standard
+      let evs;
+      if (isAdvancedMode) {
+        evs = calculateAdvancedWorldviewEVs(questionStates, questionsConfig, {
+          causes: CAUSES,
+        });
+      } else {
+        const credences = {};
+        for (const [questionId, qState] of Object.entries(worldview.questions)) {
+          credences[questionId] = qState.credences;
+        }
+        evs = calculateWorldviewEVs(credences, {
+          causes: CAUSES,
+          dimensions: buildDimensionsFromQuestions(questionsConfig),
+        });
+      }
 
       return {
         id,
@@ -113,7 +158,8 @@ function MoralMarketplaceScreen() {
     : null;
 
   const handleBack = () => {
-    goToStep('results');
+    // In advanced mode, go back to hub; otherwise go to results
+    goToStep(isAdvancedMode ? 'hub' : 'results');
   };
 
   return (
@@ -123,6 +169,9 @@ function MoralMarketplaceScreen() {
       <div className={styles.inner}>
         <div className={styles.resultsHeader}>
           <h1 className={styles.title}>{copy.marketplace.heading}</h1>
+          {features.ui?.feedbackCard && (
+            <p className={styles.prototypeDisclaimer}>{copy.results.prototypeDisclaimer}</p>
+          )}
           <p className={marketplaceStyles.description}>{copy.marketplace.description}</p>
         </div>
 
@@ -248,9 +297,33 @@ function MoralMarketplaceScreen() {
 
         <div className={styles.backButtonContainer}>
           <button onClick={handleBack} className="btn btn-secondary">
-            {copy.marketplace.backButton}
+            {isAdvancedMode ? copy.hub?.backButton || '← Back to Hub' : copy.marketplace.backButton}
           </button>
+          {features.ui?.shareResults && (
+            <ShareButton
+              loading={shareLoading}
+              copied={copied}
+              error={shareError}
+              onClick={handleShareClick}
+            />
+          )}
         </div>
+
+        {features.ui?.feedbackCard && (
+          <div className={styles.feedbackCard}>
+            <ReactMarkdown
+              components={{
+                a: createEmailLinkComponent(handleFeedbackEmailClick, styles.emailCopy),
+              }}
+            >
+              {processEmailPlaceholder(
+                copy.results.feedbackCard,
+                feedbackEmail,
+                feedbackEmailCopied
+              )}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
     </div>
   );

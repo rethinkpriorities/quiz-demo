@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   SKIP_CONFLICT: 'quiz_skip_conflict',
 };
 
-const STATE_VERSION = 6;
+const STATE_VERSION = 7;
 
 /**
  * Get or create a session ID for this browser tab.
@@ -34,7 +34,14 @@ export function getSessionId() {
  * Save quiz state to sessionStorage.
  */
 export function saveQuizState(state) {
-  const { currentStep, worldviews, activeWorldviewId, selectedCalculations } = state;
+  const {
+    currentStep,
+    worldviews,
+    activeWorldviewId,
+    selectedCalculations,
+    worldviewNames,
+    marketplaceBudget,
+  } = state;
 
   const worldviewData = {};
   for (const [worldviewId, worldview] of Object.entries(worldviews)) {
@@ -48,7 +55,10 @@ export function saveQuizState(state) {
         selectedPreset: qState.selectedPreset,
       };
     }
-    worldviewData[worldviewId] = { questions: questionData };
+    worldviewData[worldviewId] = {
+      questions: questionData,
+      completed: worldview.completed || false,
+    };
   }
 
   const payload = {
@@ -58,6 +68,8 @@ export function saveQuizState(state) {
       worldviews: worldviewData,
       activeWorldviewId,
       selectedCalculations,
+      worldviewNames,
+      marketplaceBudget,
     },
   };
 
