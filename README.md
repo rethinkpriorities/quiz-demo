@@ -161,26 +161,36 @@ quiz-demo/
 │   ├── App.jsx                     # Main app wrapper
 │   │
 │   ├── components/
-│   │   ├── MoralParliamentQuiz.jsx # Main quiz orchestrator
-│   │   ├── WelcomeScreen.jsx       # Landing page
-│   │   ├── QuestionScreen.jsx      # Reusable question template
-│   │   ├── IntermissionScreen.jsx  # Mid-quiz pause with partial results
-│   │   ├── ResultsScreen.jsx       # Results display
-│   │   ├── CalculationDebugger.jsx # Developer tool for testing calculations
+│   │   ├── MoralParliamentQuiz.jsx     # Main quiz orchestrator
+│   │   ├── DisclaimerScreen.jsx        # Initial disclaimer (optional)
+│   │   ├── WelcomeScreen.jsx           # Landing page
+│   │   ├── WorldviewHub.jsx            # Worldview management hub (advanced)
+│   │   ├── QuestionScreen.jsx          # Reusable question template
+│   │   ├── PresetQuestion.jsx          # Preset-style question layout
+│   │   ├── RatioQuestion.jsx           # Ratio-style question (advanced)
+│   │   ├── IntermissionScreen.jsx      # Mid-quiz pause with partial results
+│   │   ├── ResultsScreen.jsx           # Results display
+│   │   ├── MoralMarketplaceScreen.jsx  # Combined worldview analysis (advanced)
+│   │   ├── CalculationDebugger.jsx     # Developer tool for testing calculations
 │   │   │
-│   │   ├── ui/                     # Reusable UI components
-│   │   │   ├── OptionButton.jsx    # Quick selection button
-│   │   │   ├── CredenceSlider.jsx  # Full-size slider for questions
-│   │   │   ├── CompactSlider.jsx   # Compact slider for results
-│   │   │   ├── CompactSelection.jsx # Compact selection buttons for results
-│   │   │   ├── ModeToggle.jsx      # Options/Sliders mode switcher
-│   │   │   ├── CauseBar.jsx        # Horizontal bar chart
-│   │   │   ├── ResultCard.jsx      # Calculation result card with cause bars
-│   │   │   └── EditPanel.jsx       # Collapsible credence editor
+│   │   ├── ui/                         # Reusable UI components
+│   │   │   ├── OptionButton.jsx        # Quick selection button
+│   │   │   ├── CredenceSlider.jsx      # Full-size slider for questions
+│   │   │   ├── CompactSlider.jsx       # Compact slider for results
+│   │   │   ├── CompactSelection.jsx    # Compact selection buttons for results
+│   │   │   ├── ModeToggle.jsx          # Options/Sliders mode switcher
+│   │   │   ├── CauseBar.jsx            # Horizontal bar chart
+│   │   │   ├── ResultCard.jsx          # Calculation result card with cause bars
+│   │   │   ├── EditPanel.jsx           # Collapsible credence editor
+│   │   │   ├── InfoTooltip.jsx         # Info icons with markdown tooltips
+│   │   │   ├── ShareButton.jsx         # Share results button
+│   │   │   ├── SessionConflictModal.jsx # Session/share conflict resolution
+│   │   │   ├── WorldviewSlotModal.jsx  # Edit worldview modal (advanced)
+│   │   │   └── WorldviewSwitchModal.jsx # Switch worldview modal (advanced)
 │   │   │
-│   │   └── layout/                 # Layout components
-│   │       ├── Header.jsx          # Page header
-│   │       └── ProgressBar.jsx     # Progress indicator
+│   │   └── layout/                     # Layout components
+│   │       ├── Header.jsx              # Page header
+│   │       └── ProgressBar.jsx         # Progress indicator
 │   │
 │   ├── context/                    # React Context for state management
 │   │   ├── QuizContext.jsx         # Quiz state provider and hooks
@@ -229,6 +239,10 @@ quiz-demo/
 │
 ├── prototypes/                     # Committed prototype builds
 │   └── index.html                  # Prototype listing page
+├── docs/                           # Documentation
+│   ├── CLAUDE-ARCHIVE.md           # Detailed implementation notes for completed features
+│   ├── REFACTORING_NOTES.md        # Bug fixes and architectural decisions
+│   └── COMPONENT_BOUNDARIES.md     # Component responsibility documentation
 └── CLAUDE.md                       # Development guide and feature tracking
 ```
 
@@ -238,7 +252,7 @@ quiz-demo/
 
 ### Calculation Methods
 
-The quiz uses selection-type questions where users pick one option. With deterministic selections, calculations are optimized to O(1) for worldview generation.
+The quiz supports multiple question types: selection (pick one), credence (sliders), preset (predefined distributions), and default (toggle between pick one and sliders). With deterministic selections, calculations are optimized to O(1) for worldview generation.
 
 #### Diminishing Returns
 
@@ -364,14 +378,13 @@ npm test
 npm run test:run
 ```
 
-**Test coverage (71 tests across 7 files):**
+**Test coverage (72 tests across 7 files):**
 - `calculations.test.js` - Calculations, Monte Carlo sampling, appliesTo pattern (35 tests)
 - `ResultsScreen.test.jsx` - Reset button functionality (5 tests)
-- `CredenceSlider.test.jsx` - Slider lock feature (7 tests)
+- `CredenceSlider.test.jsx` - Slider lock feature (8 tests)
 - `QuestionScreen.test.jsx` - Question types mode toggle (6 tests)
 - `EditPanel.test.jsx` - Selection vs slider rendering (8 tests)
 - `QuizContext.intermission.test.jsx` - Intermission progress/feature flag (8 tests)
-- `session.test.js` - Session persistence (2 tests)
 
 ### Manual Testing Areas
 The dev server runs at `http://localhost:5173/` with hot module replacement (or `http://localhost:8888/` with `netlify dev` for full stack).
@@ -395,17 +408,21 @@ State is managed via React Context in `src/context/QuizContext.jsx`:
 
 ```js
 {
-  currentStep: 'welcome' | questionId | 'results',
+  currentStep: 'welcome' | 'disclaimer' | questionId | 'results' | 'marketplace',
   questions: {
     [questionId]: {
-      credences: { equal, '10x', '100x' },
+      credences: { optionKey: number, ... },
       originalCredences: null | {...},
       inputMode: 'options' | 'sliders',
-      lockedKey: null | 'equal' | '10x' | '100x'
+      lockedKey: null | optionKey
     }
   },
   expandedPanel: null | questionId,
-  debugConfig: null | {...}
+  debugConfig: null | {...},
+  // Multiple worldviews (when enabled)
+  worldviewIds: [...],
+  worldviewNames: {...},
+  currentWorldviewId: string
 }
 ```
 
@@ -425,7 +442,7 @@ Questions are defined in `config/questions.json`. To add a new question:
    ```json
    {
      "id": "newQuestion",
-     "type": "selection",           // "default", "selection", or "credence"
+     "type": "selection",           // "default", "selection", "credence", or "preset"
      "worldviewDimension": {
        // Pattern 1: Boolean flag - applies multiplier when cause has flag
        "appliesWhen": "causeFlag",
@@ -481,14 +498,16 @@ Questions are defined in `config/questions.json`. To add a new question:
 ### Planned Improvements
 
 - [x] Refine slider recalculation UX during drag operations (completed with ratio preservation and smooth animations)
-- [x] Add component tests with React Testing Library (46 tests across 6 test files)
+- [x] Add component tests with React Testing Library (72 tests across 7 test files)
 - [ ] Add TypeScript for type safety
 - [x] Add unit tests for calculation functions (diminishing returns)
 - [ ] Improve accessibility (ARIA labels, keyboard navigation)
 - [ ] Add error boundaries
-- [ ] Consider state management library if app grows
+- [x] Session persistence and share URLs
+- [x] Multiple question types (selection, credence, preset)
+- [x] Info tooltips with markdown support
 
-See **REFACTORING_NOTES.md** for details on bug fixes and architectural decisions.
+See **docs/REFACTORING_NOTES.md** for details on bug fixes and architectural decisions.
 
 ---
 

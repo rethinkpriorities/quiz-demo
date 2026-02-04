@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Standalone config validation script for CI
- * Validates causes.json and questions.json configs
+ * Validates all config JSON files
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
@@ -20,34 +20,146 @@ const { validateQuestionsConfig } = await import(
   join(projectRoot, 'src/utils/validateQuestions.js')
 );
 
-// Load config files
-const causesConfig = JSON.parse(readFileSync(join(projectRoot, 'config/causes.json'), 'utf-8'));
-const questionsConfig = JSON.parse(
-  readFileSync(join(projectRoot, 'config/questions.json'), 'utf-8')
-);
-
-// Run validations
 let hasErrors = false;
 
-try {
-  validateCausesConfig(causesConfig);
-  console.log('✓ causes.json validated successfully');
-} catch (error) {
-  console.error('✗ causes.json validation failed:');
-  console.error(error.message);
-  hasErrors = true;
+/**
+ * Safely load and parse a JSON file
+ */
+function loadJson(filename) {
+  const filepath = join(projectRoot, 'config', filename);
+  if (!existsSync(filepath)) {
+    console.error(`✗ ${filename} not found`);
+    hasErrors = true;
+    return null;
+  }
+  try {
+    return JSON.parse(readFileSync(filepath, 'utf-8'));
+  } catch (error) {
+    console.error(`✗ ${filename} is not valid JSON:`);
+    console.error(`  ${error.message}`);
+    hasErrors = true;
+    return null;
+  }
 }
 
-try {
-  validateQuestionsConfig(questionsConfig, causesConfig);
-  console.log('✓ questions.json validated successfully');
-} catch (error) {
-  console.error('✗ questions.json validation failed:');
-  console.error(error.message);
-  hasErrors = true;
+// Load all config files (validates JSON syntax)
+const causesConfig = loadJson('causes.json');
+const questionsConfig = loadJson('questions.json');
+const questionsAdvancedConfig = loadJson('questions-advanced.json');
+const featuresConfig = loadJson('features.json');
+const copyConfig = loadJson('copy.json');
+
+// Validate causes.json structure
+if (causesConfig) {
+  try {
+    validateCausesConfig(causesConfig);
+    console.log('✓ causes.json validated successfully');
+  } catch (error) {
+    console.error('✗ causes.json validation failed:');
+    console.error(`  ${error.message}`);
+    hasErrors = true;
+  }
+}
+
+// Validate questions.json structure
+if (questionsConfig && causesConfig) {
+  try {
+    validateQuestionsConfig(questionsConfig, causesConfig);
+    console.log('✓ questions.json validated successfully');
+  } catch (error) {
+    console.error('✗ questions.json validation failed:');
+    console.error(`  ${error.message}`);
+    hasErrors = true;
+  }
+}
+
+// Validate questions-advanced.json structure
+// Note: Advanced mode uses ratio questions with different schema, so we only
+// validate JSON syntax here. Full validation when advanced mode is enabled.
+if (questionsAdvancedConfig) {
+  // Basic structure check - must have questions array
+  if (!Array.isArray(questionsAdvancedConfig.questions)) {
+    console.error('✗ questions-advanced.json: missing "questions" array');
+    hasErrors = true;
+  } else {
+    console.log('✓ questions-advanced.json validated (JSON syntax + structure)');
+  }
+}
+
+// Validate features.json structure
+if (featuresConfig) {
+  const errors = [];
+
+  // Check expected top-level keys
+  const expectedKeys = ['ui', 'calculations', 'developer'];
+  for (const key of expectedKeys) {
+    if (featuresConfig[key] && typeof featuresConfig[key] !== 'object') {
+      errors.push(`"${key}" should be an object`);
+    }
+  }
+
+  // Check all values are booleans (nested check)
+  function checkBooleans(obj, path = '') {
+    for (const [key, value] of Object.entries(obj)) {
+      if (key.startsWith('_')) continue; // Skip comments
+      const fullPath = path ? `${path}.${key}` : key;
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        checkBooleans(value, fullPath);
+      } else if (typeof value !== 'boolean' && !Array.isArray(value)) {
+        // Allow arrays (like calculations.order) and booleans
+        if (key !== 'order') {
+          errors.push(`"${fullPath}" should be a boolean, got ${typeof value}`);
+        }
+      }
+    }
+  }
+  checkBooleans(featuresConfig);
+
+  if (errors.length > 0) {
+    console.error('✗ features.json validation failed:');
+    errors.forEach((e) => console.error(`  ${e}`));
+    hasErrors = true;
+  } else {
+    console.log('✓ features.json validated successfully');
+  }
+}
+
+// Validate copy.json structure
+if (copyConfig) {
+  const errors = [];
+
+  // Check expected top-level keys exist
+  const expectedKeys = ['welcome', 'navigation', 'results'];
+  for (const key of expectedKeys) {
+    if (!copyConfig[key]) {
+      errors.push(`Missing required section: "${key}"`);
+    }
+  }
+
+  // Check for empty strings (likely mistakes)
+  function checkEmptyStrings(obj, path = '') {
+    for (const [key, value] of Object.entries(obj)) {
+      const fullPath = path ? `${path}.${key}` : key;
+      if (typeof value === 'string' && value.trim() === '') {
+        errors.push(`Empty string at "${fullPath}"`);
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        checkEmptyStrings(value, fullPath);
+      }
+    }
+  }
+  checkEmptyStrings(copyConfig);
+
+  if (errors.length > 0) {
+    console.error('✗ copy.json validation failed:');
+    errors.forEach((e) => console.error(`  ${e}`));
+    hasErrors = true;
+  } else {
+    console.log('✓ copy.json validated successfully');
+  }
 }
 
 if (hasErrors) {
+  console.error('\nValidation failed!');
   process.exit(1);
 }
 
