@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import Header from './layout/Header';
 import WorldviewSlotModal from './ui/WorldviewSlotModal';
 import ShareButton from './ui/ShareButton.jsx';
@@ -10,7 +11,8 @@ import features from '../../config/features.json';
 
 /**
  * Worldview Hub screen for advanced mode.
- * Shows 3 worldview slots that can be filled by taking the quiz.
+ * Shows worldview slots that can be filled by taking the quiz.
+ * Allows adding more worldviews dynamically.
  * Provides access to Moral Marketplace when 2+ worldviews are filled.
  */
 function WorldviewHub() {
@@ -27,6 +29,8 @@ function WorldviewHub() {
     activeWorldviewId,
     selectedCalculations,
     marketplaceBudget,
+    canAddWorldview,
+    addWorldview,
   } = useQuiz();
 
   const [modalWorldviewId, setModalWorldviewId] = useState(null);
@@ -102,7 +106,7 @@ function WorldviewHub() {
           <h1 className={styles.heading}>{copy.hub?.heading || 'Your Worldviews'}</h1>
           <p className={styles.subtitle}>
             {copy.hub?.subtitle ||
-              'Define up to three different perspectives, then see how they combine in the Moral Marketplace.'}
+              'Define different perspectives, then see how they combine in the Moral Marketplace.'}
           </p>
 
           <div className={styles.slotsGrid}>
@@ -142,6 +146,26 @@ function WorldviewHub() {
                 </div>
               );
             })}
+
+            {/* Add worldview card - only show when more can be added */}
+            {canAddWorldview && (
+              <div
+                className={`${styles.slotCard} ${styles.slotCardAdd}`}
+                onClick={addWorldview}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    addWorldview();
+                  }
+                }}
+              >
+                <Plus size={32} className={styles.addIcon} />
+                <span className={styles.addLabel}>
+                  {copy.hub?.addWorldview || 'Add another worldview'}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className={styles.marketplaceSection}>

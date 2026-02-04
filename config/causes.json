@@ -63,6 +63,7 @@
       "helpsAnimals": false,
       "helpsInvertebrates": false,
       "timeframe": "long",
+      "isLongTerm": true,
       "isNonXRisk": false,
       "isDummyRisk": true
     },

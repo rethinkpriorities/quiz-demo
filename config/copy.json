@@ -87,7 +87,7 @@
     "tooltip": "These questions don't have obvious right answers, so we're asking for your credences—how much you believe in each possible answer. You can select multiple options and split your belief between them. If you're certain about one answer, give it 100%. If you're split, you might put 80% on one and 20% on another, or 50/50 if you're truly torn."
   },
   "marketplace": {
-    "heading": "Moral Marketplace",
+    "heading": "Recommended Allocations",
     "description": "Combined allocation based on your worldviews",
     "backButton": "← Back to Results",
     "worldviewBreakdownHeading": "Worldview Contributions",
@@ -105,14 +105,15 @@
     "description": "Each worldview stores a separate set of quiz answers. Select a worldview to view or edit.",
     "emptyLabel": "(empty)",
     "currentLabel": "(current)",
-    "marketplaceButton": "Moral Marketplace",
+    "marketplaceButton": "Recommended Allocations",
     "defaultName": "Worldview"
   },
   "hub": {
     "heading": "Your Worldviews",
-    "subtitle": "Define up to three different perspectives, then see how they combine in the Moral Marketplace.",
-    "marketplaceButton": "View Moral Marketplace",
+    "subtitle": "Define different perspectives, then see how they combine into Recommended Allocations.",
+    "marketplaceButton": "View Recommended Allocations",
     "marketplaceHint": "Complete at least 2 worldviews to unlock",
+    "addWorldview": "Add another worldview",
     "backButton": "← Back to Hub"
   }
 }

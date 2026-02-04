@@ -176,16 +176,24 @@ function createInitialQuestionsState() {
 }
 
 /**
- * Worldview IDs - fixed slots for storing quiz states.
+ * Maximum number of worldviews allowed (for testing; UI doesn't reveal limit).
  */
-const WORLDVIEW_IDS = ['1', '2', '3'];
+const MAX_WORLDVIEWS = 6;
 
 /**
- * Create initial worldviews structure with all slots.
+ * Initial worldview IDs - start with just 1 in advanced mode, 3 in basic mode.
+ */
+const INITIAL_WORLDVIEW_IDS = isAdvancedMode ? ['1'] : ['1', '2', '3'];
+
+/**
+ * Create initial worldviews structure.
  */
 function createInitialWorldviews() {
   return Object.fromEntries(
-    WORLDVIEW_IDS.map((id) => [id, { questions: createInitialQuestionsState(), completed: false }])
+    INITIAL_WORLDVIEW_IDS.map((id) => [
+      id,
+      { questions: createInitialQuestionsState(), completed: false },
+    ])
   );
 }
 
@@ -207,10 +215,10 @@ function worldviewHasProgress(worldview) {
 }
 
 /**
- * Create initial worldview names (e.g., "Worldview 1", "Worldview 2", "Worldview 3")
+ * Create initial worldview names (e.g., "Worldview 1")
  */
 function createInitialWorldviewNames() {
-  return Object.fromEntries(WORLDVIEW_IDS.map((id) => [id, `Worldview ${id}`]));
+  return Object.fromEntries(INITIAL_WORLDVIEW_IDS.map((id) => [id, `Worldview ${id}`]));
 }
 
 const DEFAULT_MARKETPLACE_BUDGET = 10_000_000;
@@ -252,6 +260,7 @@ const ACTIONS = {
   SET_JUST_COMPLETED_WORLDVIEW: 'SET_JUST_COMPLETED_WORLDVIEW',
   CLEAR_JUST_COMPLETED_WORLDVIEW: 'CLEAR_JUST_COMPLETED_WORLDVIEW',
   MARK_WORLDVIEW_COMPLETED: 'MARK_WORLDVIEW_COMPLETED',
+  ADD_WORLDVIEW: 'ADD_WORLDVIEW',
 };
 
 /**
@@ -345,14 +354,14 @@ function quizReducer(state, action) {
       };
 
     case ACTIONS.SWITCH_WORLDVIEW:
-      if (!WORLDVIEW_IDS.includes(action.payload)) {
+      if (!state.worldviews[action.payload]) {
         return state;
       }
       return { ...state, activeWorldviewId: action.payload };
 
     case ACTIONS.SET_WORLDVIEW_NAME: {
       const { worldviewId, name } = action.payload;
-      if (!WORLDVIEW_IDS.includes(worldviewId)) {
+      if (!state.worldviews[worldviewId]) {
         return state;
       }
       return {
@@ -369,7 +378,7 @@ function quizReducer(state, action) {
 
     case ACTIONS.MARK_WORLDVIEW_COMPLETED: {
       const worldviewId = action.payload;
-      if (!WORLDVIEW_IDS.includes(worldviewId)) {
+      if (!state.worldviews[worldviewId]) {
         return state;
       }
       return {
@@ -381,6 +390,35 @@ function quizReducer(state, action) {
             completed: true,
           },
         },
+      };
+    }
+
+    case ACTIONS.ADD_WORLDVIEW: {
+      const existingIds = Object.keys(state.worldviews);
+      if (existingIds.length >= MAX_WORLDVIEWS) {
+        return state;
+      }
+      // Check all existing worldviews are complete
+      const allComplete = existingIds.every((id) => state.worldviews[id]?.completed);
+      if (!allComplete) {
+        return state;
+      }
+      // Generate next ID (find max existing ID and add 1)
+      const maxId = Math.max(...existingIds.map((id) => parseInt(id, 10)));
+      const newId = String(maxId + 1);
+      return {
+        ...state,
+        worldviews: {
+          ...state.worldviews,
+          [newId]: { questions: createInitialQuestionsState(), completed: false },
+        },
+        worldviewNames: {
+          ...state.worldviewNames,
+          [newId]: `Worldview ${newId}`,
+        },
+        // Switch to new worldview and start quiz
+        activeWorldviewId: newId,
+        currentStep: questions[0].id,
       };
     }
 
@@ -426,19 +464,20 @@ function quizReducer(state, action) {
             completed: worldview.completed || false,
           };
         }
-        // Ensure all worldview slots exist
-        for (const id of WORLDVIEW_IDS) {
-          if (!restored[id]) {
-            restored[id] = { questions: createInitialQuestionsState(), completed: false };
-          }
+        // Ensure at least worldview '1' exists as fallback
+        if (!restored['1']) {
+          restored['1'] = { questions: createInitialQuestionsState(), completed: false };
         }
         return restored;
       };
 
-      // Helper to restore worldview names with defaults for missing IDs
-      const restoreWorldviewNames = (namesData) => {
+      // Helper to restore worldview names with defaults for any in the data
+      const restoreWorldviewNames = (namesData, worldviewsData) => {
         const restored = {};
-        for (const id of WORLDVIEW_IDS) {
+        const worldviewIds = Object.keys(worldviewsData || {});
+        // Ensure at least '1' is in the list
+        if (!worldviewIds.includes('1')) worldviewIds.push('1');
+        for (const id of worldviewIds) {
           restored[id] = namesData?.[id] || `Worldview ${id}`;
         }
         return restored;
@@ -452,7 +491,7 @@ function quizReducer(state, action) {
           ...state,
           currentStep: isUrlRestore ? urlRestoreStep : sessionStep,
           worldviews: restoreWorldviews(sourceWorldviews, isUrlRestore),
-          worldviewNames: restoreWorldviewNames(sourceWorldviewNames),
+          worldviewNames: restoreWorldviewNames(sourceWorldviewNames, sourceWorldviews),
           activeWorldviewId: sourceActiveId,
           selectedCalculations: sourceSelectedCalculations || state.selectedCalculations,
           marketplaceBudget: sourceMarketplaceBudget || DEFAULT_MARKETPLACE_BUDGET,
@@ -815,6 +854,10 @@ export function QuizProvider({ children }) {
     dispatch({ type: ACTIONS.MARK_WORLDVIEW_COMPLETED, payload: worldviewId });
   }, []);
 
+  const addWorldview = useCallback(() => {
+    dispatch({ type: ACTIONS.ADD_WORLDVIEW });
+  }, []);
+
   // Navigation helpers
   const getQuestionIndex = useCallback(
     (questionId) => questions.findIndex((q) => q.id === questionId),
@@ -933,19 +976,28 @@ export function QuizProvider({ children }) {
     );
   }, [activeQuestions]);
 
+  // Derive worldview IDs from state (sorted numerically)
+  const worldviewIds = useMemo(() => {
+    return Object.keys(state.worldviews).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  }, [state.worldviews]);
+
   // Map of worldview IDs to whether they have progress
   const hasProgressMap = useMemo(() => {
     return Object.fromEntries(
-      WORLDVIEW_IDS.map((id) => [id, worldviewHasProgress(state.worldviews[id])])
+      worldviewIds.map((id) => [id, worldviewHasProgress(state.worldviews[id])])
     );
-  }, [state.worldviews]);
+  }, [state.worldviews, worldviewIds]);
 
   // Map of worldview IDs to whether they've been completed (clicked through)
   const completedMap = useMemo(() => {
     return Object.fromEntries(
-      WORLDVIEW_IDS.map((id) => [id, state.worldviews[id]?.completed === true])
+      worldviewIds.map((id) => [id, state.worldviews[id]?.completed === true])
     );
-  }, [state.worldviews]);
+  }, [state.worldviews, worldviewIds]);
+
+  // Whether more worldviews can be added (only if all existing are complete and under limit)
+  const allWorldviewsComplete = worldviewIds.every((id) => completedMap[id]);
+  const canAddWorldview = worldviewIds.length < MAX_WORLDVIEWS && allWorldviewsComplete;
 
   // Derived values
   const currentQuestionIndex = useMemo(() => {
@@ -1032,7 +1084,11 @@ export function QuizProvider({ children }) {
       questionsConfig: questionsWithColors,
       causesConfig: CAUSES,
       defaultCredences,
-      worldviewIds: WORLDVIEW_IDS,
+
+      // Worldview management
+      worldviewIds,
+      canAddWorldview,
+      addWorldview,
 
       // Actions
       goToStep,
@@ -1123,6 +1179,9 @@ export function QuizProvider({ children }) {
       calculationResults,
       originalCalculationResults,
       stateMap,
+      worldviewIds,
+      canAddWorldview,
+      addWorldview,
     ]
   );
 

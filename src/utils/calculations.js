@@ -1002,13 +1002,16 @@ export function calculateAdvancedWorldviewEVs(questionStates, questionsConfig, c
         const ratioValue = state.credences?.value ?? question.ratioConfig.defaultValue ?? 0.5;
         const multiplier = ratioToMultiplier(ratioValue, question.ratioConfig);
 
-        // For ratio questions, we need to invert the multiplier for most cases
-        // because higher slider values typically mean "less weight" on something
         // The multiplier is applied if the dimension matches the cause
         if (shouldApplyDimension(cause, dimension)) {
-          // For ratio questions, the multiplier IS the raw value
-          // The config's min/max determine the semantic meaning
-          ev *= 1 / multiplier; // Invert because higher multiplier = less valuable
+          if (dimension.directMultiplier) {
+            // directMultiplier: use the multiplier as-is (for questions like disability
+            // where the ratioConfig directly specifies the desired multiplier range)
+            ev *= multiplier;
+          } else {
+            // Default: invert because higher slider values typically mean "less weight"
+            ev *= 1 / multiplier;
+          }
         }
       } else if (state.credences) {
         // Credence question: use expected multiplier calculation

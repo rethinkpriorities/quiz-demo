@@ -27,7 +27,7 @@ function RatioQuestion() {
 
   // Get ratio value from credences (stored as { value: 0-1 })
   const ratioValue = credences?.value ?? currentQuestion.ratioConfig?.defaultValue ?? 0.5;
-  const { scale, min, max, minLabel, maxLabel } = currentQuestion.ratioConfig || {};
+  const { minLabel, maxLabel } = currentQuestion.ratioConfig || {};
 
   const handleSliderChange = (e) => {
     const newValue = parseFloat(e.target.value);
@@ -35,8 +35,17 @@ function RatioQuestion() {
   };
 
   // Calculate display value for the current ratio
-  const displayValue = ratioToDisplayValue(ratioValue, currentQuestion.ratioConfig);
-  const displayFormatted = formatDisplayValue(displayValue, scale, min, max);
+  // Use displayConfig if provided (for user-friendly display), otherwise fall back to ratioConfig
+  const displayConfig = currentQuestion.displayConfig || currentQuestion.ratioConfig;
+  const displayValue = ratioToDisplayValue(ratioValue, displayConfig);
+  const displayFormatted = formatDisplayValue(
+    displayValue,
+    displayConfig.scale,
+    displayConfig.min,
+    displayConfig.max,
+    displayConfig.format,
+    displayConfig.suffix
+  );
 
   // Calculate slider progress for track fill
   const sliderProgress = ratioValue * 100;
@@ -102,33 +111,44 @@ function RatioQuestion() {
 }
 
 /**
- * Format the display value based on scale type and range.
+ * Format the display value based on scale type, range, and optional format string.
+ * @param {number} value - The calculated display value
+ * @param {string} scale - 'linear' or 'logarithmic'
+ * @param {number} min - Minimum value of the range
+ * @param {number} max - Maximum value of the range
+ * @param {string} format - Optional format: 'multiplier', 'percentage', or custom suffix
+ * @param {string} suffix - Optional suffix to append (e.g., " less than humans")
  */
-function formatDisplayValue(value, scale, min, max) {
-  if (scale === 'logarithmic') {
-    // For logarithmic scales, show as multiplier
+function formatDisplayValue(value, scale, min, max, format, suffix = '') {
+  // Handle custom format strings
+  if (format === 'percentage') {
+    return `${(value * 100).toFixed(0)}%${suffix}`;
+  }
+
+  if (format === 'multiplier' || scale === 'logarithmic') {
+    // For logarithmic scales or explicit multiplier format, show as "Nx"
+    let formatted;
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}k x`;
+      formatted = `${(value / 1000).toFixed(1)}k×`;
+    } else if (value >= 100) {
+      formatted = `${Math.round(value)}×`;
+    } else if (value >= 10) {
+      formatted = `${value.toFixed(1)}×`;
+    } else if (value >= 1) {
+      formatted = `${value.toFixed(1)}×`;
+    } else {
+      formatted = `${value.toFixed(2)}×`;
     }
-    if (value >= 100) {
-      return `${Math.round(value)}x`;
-    }
-    if (value >= 10) {
-      return `${value.toFixed(1)}x`;
-    }
-    if (value >= 1) {
-      return `${value.toFixed(2)}x`;
-    }
-    return `${value.toFixed(3)}x`;
+    return `${formatted}${suffix}`;
   }
 
-  // For linear scales (0-1), show as percentage or ratio
+  // For linear scales (0-1), show as percentage
   if (min === 0 && max === 1) {
-    return `${(value * 100).toFixed(0)}%`;
+    return `${(value * 100).toFixed(0)}%${suffix}`;
   }
 
-  // Default: show raw value
-  return value.toFixed(2);
+  // Default: show raw value with 2 decimal places
+  return `${value.toFixed(2)}${suffix}`;
 }
 
 export default RatioQuestion;

@@ -12,8 +12,9 @@
         "defaultValue": 0.5
       },
       "worldviewDimension": {
-        "appliesTo": "timeframe",
-        "applyAs": "multiplier"
+        "appliesWhen": "isLongTerm",
+        "applyAs": "multiplier",
+        "directMultiplier": true
       },
       "categoryLabel": "Time Preferences",
       "icon": "clock",
@@ -91,7 +92,8 @@
       },
       "worldviewDimension": {
         "appliesWhen": "isNonXRisk",
-        "applyAs": "multiplier"
+        "applyAs": "multiplier",
+        "directMultiplier": true
       },
       "categoryLabel": "Existential Risk",
       "icon": "alert-triangle",
@@ -105,15 +107,23 @@
       "type": "ratio",
       "ratioConfig": {
         "scale": "logarithmic",
-        "min": 1,
-        "max": 1000,
+        "min": 0.0172,
+        "max": 0.0000172,
         "minLabel": "Equal to humans",
         "maxLabel": "1000x less than humans",
         "defaultValue": 0.5
       },
+      "displayConfig": {
+        "scale": "logarithmic",
+        "min": 1,
+        "max": 1000,
+        "format": "multiplier",
+        "suffix": " less"
+      },
       "worldviewDimension": {
         "appliesWhen": "helpsAnimals",
-        "applyAs": "multiplier"
+        "applyAs": "multiplier",
+        "directMultiplier": true
       },
       "categoryLabel": "Animal Welfare",
       "icon": "paw",
@@ -127,15 +137,23 @@
       "type": "ratio",
       "ratioConfig": {
         "scale": "logarithmic",
-        "min": 1,
-        "max": 10000,
+        "min": 0.0172,
+        "max": 0.00000172,
         "minLabel": "Equal to humans",
         "maxLabel": "10,000x less than humans",
         "defaultValue": 0.5
       },
+      "displayConfig": {
+        "scale": "logarithmic",
+        "min": 1,
+        "max": 10000,
+        "format": "multiplier",
+        "suffix": " less"
+      },
       "worldviewDimension": {
         "appliesWhen": "helpsInvertebrates",
-        "applyAs": "multiplier"
+        "applyAs": "multiplier",
+        "directMultiplier": true
       },
       "categoryLabel": "Invertebrate Welfare",
       "icon": "shell",
@@ -148,16 +166,23 @@
       "id": "disability",
       "type": "ratio",
       "ratioConfig": {
-        "scale": "logarithmic",
-        "min": 0.2,
-        "max": 5,
+        "scale": "linear",
+        "min": 0.086,
+        "max": 0,
         "minLabel": "5x weight on disability relief",
         "maxLabel": "5x weight on saving lives",
         "defaultValue": 0.5
       },
+      "displayConfig": {
+        "scale": "logarithmic",
+        "min": 0.2,
+        "max": 5,
+        "format": "multiplier"
+      },
       "worldviewDimension": {
         "appliesWhen": "preventsDisability",
-        "applyAs": "multiplier"
+        "applyAs": "multiplier",
+        "directMultiplier": true
       },
       "categoryLabel": "Disability Weights",
       "icon": "heart-pulse",
@@ -170,16 +195,23 @@
       "id": "income",
       "type": "ratio",
       "ratioConfig": {
-        "scale": "logarithmic",
-        "min": 0.1,
-        "max": 10,
-        "minLabel": "10x weight on income doubling",
-        "maxLabel": "10x weight on saving lives",
+        "scale": "linear",
+        "min": 0.0172,
+        "max": 0,
+        "minLabel": "Equal weight on income doubling",
+        "maxLabel": "Only saving lives matters",
         "defaultValue": 0.5
+      },
+      "displayConfig": {
+        "scale": "logarithmic",
+        "min": 1,
+        "max": 100,
+        "format": "multiplier"
       },
       "worldviewDimension": {
         "appliesWhen": "increasesIncome",
-        "applyAs": "multiplier"
+        "applyAs": "multiplier",
+        "directMultiplier": true
       },
       "categoryLabel": "Income Weights",
       "icon": "banknote",

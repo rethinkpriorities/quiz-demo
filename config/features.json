@@ -9,7 +9,7 @@
     "resetButton": false,
     "sliderLock": true,
     "questionTypes": true,
-    "shareResults": true,
+    "shareResults": false,
     "multipleWorldviews": false,
     "moralMarketplace": false,
     "questionInfo": true,
