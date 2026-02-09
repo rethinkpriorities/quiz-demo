@@ -740,7 +740,12 @@ export function QuizProvider({ children }) {
   // Persistence effect: save state to sessionStorage on changes (debounced)
   useEffect(() => {
     // Don't save during hydration or if on disclaimer/welcome screens
-    if (isHydrating || state.currentStep === 'welcome' || state.currentStep === 'disclaimer')
+    // (Marcus Mode bypasses navigation, so always save when it's enabled)
+    const isMarcusMode = features.ui?.marcusMode === true;
+    if (
+      isHydrating ||
+      (!isMarcusMode && (state.currentStep === 'welcome' || state.currentStep === 'disclaimer'))
+    )
       return;
 
     // Clear any pending save

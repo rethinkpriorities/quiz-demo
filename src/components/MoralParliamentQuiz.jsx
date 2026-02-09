@@ -6,6 +6,7 @@ import RatioQuestion from './RatioQuestion';
 import IntermissionScreen from './IntermissionScreen';
 import ResultsScreen from './ResultsScreen';
 import MoralMarketplaceScreen from './MoralMarketplaceScreen';
+import MarcusModeScreen from './MarcusModeScreen';
 import CalculationDebugger from './CalculationDebugger';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
@@ -35,6 +36,11 @@ function MoralParliamentQuiz() {
   // Show nothing while hydrating to avoid flash of welcome screen
   if (isHydrating) {
     return null;
+  }
+
+  // Marcus Mode: dense single-page layout bypassing all navigation
+  if (features.ui?.marcusMode === true) {
+    return <MarcusModeScreen />;
   }
 
   // Determine which screen to render

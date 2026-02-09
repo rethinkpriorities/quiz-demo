@@ -5,7 +5,8 @@
   "advanced": false,
 
   "ui": {
-    "disclaimerPage": true,
+    "marcusMode": true,
+    "disclaimerPage": false,
     "resetButton": false,
     "sliderLock": true,
     "questionTypes": true,
@@ -15,7 +16,7 @@
     "questionInfo": true,
     "answerInfo": true,
     "calculationSelect": true,
-    "feedbackCard": true
+    "feedbackCard": false
   },
 
   "calculations": {
