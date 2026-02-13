@@ -203,6 +203,8 @@ export function* generateWorldviews(credences) {
  * @param {number} numSamples - Number of samples to generate (default: 2000)
  * @yields {{ options: Object, probability: number }}
  */
+// TODO: Candidate for replacement with precomputation approach (like Moral
+// Marketplace's typed-array enumeration which precomputes all 25,600 worldviews).
 export function* generateWorldviewsSampled(credences, numSamples = 2000) {
   const dimensionIds = Object.keys(credences);
   if (dimensionIds.length === 0) return;
@@ -304,6 +306,8 @@ export function* generateDeterministicWorldview(credences) {
  * @param {number} numSamples - Number of samples if sampling (default: 2000)
  * @yields {{ options: Object, probability: number }}
  */
+// TODO: The sampling fallback path here could be replaced with full enumeration
+// using typed arrays, similar to moralMarketplace.js's precomputation approach.
 export function* generateWorldviewsSmart(credences, threshold = 500, numSamples = 2000) {
   // Fast path: selection-type questions with one option at 100%
   if (isDeterministicCredences(credences)) {

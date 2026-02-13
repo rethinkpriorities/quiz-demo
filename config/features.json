@@ -20,7 +20,8 @@
   },
 
   "calculations": {
-    "order": ["mergedFavorites", "maxEV", "parliament", "maximin"],
+    "order": ["moralMarketplace", "mergedFavorites", "maxEV", "parliament", "maximin"],
+    "showMoralMarketplace": true,
     "showMergedFavorites": true,
     "showMaxEV": true,
     "showParliament": false,

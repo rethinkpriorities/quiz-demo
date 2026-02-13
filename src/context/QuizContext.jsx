@@ -34,6 +34,8 @@ import {
   calculateMergedFavorites,
   calculateMaximin,
 } from '../utils/calculations';
+import { calculateMoralMarketplace as calculateMM } from '../utils/moralMarketplace';
+import { getEnabledMethods } from '../constants/calculationMethods';
 
 // Load questions based on advanced mode flag
 const isAdvancedMode = features.advanced === true;
@@ -221,7 +223,7 @@ function createInitialWorldviewNames() {
   return Object.fromEntries(INITIAL_WORLDVIEW_IDS.map((id) => [id, `Worldview ${id}`]));
 }
 
-const DEFAULT_MARKETPLACE_BUDGET = 10_000_000;
+const DEFAULT_MARKETPLACE_BUDGET = 900_000_000;
 
 // Determine initial step based on feature flags
 const getInitialStep = () => {
@@ -562,7 +564,6 @@ export function QuizProvider({ children }) {
   const [sessionId] = useState(() => getOrCreateSessionId());
   const saveTimeoutRef = useRef(null);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- intentional mount-only initialization */
   // Hydration effect: check for share URL and/or session storage on mount
   useEffect(() => {
     if (!features.ui?.shareResults) {
@@ -651,7 +652,6 @@ export function QuizProvider({ children }) {
 
     hydrate();
   }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Listen for hash changes (e.g., user pastes URL while already on page)
   useEffect(() => {
@@ -951,27 +951,86 @@ export function QuizProvider({ children }) {
     [activeQuestions]
   );
 
-  // Helper to calculate all results from a set of credences
-  const computeAllResults = useCallback((credences, debugConfig) => {
-    if (!credences) return null;
-    return {
-      maxEV: calculateMaxEV(credences, debugConfig),
-      parliament: calculateVarianceVoting(credences, debugConfig),
-      mergedFavorites: calculateMergedFavorites(credences, debugConfig),
-      maximin: calculateMaximin(credences, debugConfig),
-    };
+  // Calculate a single method by key
+  const computeMethod = useCallback((key, credences, debugConfig, marketplaceBudget) => {
+    switch (key) {
+      case 'moralMarketplace':
+        return calculateMM(credences, { budget: marketplaceBudget });
+      case 'maxEV':
+        return calculateMaxEV(credences, debugConfig);
+      case 'parliament':
+        return calculateVarianceVoting(credences, debugConfig);
+      case 'mergedFavorites':
+        return calculateMergedFavorites(credences, debugConfig);
+      case 'maximin':
+        return calculateMaximin(credences, debugConfig);
+      default:
+        return null;
+    }
   }, []);
 
-  // Calculation results (memoized)
-  const calculationResults = useMemo(
-    () => computeAllResults(extractCredences('current'), state.debugConfig),
-    [extractCredences, computeAllResults, state.debugConfig]
-  );
+  // Determine which methods actually need computing
+  const neededMethods = useMemo(() => {
+    const enabledMethods = getEnabledMethods();
+    const enabledKeys = enabledMethods.map((m) => m.key);
 
-  const originalCalculationResults = useMemo(
-    () => computeAllResults(extractCredences('original'), state.debugConfig),
-    [extractCredences, computeAllResults, state.debugConfig]
-  );
+    if (features.ui?.calculationSelect) {
+      // Only compute the selected method(s)
+      const needed = new Set();
+      if (state.selectedCalculations.left) needed.add(state.selectedCalculations.left);
+      if (state.selectedCalculations.right) needed.add(state.selectedCalculations.right);
+      // If nothing selected yet, default to first enabled
+      if (needed.size === 0 && enabledKeys.length > 0) needed.add(enabledKeys[0]);
+      // Only include methods that are actually enabled
+      return [...needed].filter((k) => enabledKeys.includes(k));
+    }
+
+    // Grid mode: compute all enabled methods
+    return enabledKeys;
+  }, [state.selectedCalculations]);
+
+  // Memoize extracted credences separately so original doesn't recompute on slider moves
+  const currentCredences = useMemo(() => extractCredences('current'), [extractCredences]);
+
+  const originalCredences = useMemo(() => {
+    const creds = extractCredences('original');
+    if (!creds) return null;
+    // Stabilize reference: only change when the actual original values change
+    return creds;
+  }, [
+    // Depend on original credences directly, not on activeQuestions (which changes on slider moves)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(extractCredences('original')),
+  ]);
+
+  // Compute only needed results (memoized)
+  const calculationResults = useMemo(() => {
+    if (!currentCredences) return null;
+    const results = {};
+    for (const key of neededMethods) {
+      results[key] = computeMethod(
+        key,
+        currentCredences,
+        state.debugConfig,
+        state.marketplaceBudget
+      );
+    }
+    return results;
+  }, [currentCredences, neededMethods, computeMethod, state.debugConfig, state.marketplaceBudget]);
+
+  const originalCalculationResults = useMemo(() => {
+    if (!originalCredences) return null;
+    const results = {};
+    for (const key of neededMethods) {
+      results[key] = computeMethod(
+        key,
+        originalCredences,
+        state.debugConfig,
+        state.marketplaceBudget
+      );
+    }
+    return results;
+  }, [originalCredences, neededMethods, computeMethod, state.debugConfig, state.marketplaceBudget]);
 
   // Check if any credences have changed from originals
   const hasChanged = useMemo(() => {

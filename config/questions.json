@@ -49,7 +49,8 @@
           "description": "I only care about effects in the short-term",
           "info": "",
           "panelLabel": "Short",
-          "panelShort": "ST"
+          "panelShort": "ST",
+          "marketplaceValue": [1,1,0,0,0,0]
         },
         {
           "key": "discountDistant",
@@ -57,7 +58,8 @@
           "description": "I do not care about the distant future. I care a bit about the medium-term, but I put more priority on the short-term",
           "info": "",
           "panelLabel": "Discount",
-          "panelShort": ">>"
+          "panelShort": ">>",
+          "marketplaceValue": [1,1,0.2,0.2,0,0]
         },
         {
           "key": "prioritizeNearer",
@@ -65,7 +67,8 @@
           "description": "I care a bit about the long-term future, but I put more priority on the medium-term and even more priority on the short-term",
           "info": "",
           "panelLabel": "Nearer",
-          "panelShort": ">"
+          "panelShort": ">",
+          "marketplaceValue": [1,1,0.5,0.5,0.2,0.2]
         },
         {
           "key": "equalAll",
@@ -73,7 +76,8 @@
           "description": "I only care about how much good I could possibly do, and I don't care whether that good happens in the short-term, medium-term, or long-term",
           "info": "",
           "panelLabel": "Equal",
-          "panelShort": "="
+          "panelShort": "=",
+          "marketplaceValue": [1,1,1,1,1,1]
         }
       ]
     },
@@ -106,7 +110,8 @@
           "description": "I prefer to invest in options that have the highest expected value, even if they have low success rates or risk of negative outcomes",
           "info": "",
           "panelLabel": "Neutral",
-          "panelShort": "EV"
+          "panelShort": "EV",
+          "marketplaceValue": 0
         },
         {
           "key": "upsideSkepticism",
@@ -114,7 +119,8 @@
           "description": "I am skeptical of projects' most optimistic scenarios and decide where to give based on scenarios that are more likely to occur",
           "info": "",
           "panelLabel": "Skeptical",
-          "panelShort": "S"
+          "panelShort": "S",
+          "marketplaceValue": 1
         },
         {
           "key": "lossAversion",
@@ -122,7 +128,8 @@
           "description": "I want to avoid losses and am motivated to avoid projects that have significant chances of failure or backfire (even if those projects have high expected value)",
           "info": "",
           "panelLabel": "Loss averse",
-          "panelShort": "LA"
+          "panelShort": "LA",
+          "marketplaceValue": 2
         },
         {
           "key": "both",
@@ -130,7 +137,8 @@
           "description": "I am both skeptical of projects' most optimistic scenarios and motivated to avoid losses",
           "info": "",
           "panelLabel": "Both",
-          "panelShort": "B"
+          "panelShort": "B",
+          "marketplaceValue": 3
         }
       ]
     },
@@ -163,7 +171,8 @@
           "description": "I want to evaluate near-term existential risk projects the same way that I evaluate all other projects (e.g. by calculating their expected effects over the timeline I care about)",
           "info": "",
           "panelLabel": "Same",
-          "panelShort": "="
+          "panelShort": "=",
+          "marketplaceValue": 0.0
         },
         {
           "key": "discount10",
@@ -171,7 +180,8 @@
           "description": "I think there is about a 10% probability that an existential risk occurs in the next decade that renders other projects useless. Therefore, I want to discount the value of these other projects somewhat",
           "info": "",
           "panelLabel": "10% risk",
-          "panelShort": "10%"
+          "panelShort": "10%",
+          "marketplaceValue": 0.1
         },
         {
           "key": "discount50",
@@ -179,7 +189,8 @@
           "description": "I think there is about a 50% probability that an existential risk occurs in the next decade that renders other projects useless. Therefore, I want to greatly discount the value of these other projects",
           "info": "",
           "panelLabel": "50% risk",
-          "panelShort": "50%"
+          "panelShort": "50%",
+          "marketplaceValue": 0.5
         },
         {
           "key": "xriskOnly",
@@ -187,7 +198,8 @@
           "description": "I only care about reducing near-term existential risk",
           "info": "",
           "panelLabel": "X-risk only",
-          "panelShort": "X"
+          "panelShort": "X",
+          "marketplaceValue": 1.0
         }
       ]
     },
@@ -241,7 +253,8 @@
           "description": "I treat a year of disability in an animal the same as a year of disability in a human",
           "info": "",
           "panelLabel": "Equal",
-          "panelShort": "="
+          "panelShort": "=",
+          "marketplaceValue": 1
         },
         {
           "key": "human10x",
@@ -249,7 +262,8 @@
           "description": "I value a human year of disability about 10x as much as a year of disability in an animal",
           "info": "",
           "panelLabel": "10x less",
-          "panelShort": "10x"
+          "panelShort": "10x",
+          "marketplaceValue": 0.1
         },
         {
           "key": "human100x",
@@ -257,7 +271,8 @@
           "description": "I value a human year of disability about 100x as much as a year of disability in an animal",
           "info": "",
           "panelLabel": "100x less",
-          "panelShort": "100x"
+          "panelShort": "100x",
+          "marketplaceValue": 0.01
         },
         {
           "key": "human1000x",
@@ -265,7 +280,8 @@
           "description": "I value a human year of disability about 1000x as much as a year of disability in an animal",
           "info": "",
           "panelLabel": "1000x less",
-          "panelShort": "1kx"
+          "panelShort": "1kx",
+          "marketplaceValue": 0.001
         },
         {
           "key": "noValue",
@@ -273,7 +289,8 @@
           "description": "I do not value animal welfare",
           "info": "",
           "panelLabel": "None",
-          "panelShort": "0"
+          "panelShort": "0",
+          "marketplaceValue": 0
         }
       ]
     },
@@ -327,7 +344,8 @@
           "description": "I treat a year of disability in shrimp the same as a year of disability in a human",
           "info": "",
           "panelLabel": "Equal",
-          "panelShort": "="
+          "panelShort": "=",
+          "marketplaceValue": 1
         },
         {
           "key": "human100x",
@@ -335,7 +353,8 @@
           "description": "I value a human year of disability about 100x as much as a year of disability in a shrimp",
           "info": "",
           "panelLabel": "100x less",
-          "panelShort": "100x"
+          "panelShort": "100x",
+          "marketplaceValue": 0.01
         },
         {
           "key": "human1000x",
@@ -343,7 +362,8 @@
           "description": "I value a human year of disability about 1000x as much as a year of disability in a shrimp",
           "info": "",
           "panelLabel": "1000x less",
-          "panelShort": "1kx"
+          "panelShort": "1kx",
+          "marketplaceValue": 0.001
         },
         {
           "key": "human10000x",
@@ -351,7 +371,8 @@
           "description": "I value a human year of disability about 10,000x as much as a year of disability in a shrimp",
           "info": "",
           "panelLabel": "10kx less",
-          "panelShort": "10kx"
+          "panelShort": "10kx",
+          "marketplaceValue": 0.0001
         },
         {
           "key": "noValue",
@@ -359,7 +380,8 @@
           "description": "I do not value shrimp welfare",
           "info": "",
           "panelLabel": "None",
-          "panelShort": "0"
+          "panelShort": "0",
+          "marketplaceValue": 0
         }
       ]
     },
@@ -412,7 +434,8 @@
           "description": "I only care about saving years of life due to death",
           "info": "",
           "panelLabel": "Lives only",
-          "panelShort": "0"
+          "panelShort": "0",
+          "marketplaceValue": 0
         },
         {
           "key": "livesMore",
@@ -420,7 +443,8 @@
           "description": "I put 5x as much value on saving a year of life lost to death than a year of life lost to disability",
           "info": "I'd need to prevent 1000 years of blindness to equal saving 50 years of life.",
           "panelLabel": "5x lives",
-          "panelShort": "5xL"
+          "panelShort": "5xL",
+          "marketplaceValue": 0.003
         },
         {
           "key": "equal",
@@ -428,7 +452,8 @@
           "description": "I value a year of life lost equally, whether it is due to death or disability",
           "info": "I'd need to prevent 200 years of blindness to equal saving 50 years of life. For comparison, this is the weight given to disability by GiveWell.",
           "panelLabel": "Equal",
-          "panelShort": "="
+          "panelShort": "=",
+          "marketplaceValue": 0.0172
         },
         {
           "key": "disabilityMore",
@@ -436,7 +461,8 @@
           "description": "I put 5x as much value on saving a year of life lost to disability than a year of life lost to death",
           "info": "I'd need to prevent 40 years of blindness to equal saving 50 years of life.",
           "panelLabel": "5x disability",
-          "panelShort": "5xD"
+          "panelShort": "5xD",
+          "marketplaceValue": 0.086
         }
       ]
     },
@@ -489,7 +515,8 @@
           "description": "I only care about adding years of life",
           "info": "",
           "panelLabel": "Lives only",
-          "panelShort": "0"
+          "panelShort": "0",
+          "marketplaceValue": 0
         },
         {
           "key": "lives10x",
@@ -497,7 +524,8 @@
           "description": "I put 10x as much value on a year of life compared to a year of doubled income",
           "info": "I would need to double yearly income for 500 people to equal saving 50 years of life.",
           "panelLabel": "10x lives",
-          "panelShort": "10x"
+          "panelShort": "10x",
+          "marketplaceValue": 0.0017
         },
         {
           "key": "lives2x",
@@ -505,7 +533,8 @@
           "description": "I put 2x as much value on a year of life compared to a year of doubled income",
           "info": "I would need to double yearly income for 100 people to equal saving 50 years of life. This is comparable to (but slightly higher than) the weight that GiveWell assigns to a year of income doubling compared to saving a year of life.",
           "panelLabel": "2x lives",
-          "panelShort": "2x"
+          "panelShort": "2x",
+          "marketplaceValue": 0.0086
         },
         {
           "key": "equal",
@@ -513,7 +542,8 @@
           "description": "I put the same value on a year of life compared to a year of doubled income",
           "info": "I would need to double yearly income for 50 people to equal saving 50 years of life.",
           "panelLabel": "Equal",
-          "panelShort": "="
+          "panelShort": "=",
+          "marketplaceValue": 0.0172
         }
       ]
     }
