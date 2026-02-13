@@ -43,6 +43,13 @@
     "shareCopied": "Link copied!",
     "calculationSelectTooltip": "There are different ways to advise allocations based on your inputs. The next version of the tool will let you compare different methods and explain clearly what is happening behind the scenes for each of these options. The current calculations are placeholders.",
     "methods": {
+      "moralMarketplace": {
+        "icon": "shopping-cart",
+        "title": "Moral Marketplace",
+        "subtitle": "25,600 worldview parliament",
+        "footerLabel": null,
+        "footerText": "Budget allocation across all worldview combinations"
+      },
       "maxEV": {
         "icon": "target",
         "title": "Max Expected Value",

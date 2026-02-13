@@ -11,6 +11,7 @@ import features from '../../config/features.json';
  * - hasEvs: whether this method provides per-cause expected values
  */
 export const CALCULATION_METHODS = [
+  { flag: 'showMoralMarketplace', key: 'moralMarketplace', hasEvs: false },
   { flag: 'showMaxEV', key: 'maxEV', hasEvs: true },
   { flag: 'showParliament', key: 'parliament', hasEvs: false },
   { flag: 'showMergedFavorites', key: 'mergedFavorites', hasEvs: false },

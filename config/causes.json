@@ -1,34 +1,21 @@
 {
   "diminishingReturns": "extreme",
   "causes": {
-    "globalHealthDisease": {
-      "name": "Global Health Disease Relief Fund",
+    "malaria_nets": {
+      "name": "Malaria Prevention",
       "color": "#5eb3d4",
       "points": 100,
       "scaleFactor": 1,
       "preventsDisability": true,
-      "increasesIncome": false,
+      "increasesIncome": true,
       "helpsAnimals": false,
       "helpsInvertebrates": false,
       "timeframe": "short",
       "isNonXRisk": true,
       "isDummyRisk": true
     },
-    "givewellPortfolio": {
-      "name": "GiveWell-Style Global Health Portfolio",
-      "color": "#d4a25e",
-      "points": 100,
-      "scaleFactor": 1,
-      "preventsDisability": true,
-      "increasesIncome": false,
-      "helpsAnimals": false,
-      "helpsInvertebrates": false,
-      "timeframe": "short",
-      "isNonXRisk": true,
-      "isDummyRisk": true
-    },
-    "animalWelfare": {
-      "name": "EA Animal Welfare-Style Fund",
+    "cage_free_campaigns": {
+      "name": "Cage-Free Campaigns",
       "color": "#ff6b9d",
       "points": 100,
       "scaleFactor": 100,
@@ -40,8 +27,8 @@
       "isNonXRisk": true,
       "isDummyRisk": true
     },
-    "invertebrateWelfare": {
-      "name": "Invertebrate Welfare Fund",
+    "shrimp_welfare": {
+      "name": "Shrimp Welfare",
       "color": "#e76f51",
       "points": 100,
       "scaleFactor": 1000,
@@ -53,30 +40,43 @@
       "isNonXRisk": true,
       "isDummyRisk": true
     },
-    "aiSafety": {
-      "name": "AI Safety Research Fund",
+    "wild_animal_welfare": {
+      "name": "Wild Animal Welfare",
+      "color": "#27ae60",
+      "points": 100,
+      "scaleFactor": 1,
+      "preventsDisability": false,
+      "increasesIncome": false,
+      "helpsAnimals": true,
+      "helpsInvertebrates": false,
+      "timeframe": "medium",
+      "isNonXRisk": true,
+      "isDummyRisk": true
+    },
+    "fish_welfare": {
+      "name": "Fish Welfare",
+      "color": "#d4a25e",
+      "points": 100,
+      "scaleFactor": 1,
+      "preventsDisability": false,
+      "increasesIncome": false,
+      "helpsAnimals": true,
+      "helpsInvertebrates": false,
+      "timeframe": "short",
+      "isNonXRisk": true,
+      "isDummyRisk": true
+    },
+    "ai_safety_policy": {
+      "name": "AI Safety & Policy",
       "color": "#9b5de5",
-      "points": 1,
-      "scaleFactor": 0.9,
+      "points": 100,
+      "scaleFactor": 1,
       "preventsDisability": false,
       "increasesIncome": false,
       "helpsAnimals": false,
       "helpsInvertebrates": false,
       "timeframe": "long",
       "isLongTerm": true,
-      "isNonXRisk": false,
-      "isDummyRisk": true
-    },
-    "bioriskPandemic": {
-      "name": "Biorisk and Pandemic Prevention Fund",
-      "color": "#27ae60",
-      "points": 1,
-      "scaleFactor": 0.8,
-      "preventsDisability": false,
-      "increasesIncome": false,
-      "helpsAnimals": false,
-      "helpsInvertebrates": false,
-      "timeframe": "short",
       "isNonXRisk": false,
       "isDummyRisk": true
     }
