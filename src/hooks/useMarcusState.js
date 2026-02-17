@@ -5,7 +5,7 @@ import marcusConfig from '../../config/marcusMode.json';
 import worldviewPresets from '../../config/worldviewPresets.json';
 
 const STORAGE_KEY = 'marcus_state';
-const STATE_VERSION = 4;
+const STATE_VERSION = 5;
 
 function createWorldview(presetId) {
   if (presetId) {
@@ -43,9 +43,10 @@ function loadSavedState() {
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     if (parsed.version !== STATE_VERSION) return null;
-    const { worldviews, credences, lockedKeys, selectedMethod, totalBudget } = parsed.state;
+    const { worldviews, credences, lockedKeys, selectedMethod, totalBudget, methodOptions } =
+      parsed.state;
     if (!Array.isArray(worldviews) || !worldviews.length) return null;
-    return { worldviews, credences, lockedKeys, selectedMethod, totalBudget };
+    return { worldviews, credences, lockedKeys, selectedMethod, totalBudget, methodOptions };
   } catch {
     return null;
   }
@@ -82,35 +83,46 @@ export function useMarcusState() {
   const [totalBudget, setTotalBudget] = useState(
     () => _savedState?.totalBudget ?? marcusConfig.totalBudget
   );
+  const [methodOptions, setMethodOptions] = useState(() => _savedState?.methodOptions ?? {});
 
-  // Debounce worldviews + credences + budget together for calculation
-  const [debouncedState, setDebouncedState] = useState({ worldviews, credences, totalBudget });
+  // Debounce worldviews + credences + budget + methodOptions together for calculation
+  const [debouncedState, setDebouncedState] = useState({
+    worldviews,
+    credences,
+    totalBudget,
+    methodOptions,
+  });
   const debounceRef = useRef(null);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setDebouncedState({ worldviews, credences, totalBudget });
+      setDebouncedState({ worldviews, credences, totalBudget, methodOptions });
     }, 150);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [worldviews, credences, totalBudget]);
+  }, [worldviews, credences, totalBudget, methodOptions]);
 
   // Persist to sessionStorage on changes (300ms debounce)
   const saveRef = useRef(null);
   useEffect(() => {
     if (saveRef.current) clearTimeout(saveRef.current);
     saveRef.current = setTimeout(() => {
-      saveState({ worldviews, credences, lockedKeys, selectedMethod, totalBudget });
+      saveState({ worldviews, credences, lockedKeys, selectedMethod, totalBudget, methodOptions });
     }, 300);
     return () => {
       if (saveRef.current) clearTimeout(saveRef.current);
     };
-  }, [worldviews, credences, lockedKeys, selectedMethod, totalBudget]);
+  }, [worldviews, credences, lockedKeys, selectedMethod, totalBudget, methodOptions]);
 
   const results = useMemo(() => {
-    const { worldviews: wvs, credences: creds, totalBudget: budget } = debouncedState;
+    const {
+      worldviews: wvs,
+      credences: creds,
+      totalBudget: budget,
+      methodOptions: opts,
+    } = debouncedState;
     if (!wvs.length) {
       const empty = {};
       for (const id of Object.keys(marcusConfig.projects)) empty[id] = 0;
@@ -129,7 +141,8 @@ export function useMarcusState() {
         worldviewsWithCredences,
         selectedMethod,
         budget,
-        marcusConfig.incrementSize
+        marcusConfig.incrementSize,
+        opts[selectedMethod]
       );
       console.log('[marcus] recalc', selectedMethod, {
         credences: Object.fromEntries(
@@ -239,5 +252,7 @@ export function useMarcusState() {
     applyPreset,
     setSelectedMethod,
     setTotalBudget,
+    methodOptions,
+    setMethodOptions,
   };
 }

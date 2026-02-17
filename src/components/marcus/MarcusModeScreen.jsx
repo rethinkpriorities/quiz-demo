@@ -20,6 +20,8 @@ function MarcusModeScreen() {
     setSelectedMethod,
     totalBudget,
     setTotalBudget,
+    methodOptions,
+    setMethodOptions,
   } = useMarcusState();
 
   return (
@@ -45,6 +47,8 @@ function MarcusModeScreen() {
             onMethodChange={setSelectedMethod}
             totalBudget={totalBudget}
             onBudgetChange={setTotalBudget}
+            methodOptions={methodOptions}
+            onMethodOptionsChange={setMethodOptions}
             results={results}
           />
         </div>
