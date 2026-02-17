@@ -83,7 +83,8 @@
 /* Worldview column */
 .worldviewColumn {
   flex-shrink: 0;
-  min-width: 120px;
+  min-width: 80px;
+  max-width: 120px;
   border-right: 1px solid var(--border-subtle);
 }
 
@@ -452,6 +453,43 @@
   height: 100%;
   border-radius: 3px;
   transition: width 0.3s ease;
+}
+
+/* === OPTION SLIDER === */
+
+.optionSliderRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.optionSlider {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.optionSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+  border: none;
+}
+
+.optionSliderValue {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  min-width: 28px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* === METHOD DISCLAIMER === */

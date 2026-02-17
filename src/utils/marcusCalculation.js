@@ -1110,7 +1110,8 @@ export function computeMarcusAllocation(
   worldviews,
   methodKey,
   totalBudget,
-  incrementSize
+  incrementSize,
+  extraOptions = {}
 ) {
   // Strip display-only fields (name, color) from project data
   const cleanData = {};
@@ -1127,6 +1128,7 @@ export function computeMarcusAllocation(
   const { funding } = allocateBudget(cleanData, votingMethod, totalBudget, {
     incrementSize,
     customWorldviews: worldviews,
+    ...extraOptions,
   });
 
   const total = Object.values(funding).reduce((s, v) => s + v, 0);
