@@ -6,7 +6,7 @@ import RatioQuestion from './RatioQuestion';
 import IntermissionScreen from './IntermissionScreen';
 import ResultsScreen from './ResultsScreen';
 import MoralMarketplaceScreen from './MoralMarketplaceScreen';
-import MarcusModeScreen from './MarcusModeScreen';
+import MarcusModeScreen from './marcus/MarcusModeScreen';
 import CalculationDebugger from './CalculationDebugger';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';

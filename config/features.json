@@ -5,7 +5,7 @@
   "advanced": false,
 
   "ui": {
-    "marcusMode": false,
+    "marcusMode": true,
     "disclaimerPage": true,
     "resetButton": false,
     "sliderLock": true,
