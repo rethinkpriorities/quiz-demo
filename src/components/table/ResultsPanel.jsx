@@ -1,7 +1,8 @@
 import AllocationBar from './AllocationBar';
 import StageCard from './StageCard';
-import marcusConfig from '../../../config/marcusMode.json';
-import styles from '../../styles/components/MarcusModeV2.module.css';
+import tableConfig from '../../../config/tableMode.json';
+import projectsConfig from '../../../config/projects.json';
+import styles from '../../styles/components/TableMode.module.css';
 
 const MAX_TOTAL_BUDGET = 1000;
 
@@ -14,13 +15,13 @@ function ResultsPanel({
   onRemoveStage,
   results,
 }) {
-  const projectEntries = Object.entries(marcusConfig.projects);
+  const projectEntries = Object.entries(projectsConfig.projects);
   const totalBudget = stages.reduce((sum, s) => sum + s.budget, 0);
   const canAddStage = totalBudget < MAX_TOTAL_BUDGET;
 
   // Check if any active method ignores credences
   const ignoresCredences = stages.some((stage) => {
-    const methodConfig = marcusConfig.votingMethods.find((m) => m.key === stage.method);
+    const methodConfig = tableConfig.votingMethods.find((m) => m.key === stage.method);
     if (methodConfig?.ignoresCredences) return true;
     if (methodConfig?.options) {
       for (const [optKey, optDef] of Object.entries(methodConfig.options)) {

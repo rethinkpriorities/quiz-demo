@@ -5,14 +5,12 @@
   "advanced": false,
 
   "ui": {
-    "marcusMode": false,
+    "tableMode": false,
     "disclaimerPage": true,
     "resetButton": false,
     "sliderLock": true,
     "questionTypes": true,
     "shareResults": true,
-    "multipleWorldviews": false,
-    "moralMarketplace": false,
     "questionInfo": true,
     "answerInfo": true,
     "calculationSelect": true,
@@ -20,16 +18,10 @@
   },
 
   "calculations": {
-    "order": ["moralMarketplace", "mergedFavorites", "maxEV", "parliament", "maximin"],
-    "showMoralMarketplace": true,
-    "showMergedFavorites": true,
-    "showMaxEV": true,
-    "showParliament": false,
-    "showMaximin": false,
+    "order": ["credenceWeighted", "mec", "borda"],
+    "showCredenceWeighted": true,
+    "showMec": true,
+    "showBorda": true,
     "sideBySideComparison": true
-  },
-
-  "developer": {
-    "calculationDebugger": false
   }
 }

@@ -1,0 +1,172 @@
+{
+  "totalBudget": 800,
+  "moralWeightKeys": [
+    { "key": "human_life_years", "label": "Human Life-Years" },
+    { "key": "human_ylds", "label": "Human YLDs" },
+    { "key": "human_income_doublings", "label": "Human Income Doublings" },
+    { "key": "chickens_birds", "label": "Chickens/Birds" },
+    { "key": "fish", "label": "Fish" },
+    { "key": "shrimp", "label": "Shrimp" },
+    { "key": "non_shrimp_invertebrates", "label": "Non-Shrimp Invertebrates" },
+    { "key": "mammals", "label": "Mammals" }
+  ],
+  "discountFactorLabels": ["0-5 years", "5-10 years", "10-20 years", "20-100 years", "100-500 years", "500+ years"],
+  "riskProfileOptions": [
+    { "value": 0, "label": "Neutral" },
+    { "value": 1, "label": "Upside" },
+    { "value": 2, "label": "Downside" },
+    { "value": 3, "label": "Combined" }
+  ],
+  "votingMethods": [
+    { "key": "credenceWeighted", "name": "Credence-Weighted" },
+    { "key": "myFavoriteTheory", "name": "My Favorite Theory" },
+    { "key": "mec", "name": "MEC" },
+    {
+      "key": "met",
+      "name": "MET",
+      "options": {
+        "metThreshold": {
+          "label": "Credence Threshold",
+          "type": "slider",
+          "default": 0.5,
+          "min": 0,
+          "max": 1,
+          "step": 0.05
+        }
+      }
+    },
+    {
+      "key": "nashBargaining",
+      "name": "Nash Bargaining",
+      "options": {
+        "disagreementPoint": {
+          "label": "Disagreement Point",
+          "type": "select",
+          "default": "zero_spending",
+          "choices": [
+            { "value": "zero_spending", "label": "Zero Spending", "ignoresCredences": true },
+            { "value": "anti_utopia", "label": "Anti-Utopia", "ignoresCredences": true },
+            { "value": "random_dictator", "label": "Random Dictator" },
+            { "value": "budget_by_credence", "label": "Budget by Credence" },
+            { "value": "exclusionary_proportional_split", "label": "Exclusionary Proportional Split" }
+          ]
+        }
+      }
+    },
+    {
+      "key": "msa",
+      "name": "MSA",
+      "options": {
+        "cardinalPermissibilityMode": {
+          "label": "Permissibility Mode",
+          "type": "select",
+          "default": "winner_take_all",
+          "choices": [
+            { "value": "winner_take_all", "label": "Winner Take All" },
+            { "value": "top_k", "label": "Top K" },
+            { "value": "within_percent", "label": "Within Percent" }
+          ]
+        },
+        "cardinalTopK": {
+          "label": "Top K Projects",
+          "type": "number",
+          "default": 2,
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "showWhen": { "cardinalPermissibilityMode": "top_k" }
+        },
+        "cardinalWithinPercent": {
+          "label": "Within Percent",
+          "type": "number",
+          "default": 0.1,
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "showWhen": { "cardinalPermissibilityMode": "within_percent" }
+        },
+        "binaryPermissibilityThreshold": {
+          "label": "Binary Threshold",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "max": 1,
+          "step": 0.05
+        }
+      }
+    },
+    { "key": "borda", "name": "Borda Count" },
+    { "key": "splitCycle", "name": "Split-Cycle" },
+    { "key": "lexicographicMaximin", "name": "Lexicographic Maximin" }
+  ],
+  "presets": [
+    {
+      "id": "total_utilitarian",
+      "name": "Total Utilitarian",
+      "moral_weights": {
+        "human_life_years": 1,
+        "human_ylds": 1,
+        "human_income_doublings": 0.3,
+        "chickens_birds": 0.4,
+        "fish": 0.24,
+        "shrimp": 0.08,
+        "non_shrimp_invertebrates": 0.07,
+        "mammals": 0.44
+      },
+      "discount_factors": [1, 0.9, 0.8, 0.6, 0.4, 0.01],
+      "risk_profile": 0,
+      "p_extinction": 0
+    },
+    {
+      "id": "kantianism",
+      "name": "Kantianism",
+      "moral_weights": {
+        "human_life_years": 1,
+        "human_ylds": 0.5,
+        "human_income_doublings": 0.5,
+        "chickens_birds": 0.05,
+        "fish": 0.01,
+        "shrimp": 0.001,
+        "non_shrimp_invertebrates": 0.001,
+        "mammals": 0.05
+      },
+      "discount_factors": [1, 1, 0.5, 0.1, 0.001, 0.00001],
+      "risk_profile": 3,
+      "p_extinction": 0
+    },
+    {
+      "id": "non_util_consequentialism",
+      "name": "Consequentialism (Non-Utilitarian)",
+      "moral_weights": {
+        "human_life_years": 1,
+        "human_ylds": 1,
+        "human_income_doublings": 1,
+        "chickens_birds": 0.1,
+        "fish": 0.06,
+        "shrimp": 0.02,
+        "non_shrimp_invertebrates": 0.02,
+        "mammals": 0.11
+      },
+      "discount_factors": [1, 0.9, 0.8, 0.6, 0.4, 0.01],
+      "risk_profile": 0,
+      "p_extinction": 0
+    },
+    {
+      "id": "contractualism",
+      "name": "Contractualism",
+      "moral_weights": {
+        "human_life_years": 1,
+        "human_ylds": 0.01,
+        "human_income_doublings": 0.001,
+        "chickens_birds": 0.004,
+        "fish": 0.002,
+        "shrimp": 0.0016,
+        "non_shrimp_invertebrates": 0.0014,
+        "mammals": 0.0044
+      },
+      "discount_factors": [1, 1, 0.5, 0.1, 0.001, 0.00001],
+      "risk_profile": 3,
+      "p_extinction": 0
+    }
+  ]
+}

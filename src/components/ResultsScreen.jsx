@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Share2, Check, Loader2, Layers } from 'lucide-react';
+import { RotateCcw, Share2, Check, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
 import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import QuestionIcon from './ui/QuestionIcon';
-import WorldviewSwitchModal from './ui/WorldviewSwitchModal';
 import InfoTooltip from './ui/InfoTooltip';
 import { useQuiz } from '../context/useQuiz';
 import { QUESTION_TYPES } from '../constants/config';
@@ -18,12 +17,17 @@ import {
   createEmailLinkComponent,
 } from '../hooks/useEmailCopy.jsx';
 import styles from '../styles/components/Results.module.css';
-import marketplaceStyles from '../styles/components/Marketplace.module.css';
 import features from '../../config/features.json';
 import copy from '../../config/copy.json';
+import projectsConfig from '../../config/projects.json';
 
-const isMultipleWorldviewsEnabled = features.ui?.multipleWorldviews === true;
 const isCalculationSelectEnabled = features.ui?.calculationSelect === true;
+
+// Build causeEntries from projects.json for ResultCard display
+const causeEntries = Object.entries(projectsConfig.projects).map(([key, project]) => [
+  key,
+  { name: project.name, color: project.color },
+]);
 
 /**
  * Results screen showing allocation methods.
@@ -32,7 +36,6 @@ const isCalculationSelectEnabled = features.ui?.calculationSelect === true;
 function ResultsScreen() {
   const {
     questionsConfig,
-    causesConfig,
     stateMap,
     expandedPanel,
     setExpandedPanel,
@@ -42,29 +45,21 @@ function ResultsScreen() {
     resetToOriginal,
     resetQuiz,
     goBack,
-    goToStep,
     worldviews,
     worldviewNames,
     activeWorldviewId,
-    switchWorldview,
-    worldviewIds,
-    hasProgressMap,
-    startQuiz,
     selectedCalculations,
     setSelectedCalculations,
-    setWorldviewName,
     marketplaceBudget,
     setMarketplaceBudget,
   } = useQuiz();
 
-  const DEFAULT_BUDGET = 10_000_000;
-  const budget = marketplaceBudget ?? DEFAULT_BUDGET;
-  const [budgetInput, setBudgetInput] = useState(budget.toLocaleString());
+  const budget = marketplaceBudget ?? 897;
+  const [budgetInput, setBudgetInput] = useState(String(budget));
 
   const [copied, setCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareError, setShareError] = useState(null);
-  const [showWorldviewModal, setShowWorldviewModal] = useState(false);
 
   // Email copy functionality for feedback card
   const {
@@ -73,7 +68,6 @@ function ResultsScreen() {
     handleEmailClick: handleFeedbackEmailClick,
   } = useEmailCopy(copy.results.feedbackEmail);
 
-  const causeEntries = Object.entries(causesConfig);
   const enabledMethods = getEnabledMethods();
 
   // Initialize selected calculations to first enabled method if not set or invalid
@@ -104,18 +98,18 @@ function ResultsScreen() {
     setSelectedCalculations({ [side]: methodKey });
   };
 
-  // Budget input handlers
   const handleBudgetChange = (e) => {
-    setBudgetInput(e.target.value);
+    const val = Number(e.target.value);
+    if (!isNaN(val) && val >= 0) {
+      const clamped = Math.min(val, 1000);
+      setBudgetInput(String(clamped));
+      if (clamped > 0) setMarketplaceBudget(clamped);
+    }
   };
 
   const handleBudgetBlur = () => {
-    const parsed = parseInt(budgetInput.replace(/[^0-9]/g, ''), 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      setMarketplaceBudget(parsed);
-      setBudgetInput(parsed.toLocaleString());
-    } else {
-      setBudgetInput(budget.toLocaleString());
+    if (!budgetInput || Number(budgetInput) <= 0) {
+      setBudgetInput(String(budget));
     }
   };
 
@@ -129,20 +123,6 @@ function ResultsScreen() {
     if (window.confirm(copy.results.resetConfirmation)) {
       resetQuiz();
     }
-  };
-
-  const handleWorldviewSwitch = (id) => {
-    setShowWorldviewModal(false);
-    switchWorldview(id);
-    // If the target worldview has no progress, start the quiz
-    if (!hasProgressMap[id]) {
-      startQuiz();
-    }
-  };
-
-  const handleMarketplace = () => {
-    setShowWorldviewModal(false);
-    goToStep('marketplace');
   };
 
   const handleShareClick = async () => {
@@ -183,7 +163,6 @@ function ResultsScreen() {
     const shareOptions = {
       selectedCalculations: isCalculationSelectEnabled ? selectedCalculations : null,
       worldviewNames,
-      marketplaceBudget,
     };
     const urlPromise = generateShareUrl(worldviewsForShare, activeWorldviewId, shareOptions).then(
       ({ url }) => url
@@ -269,7 +248,6 @@ function ResultsScreen() {
         evs={method.hasEvs ? results.evs : null}
         causeEntries={causeEntries}
         simpleMode={simpleMode}
-        budget={budget}
       />
     );
   };
@@ -287,7 +265,6 @@ function ResultsScreen() {
             evs={method.hasEvs ? results.evs : null}
             causeEntries={causeEntries}
             simpleMode={true}
-            budget={budget}
           />
         );
       })}
@@ -308,7 +285,6 @@ function ResultsScreen() {
             originalResults={originalCalculationResults?.[method.key]}
             causeEntries={causeEntries}
             hasChanged={hasChanged}
-            budget={budget}
           />
         );
       })}
@@ -323,12 +299,6 @@ function ResultsScreen() {
         <div className={styles.resultsHeader}>
           <h1 className={styles.title}>
             {copy.results.heading}
-            {isMultipleWorldviewsEnabled && (
-              <span className={styles.worldviewLabel}>
-                {' '}
-                ({worldviewNames?.[activeWorldviewId] || `Worldview ${activeWorldviewId}`})
-              </span>
-            )}
             {hasChanged && (
               <span className={styles.modifiedIndicator}>{copy.results.modifiedIndicator}</span>
             )}
@@ -339,19 +309,22 @@ function ResultsScreen() {
         </div>
 
         <div className={styles.budgetRow}>
-          <label className={marketplaceStyles.settingsLabel}>
+          <label className={styles.budgetLabel}>
             {copy.results.budgetLabel}
             {copy.results.budgetInfo && <InfoTooltip content={copy.results.budgetInfo} />}
-            <div className={marketplaceStyles.budgetInputWrapper}>
-              <span className={marketplaceStyles.currencyPrefix}>$</span>
+            <div className={styles.budgetInputWrapper}>
+              <span className={styles.currencyPrefix}>$</span>
               <input
-                type="text"
+                type="number"
                 value={budgetInput}
+                min="1"
+                max="1000"
                 onChange={handleBudgetChange}
                 onBlur={handleBudgetBlur}
                 onKeyDown={handleBudgetKeyDown}
-                className={marketplaceStyles.budgetInput}
+                className={styles.budgetInput}
               />
+              <span className={styles.budgetUnit}>K</span>
             </div>
           </label>
         </div>
@@ -446,12 +419,6 @@ function ResultsScreen() {
           <button onClick={goBack} className="btn btn-secondary">
             {copy.navigation.backToQuiz}
           </button>
-          {isMultipleWorldviewsEnabled && (
-            <button onClick={() => setShowWorldviewModal(true)} className="btn btn-secondary">
-              <Layers size={16} />
-              Switch Worldview
-            </button>
-          )}
           {features.ui?.shareResults && (
             <button
               onClick={handleShareClick}
@@ -488,19 +455,6 @@ function ResultsScreen() {
           </div>
         )}
       </div>
-
-      {showWorldviewModal && (
-        <WorldviewSwitchModal
-          worldviewIds={worldviewIds}
-          activeWorldviewId={activeWorldviewId}
-          hasProgressMap={hasProgressMap}
-          worldviewNames={worldviewNames}
-          onSwitch={handleWorldviewSwitch}
-          onClose={() => setShowWorldviewModal(false)}
-          onMarketplace={handleMarketplace}
-          onRename={setWorldviewName}
-        />
-      )}
     </div>
   );
 }

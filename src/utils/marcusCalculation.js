@@ -5,7 +5,16 @@
  * All math/algorithm code is identical to the original.
  * Removed: DEFAULT_PROJECT_DATA, EXAMPLE_CUSTOM_WORLDVIEWS, showAllocation, require.main block.
  * Added: computeMarcusAllocation facade function.
+ *
+ * Core scoring functions (calculateAllProjects, adjustForExtinctionRisk,
+ * getDiminishingReturnsFactor) are imported from the shared projectScoring.js module.
  */
+
+import {
+  calculateAllProjects,
+  adjustForExtinctionRisk,
+  getDiminishingReturnsFactor,
+} from './projectScoring.js';
 
 // =============================================================================
 // HELPERS
@@ -57,6 +66,15 @@ function createRng(seed) {
     },
     choice(arr) {
       return arr[Math.floor(this.next() * arr.length)];
+    },
+    weightedChoice(indices, weights) {
+      const total = weights.reduce((s, w) => s + w, 0);
+      let r = this.next() * total;
+      for (let i = 0; i < indices.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return indices[i];
+      }
+      return indices[indices.length - 1];
     },
   };
 }
@@ -310,51 +328,7 @@ function mecAggregateCardinalTheories(interventions, cardinalTheories, credenceD
   return { best: bestIntervention, scores: interventionScores };
 }
 
-// =============================================================================
-// CALCULATOR FUNCTIONS
-// =============================================================================
-
-function calculateSingleEffect(effectData, moralWeight, discountFactors, riskProfile) {
-  const column = getColumn(effectData.values, riskProfile);
-  return moralWeight * dotProduct(column, discountFactors);
-}
-
-function calculateProject(projectData, moralWeights, discountFactors, riskProfile) {
-  let total = 0;
-  const breakdown = {};
-  for (const [effectId, effectData] of Object.entries(projectData.effects)) {
-    const mi = moralWeights[effectData.recipient_type] || 0;
-    const value = calculateSingleEffect(effectData, mi, discountFactors, riskProfile);
-    breakdown[effectId] = value;
-    total += value;
-  }
-  return { total, breakdown };
-}
-
-function calculateAllProjects(data, moralWeights, discountFactors, riskProfile) {
-  const results = {};
-  for (const [projectId, projectData] of Object.entries(data)) {
-    results[projectId] = calculateProject(
-      projectData,
-      moralWeights,
-      discountFactors,
-      riskProfile
-    ).total;
-  }
-  return results;
-}
-
-function adjustForExtinctionRisk(projectValues, data, pExtinction) {
-  const adjusted = {};
-  for (const [projectId, value] of Object.entries(projectValues)) {
-    if (data[projectId].tags.near_term_xrisk) {
-      adjusted[projectId] = value;
-    } else {
-      adjusted[projectId] = value * (1 - pExtinction);
-    }
-  }
-  return adjusted;
-}
+// Calculator functions imported from projectScoring.js
 
 // =============================================================================
 // VOTING METHODS
@@ -363,6 +337,7 @@ function adjustForExtinctionRisk(projectValues, data, pExtinction) {
 const AGGREGATION_DEFAULTS = {
   met_threshold: 0.5,
   nash_disagreement_point: 'zero_spending',
+  default_random_seed: 0,
   msa_permissibility_mode: 'winner_take_all',
   msa_top_k: 2,
   msa_within_percent: 0.1,
@@ -372,23 +347,7 @@ const AGGREGATION_DEFAULTS = {
 
 const MSA_DEFAULT_BINARY_WORLDVIEWS = new Set(['Kantianism', 'Rawlsian Contractarianism']);
 
-function getDiminishingReturnsFactor(data, projectId, currentFunding) {
-  const stepSize = 10.0;
-  const steps = currentFunding / stepSize;
-  const nearestStep = Math.round(steps);
-  let idx;
-  if (isClose(steps, nearestStep)) {
-    idx = nearestStep;
-  } else {
-    idx = Math.floor(steps);
-  }
-  idx = Math.max(idx, 0);
-  const drArray = data[projectId].diminishing_returns;
-  if (idx >= drArray.length) {
-    return drArray[drArray.length - 1];
-  }
-  return drArray[idx];
-}
+// getDiminishingReturnsFactor imported from projectScoring.js
 
 function _buildRng(tieBreak, randomSeed) {
   if (tieBreak === 'random') {
@@ -611,7 +570,8 @@ function _nashDisagreementUtilities(
   credences,
   disagreementPoint,
   tieBreak = 'deterministic',
-  rng = null
+  rng = null,
+  randomSeed = null
 ) {
   const nWorldviews = worldviewScores.length;
   const projects = nWorldviews > 0 ? Object.keys(worldviewScores[0]) : [];
@@ -626,6 +586,17 @@ function _nashDisagreementUtilities(
   }
 
   if (disagreementPoint === 'random_dictator') {
+    const totalCredence = arraySum(credences);
+    if (totalCredence <= 0) return new Array(nWorldviews).fill(0.0);
+    const seed = randomSeed ?? AGGREGATION_DEFAULTS.default_random_seed;
+    const samplingRng = createRng(seed);
+    const indices = Array.from({ length: nWorldviews }, (_, i) => i);
+    const dictatorIdx = samplingRng.weightedChoice(indices, credences);
+    const dictatorProject = bestProjects[dictatorIdx];
+    return worldviewScores.map((scores) => scores[dictatorProject]);
+  }
+
+  if (disagreementPoint === 'budget_by_credence') {
     const utilities = [];
     for (let i = 0; i < nWorldviews; i++) {
       let baseline = 0;
@@ -658,7 +629,7 @@ function _nashDisagreementUtilities(
 
   throw new Error(
     'Unknown disagreement_point. Use one of: ' +
-      'zero_spending, anti_utopia, random_dictator, exclusionary_proportional_split.'
+      'zero_spending, anti_utopia, random_dictator, budget_by_credence, exclusionary_proportional_split.'
   );
 }
 
@@ -686,7 +657,8 @@ function voteNashBargaining(
     credences,
     disagreementPoint,
     tieBreak,
-    rng
+    rng,
+    randomSeed
   );
 
   const feasibleScores = {};
@@ -1104,7 +1076,7 @@ const METHOD_MAP = {
 /**
  * Compute allocation for a given voting method.
  *
- * @param {Object} projectData - Project definitions (from marcusMode.json, without name/color)
+ * @param {Object} projectData - Project definitions (from projects.json, without name/color)
  * @param {Array} worldviews - Array of worldview objects
  * @param {string} methodKey - Key from votingMethods config
  * @param {number} totalBudget - Total budget in $M
@@ -1153,7 +1125,7 @@ export function computeMarcusAllocation(
  * Compute allocation across multiple sequential stages.
  * Each stage picks up where the previous left off (diminishing returns compound).
  *
- * @param {Object} projectData - Project definitions (from marcusMode.json)
+ * @param {Object} projectData - Project definitions (from projects.json)
  * @param {Array} worldviews - Array of worldview objects with credences
  * @param {Array} stages - Array of { method, budget, options }
  * @param {number} incrementSize - Step size in $M
@@ -1180,7 +1152,9 @@ export function computeMultiStageAllocation(projectData, worldviews, stages, inc
       throw new Error(`Unknown voting method: ${stage.method}`);
     }
 
-    const { funding } = allocateBudget(cleanData, votingMethod, stage.budget, {
+    // Hard ceiling: never run with more than $1B ($1000M) regardless of input
+    const stageBudget = Math.min(stage.budget, 1000);
+    const { funding } = allocateBudget(cleanData, votingMethod, stageBudget, {
       incrementSize,
       initialFunding: cumulativeFunding,
       customWorldviews: worldviews,

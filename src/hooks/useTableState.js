@@ -1,15 +1,16 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { computeMultiStageAllocation } from '../utils/marcusCalculation';
 import { adjustCredences, roundCredences } from '../utils/calculations';
-import marcusConfig from '../../config/marcusMode.json';
+import tableConfig from '../../config/tableMode.json';
+import projectsConfig from '../../config/projects.json';
 import worldviewPresets from '../../config/worldviewPresets.json';
 
-const STORAGE_KEY = 'marcus_state';
+const STORAGE_KEY = 'table_state';
 const STATE_VERSION = 7;
 
 function createWorldview(presetId) {
   if (presetId) {
-    const preset = marcusConfig.presets.find((p) => p.id === presetId);
+    const preset = tableConfig.presets.find((p) => p.id === presetId);
     if (preset) {
       const { id, name, ...data } = preset;
       return { ...JSON.parse(JSON.stringify(data)), name, presetId: id, uid: crypto.randomUUID() };
@@ -41,8 +42,8 @@ function buildEqualCredences(count) {
 function createDefaultStage() {
   return {
     id: crypto.randomUUID(),
-    method: marcusConfig.votingMethods[0].key,
-    budget: marcusConfig.totalBudget,
+    method: tableConfig.votingMethods[0].key,
+    budget: tableConfig.totalBudget,
     options: {},
   };
 }
@@ -55,8 +56,8 @@ function migrateToStages(savedState) {
   return [
     {
       id: crypto.randomUUID(),
-      method: savedState.selectedMethod || marcusConfig.votingMethods[0].key,
-      budget: savedState.totalBudget ?? marcusConfig.totalBudget,
+      method: savedState.selectedMethod || tableConfig.votingMethods[0].key,
+      budget: savedState.totalBudget ?? tableConfig.totalBudget,
       options: savedState.methodOptions?.[savedState.selectedMethod] ?? {},
     },
   ];
@@ -64,7 +65,15 @@ function migrateToStages(savedState) {
 
 function loadSavedState() {
   try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    let stored = sessionStorage.getItem(STORAGE_KEY);
+    // Backward compat: migrate from old key
+    if (!stored) {
+      stored = sessionStorage.getItem('marcus_state');
+      if (stored) {
+        sessionStorage.setItem(STORAGE_KEY, stored);
+        sessionStorage.removeItem('marcus_state');
+      }
+    }
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     // Accept both version 6 (old format) and 7 (new format)
@@ -97,12 +106,12 @@ const _savedState = loadSavedState();
 
 const MAX_TOTAL_BUDGET = 1000;
 
-export function useMarcusState() {
+export function useTableState() {
   const [worldviews, setWorldviews] = useState(
-    () => _savedState?.worldviews ?? marcusConfig.presets.map((p) => createWorldview(p.id))
+    () => _savedState?.worldviews ?? tableConfig.presets.map((p) => createWorldview(p.id))
   );
   const [credences, setCredences] = useState(
-    () => _savedState?.credences ?? buildEqualCredences(marcusConfig.presets.length)
+    () => _savedState?.credences ?? buildEqualCredences(tableConfig.presets.length)
   );
   const [lockedKeys, setLockedKeys] = useState(() => _savedState?.lockedKeys ?? []);
   const [stages, setStages] = useState(() => _savedState?.stages ?? [createDefaultStage()]);
@@ -116,7 +125,7 @@ export function useMarcusState() {
         ...prev,
         {
           id: crypto.randomUUID(),
-          method: marcusConfig.votingMethods[0].key,
+          method: tableConfig.votingMethods[0].key,
           budget: remaining,
           options: {},
         },
@@ -203,7 +212,7 @@ export function useMarcusState() {
     const { worldviews: wvs, credences: creds, stages: stgs } = debouncedState;
     if (!wvs.length) {
       const empty = {};
-      for (const id of Object.keys(marcusConfig.projects)) empty[id] = 0;
+      for (const id of Object.keys(projectsConfig.projects)) empty[id] = 0;
       return { allocations: empty, funding: empty, stageResults: [] };
     }
 
@@ -215,13 +224,13 @@ export function useMarcusState() {
 
     try {
       const result = computeMultiStageAllocation(
-        marcusConfig.projects,
+        projectsConfig.projects,
         worldviewsWithCredences,
         stgs,
-        marcusConfig.incrementSize
+        projectsConfig.incrementSize
       );
       console.log(
-        '[marcus] recalc stages',
+        '[table] recalc stages',
         stgs.map((s) => s.method),
         {
           credences: Object.fromEntries(
@@ -231,15 +240,15 @@ export function useMarcusState() {
             Object.entries(result.allocations)
               .filter(([, v]) => v > 0)
               .sort((a, b) => b[1] - a[1])
-              .map(([id, v]) => [marcusConfig.projects[id].name, `${v.toFixed(1)}%`])
+              .map(([id, v]) => [projectsConfig.projects[id].name, `${v.toFixed(1)}%`])
           ),
         }
       );
       return result;
     } catch (e) {
-      console.error('[marcus] calc error', e);
+      console.error('[table] calc error', e);
       const empty = {};
-      for (const id of Object.keys(marcusConfig.projects)) empty[id] = 0;
+      for (const id of Object.keys(projectsConfig.projects)) empty[id] = 0;
       return { allocations: empty, funding: empty, stageResults: [] };
     }
   }, [debouncedState]);
@@ -364,7 +373,7 @@ export function useMarcusState() {
         {
           id: crypto.randomUUID(),
           method: shareData.selectedMethod,
-          budget: shareData.totalBudget ?? marcusConfig.totalBudget,
+          budget: shareData.totalBudget ?? tableConfig.totalBudget,
           options: shareData.methodOptions?.[shareData.selectedMethod] ?? {},
         },
       ]);
