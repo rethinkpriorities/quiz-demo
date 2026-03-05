@@ -8,7 +8,7 @@
       "tags": {
         "near_term_xrisk": false
       },
-      "diminishing_returns": [
+      "diminishing_returns":
         1,
         0.833,
         0.714,
