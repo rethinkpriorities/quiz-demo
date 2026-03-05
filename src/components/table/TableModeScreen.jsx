@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTableState } from '../../hooks/useTableState';
 import { useTableShareUrl } from '../../hooks/useTableShareUrl';
 import { parseTableShareUrl, parseTableHash } from '../../utils/tableShareUrl';
@@ -6,6 +6,19 @@ import SpreadsheetInput from './SpreadsheetInput';
 import ResultsPanel from './ResultsPanel';
 import ShareButton from '../ui/ShareButton';
 import styles from '../../styles/components/TableMode.module.css';
+
+/**
+ * Clear the share parameter from the URL hash, preserving the #table route.
+ */
+function clearShareParam() {
+  if (window.location.hash.includes('&s=')) {
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + window.location.search + '#table'
+    );
+  }
+}
 
 function TableModeScreen() {
   const {
@@ -32,63 +45,47 @@ function TableModeScreen() {
   const [hydrating, setHydrating] = useState(false);
   const [shareError, setShareError] = useState(null);
 
+  /**
+   * Fetch share data from the URL hash and hydrate table state.
+   * Shows a timed error toast on failure, clears the hash param on completion.
+   */
+  const hydrateFromUrl = useCallback(async () => {
+    const data = await parseTableShareUrl();
+    if (data?.error) {
+      setShareError(data.error);
+      window.setTimeout(() => setShareError(null), 5000);
+    } else if (data) {
+      hydrateFromShare(data);
+    }
+    clearShareParam();
+  }, [hydrateFromShare]);
+
   // Hydrate from share URL on mount
   useEffect(() => {
     let cancelled = false;
     async function hydrate() {
       setHydrating(true);
       try {
-        const data = await parseTableShareUrl();
-        if (cancelled) return;
-        if (data?.error) {
-          setShareError(data.error);
-          window.setTimeout(() => setShareError(null), 5000);
-        } else if (data) {
-          hydrateFromShare(data);
-        }
+        await hydrateFromUrl();
       } finally {
         if (!cancelled) setHydrating(false);
-      }
-      // Clear share param from hash, keep #table route
-      if (window.location.hash.includes('&s=')) {
-        window.history.replaceState(
-          null,
-          '',
-          window.location.pathname + window.location.search + '#table'
-        );
       }
     }
     hydrate();
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromShare]);
+  }, [hydrateFromUrl]);
 
   // Listen for hashchange to handle share URLs pasted into existing tabs
   useEffect(() => {
-    const handleHashChange = async () => {
+    const handleHashChange = () => {
       const { shareId } = parseTableHash();
-      if (!shareId) return;
-
-      const data = await parseTableShareUrl();
-      if (data?.error) {
-        setShareError(data.error);
-        window.setTimeout(() => setShareError(null), 5000);
-      } else if (data) {
-        hydrateFromShare(data);
-      }
-      // Clear share param from hash
-      if (window.location.hash.includes('&s=')) {
-        window.history.replaceState(
-          null,
-          '',
-          window.location.pathname + window.location.search + '#table'
-        );
-      }
+      if (shareId) hydrateFromUrl();
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [hydrateFromShare]);
+  }, [hydrateFromUrl]);
 
   const {
     copied,

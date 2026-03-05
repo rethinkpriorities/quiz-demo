@@ -24,13 +24,6 @@ import {
   Q_INVERTEBRATES,
   Q_SAVING_VS_IMPROVING,
   Q_SAVING_VS_INCOME,
-  SAVING_VS_IMPROVING_OPTIONS,
-  SAVING_VS_INCOME_OPTIONS,
-  ANIMAL_WELFARE_FRACTIONS,
-  INVERTEBRATE_FRACTIONS,
-  XRISK_OPTIONS,
-  TIMEFRAME_PROFILES,
-  RISK_PROFILE_OPTIONS,
 } from './quizToWorldviews.js';
 
 const {
@@ -216,16 +209,25 @@ function packForParliament(results, worldviews, data = PROJECT_DATA) {
   return { scoreMatrix, credences, numActive: N, projectIds, drArrays };
 }
 
-function voteParliamentFast(data, funding, increment, { packed }) {
-  const { scoreMatrix, credences, numActive, projectIds, drArrays } = packed;
+/**
+ * Compute diminishing returns factors for each project based on current funding.
+ * Shared across all voting methods.
+ */
+function computeDrFactors(funding, projectIds, drArrays) {
   const numProjects = projectIds.length;
-
   const drFactors = new Float64Array(numProjects);
   for (let p = 0; p < numProjects; p++) {
     const idx = Math.floor(funding[projectIds[p]] / 10);
     const arr = drArrays[p];
     drFactors[p] = idx >= arr.length ? arr[arr.length - 1] : arr[idx];
   }
+  return drFactors;
+}
+
+function voteParliamentFast(data, funding, increment, { packed }) {
+  const { scoreMatrix, credences, numActive, projectIds, drArrays } = packed;
+  const numProjects = projectIds.length;
+  const drFactors = computeDrFactors(funding, projectIds, drArrays);
 
   const alloc = new Float64Array(numProjects);
 
@@ -255,13 +257,7 @@ function voteParliamentFast(data, funding, increment, { packed }) {
 function voteMecFast(data, funding, increment, { packed }) {
   const { scoreMatrix, credences, numActive, projectIds, drArrays } = packed;
   const numProjects = projectIds.length;
-
-  const drFactors = new Float64Array(numProjects);
-  for (let p = 0; p < numProjects; p++) {
-    const idx = Math.floor(funding[projectIds[p]] / 10);
-    const arr = drArrays[p];
-    drFactors[p] = idx >= arr.length ? arr[arr.length - 1] : arr[idx];
-  }
+  const drFactors = computeDrFactors(funding, projectIds, drArrays);
 
   const expectedScores = new Float64Array(numProjects);
   for (let w = 0; w < numActive; w++) {
@@ -287,18 +283,11 @@ function voteMecFast(data, funding, increment, { packed }) {
 function voteBordaFast(data, funding, increment, { packed }) {
   const { scoreMatrix, credences, numActive, projectIds, drArrays } = packed;
   const numProjects = projectIds.length;
-
-  const drFactors = new Float64Array(numProjects);
-  for (let p = 0; p < numProjects; p++) {
-    const idx = Math.floor(funding[projectIds[p]] / 10);
-    const arr = drArrays[p];
-    drFactors[p] = idx >= arr.length ? arr[arr.length - 1] : arr[idx];
-  }
+  const drFactors = computeDrFactors(funding, projectIds, drArrays);
 
   const bordaScores = new Float64Array(numProjects);
-  // Precompute adjusted values per worldview, then rank by counting
-  // how many projects score higher (avoids Array.prototype.sort overhead
-  // in the hot loop — ~2.3M sort calls replaced with typed-array comparisons)
+  // Rank by counting how many projects score higher per worldview
+  // (avoids Array.prototype.sort overhead in the hot loop)
   const vals = new Float64Array(numProjects);
 
   for (let w = 0; w < numActive; w++) {
@@ -418,6 +407,50 @@ function convertCredences(credences) {
 // =============================================================================
 
 /**
+ * Return a zero-allocation result for all projects.
+ * Used as an early return when required questions are not configured.
+ */
+function emptyResult() {
+  const result = {};
+  for (const projectId of Object.keys(PROJECT_DATA)) {
+    result[projectId] = 0;
+  }
+  return result;
+}
+
+/**
+ * Run a voting method against quiz credences and return allocation percentages.
+ *
+ * Shared pipeline: guard check, budget clamping, credence conversion,
+ * worldview packing, budget allocation loop, and percentage conversion.
+ *
+ * @param {Function} votingMethod - One of voteParliamentFast, voteMecFast, voteBordaFast
+ * @param {Object} credences - Quiz credences { questionId: { optionKey: value } }
+ * @param {Object} options - Optional configuration
+ * @param {number} [options.budget] - Budget in $M. Defaults to TOTAL_BUDGET from projects.json.
+ * @returns {Object} Allocation percentages { project_id: percentage }
+ */
+function runAllocation(votingMethod, credences, options = {}) {
+  if (!HAS_ALL_QUESTIONS) return emptyResult();
+
+  const budget = Math.min(options.budget || TOTAL_BUDGET, MAX_BUDGET_M);
+  const credArrays = convertCredences(credences);
+  const worldviews = computeWorldviewCredences(credArrays);
+  const packed = packForParliament(getPrecomputedResults(), worldviews, PROJECT_DATA);
+
+  const { funding } = allocateBudget(PROJECT_DATA, votingMethod, budget, {
+    packed,
+    incrementSize: INCREMENT_SIZE,
+  });
+
+  const result = {};
+  for (const [projectId, amount] of Object.entries(funding)) {
+    result[projectId] = (amount / budget) * 100;
+  }
+  return result;
+}
+
+/**
  * Calculate Moral Marketplace allocation from quiz credences.
  *
  * Uses the corrected moral weight derivation from quizToWorldviews.js:
@@ -427,87 +460,19 @@ function convertCredences(credences) {
  *
  * @param {Object} credences - Quiz credences { questionId: { optionKey: value } }
  * @param {Object} [options] - Optional configuration
- * @param {number} [options.budget] - Budget in dollars (converted to $M internally).
- *   Defaults to TOTAL_BUDGET from projects.json.
+ * @param {number} [options.budget] - Budget in $M. Defaults to TOTAL_BUDGET from projects.json.
  * @returns {Object} Allocation percentages { project_id: percentage }
  */
 export function calculateMoralMarketplace(credences, options = {}) {
-  if (!HAS_ALL_QUESTIONS) {
-    const result = {};
-    for (const projectId of Object.keys(PROJECT_DATA)) {
-      result[projectId] = 0;
-    }
-    return result;
-  }
-
-  const budget = Math.min(options.budget ? options.budget / 1_000_000 : TOTAL_BUDGET, MAX_BUDGET_M);
-  const credArrays = convertCredences(credences);
-  const worldviews = computeWorldviewCredences(credArrays);
-  const packed = packForParliament(getPrecomputedResults(), worldviews, PROJECT_DATA);
-
-  const { funding } = allocateBudget(PROJECT_DATA, voteParliamentFast, budget, {
-    packed,
-    incrementSize: INCREMENT_SIZE,
-  });
-
-  const result = {};
-  for (const [projectId, amount] of Object.entries(funding)) {
-    result[projectId] = (amount / budget) * 100;
-  }
-
-  return result;
+  return runAllocation(voteParliamentFast, credences, options);
 }
 
 export { calculateMoralMarketplace as calculateCredenceWeighted };
 
 export function calculateMec(credences, options = {}) {
-  if (!HAS_ALL_QUESTIONS) {
-    const result = {};
-    for (const projectId of Object.keys(PROJECT_DATA)) {
-      result[projectId] = 0;
-    }
-    return result;
-  }
-
-  const budget = Math.min(options.budget ? options.budget / 1_000_000 : TOTAL_BUDGET, MAX_BUDGET_M);
-  const credArrays = convertCredences(credences);
-  const worldviews = computeWorldviewCredences(credArrays);
-  const packed = packForParliament(getPrecomputedResults(), worldviews, PROJECT_DATA);
-
-  const { funding } = allocateBudget(PROJECT_DATA, voteMecFast, budget, {
-    packed,
-    incrementSize: INCREMENT_SIZE,
-  });
-
-  const result = {};
-  for (const [projectId, amount] of Object.entries(funding)) {
-    result[projectId] = (amount / budget) * 100;
-  }
-  return result;
+  return runAllocation(voteMecFast, credences, options);
 }
 
 export function calculateBorda(credences, options = {}) {
-  if (!HAS_ALL_QUESTIONS) {
-    const result = {};
-    for (const projectId of Object.keys(PROJECT_DATA)) {
-      result[projectId] = 0;
-    }
-    return result;
-  }
-
-  const budget = Math.min(options.budget ? options.budget / 1_000_000 : TOTAL_BUDGET, MAX_BUDGET_M);
-  const credArrays = convertCredences(credences);
-  const worldviews = computeWorldviewCredences(credArrays);
-  const packed = packForParliament(getPrecomputedResults(), worldviews, PROJECT_DATA);
-
-  const { funding } = allocateBudget(PROJECT_DATA, voteBordaFast, budget, {
-    packed,
-    incrementSize: INCREMENT_SIZE,
-  });
-
-  const result = {};
-  for (const [projectId, amount] of Object.entries(funding)) {
-    result[projectId] = (amount / budget) * 100;
-  }
-  return result;
+  return runAllocation(voteBordaFast, credences, options);
 }

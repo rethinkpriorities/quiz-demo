@@ -29,20 +29,26 @@ async function getDbClient() {
   return createClient({ url, authToken });
 }
 
-const responseHeaders = {
+const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Content-Type': 'application/json',
 };
 
+function jsonResponse(statusCode, data) {
+  return {
+    statusCode,
+    headers: CORS_HEADERS,
+    body: JSON.stringify(data),
+  };
+}
+
 export async function handler(event) {
-  // Lambda Function URL uses requestContext.http.method
   const httpMethod = event.requestContext?.http?.method || event.httpMethod;
 
-  // Preflight is handled by AWS Function URL CORS config
   if (httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: responseHeaders, body: '' };
+    return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   }
 
   try {
@@ -53,24 +59,15 @@ export async function handler(event) {
     } else if (httpMethod === 'GET') {
       return await getShare(event, db);
     } else {
-      return {
-        statusCode: 405,
-        headers: responseHeaders,
-        body: JSON.stringify({ error: 'Method not allowed' }),
-      };
+      return jsonResponse(405, { error: 'Method not allowed' });
     }
   } catch (error) {
     console.error('Function error:', error);
-    return {
-      statusCode: 500,
-      headers: responseHeaders,
-      body: JSON.stringify({ error: error.message }),
-    };
+    return jsonResponse(500, { error: error.message });
   }
 }
 
 async function createShare(event, db) {
-  // Lambda Function URL may base64-encode the body
   let bodyStr = event.body || '{}';
   if (event.isBase64Encoded) {
     bodyStr = Buffer.from(bodyStr, 'base64').toString('utf-8');
@@ -83,13 +80,8 @@ async function createShare(event, db) {
   if (type === 'table' || type === 'marcus') {
     const { worldviews, credences, stages, selectedMethod, totalBudget, methodOptions } = body;
     if (!worldviews) {
-      return {
-        statusCode: 400,
-        headers: responseHeaders,
-        body: JSON.stringify({ error: 'Missing worldviews' }),
-      };
+      return jsonResponse(400, { error: 'Missing worldviews' });
     }
-    // Support both new (stages) and old (selectedMethod/totalBudget/methodOptions) format
     dataToStore = { type, worldviews, credences };
     if (stages) {
       dataToStore.stages = stages;
@@ -101,16 +93,11 @@ async function createShare(event, db) {
   } else {
     const { worldviews, activeWorldviewId } = body;
     if (!worldviews || !activeWorldviewId) {
-      return {
-        statusCode: 400,
-        headers: responseHeaders,
-        body: JSON.stringify({ error: 'Missing worldviews or activeWorldviewId' }),
-      };
+      return jsonResponse(400, { error: 'Missing worldviews or activeWorldviewId' });
     }
     dataToStore = { worldviews, activeWorldviewId };
   }
 
-  // Generate unique short ID (retry on collision)
   for (let attempt = 0; attempt < 5; attempt++) {
     const shortId = generateShortId();
     try {
@@ -119,12 +106,7 @@ async function createShare(event, db) {
               VALUES (?, ?, ?, ?)`,
         args: [shortId, JSON.stringify(dataToStore), sessionId || null, quizVersion || null],
       });
-
-      return {
-        statusCode: 201,
-        headers: responseHeaders,
-        body: JSON.stringify({ id: shortId }),
-      };
+      return jsonResponse(201, { id: shortId });
     } catch (error) {
       if (error.message?.includes('UNIQUE constraint')) {
         continue;
@@ -133,23 +115,14 @@ async function createShare(event, db) {
     }
   }
 
-  return {
-    statusCode: 500,
-    headers: responseHeaders,
-    body: JSON.stringify({ error: 'Failed to generate unique ID' }),
-  };
+  return jsonResponse(500, { error: 'Failed to generate unique ID' });
 }
 
 async function getShare(event, db) {
-  // Get ID from query string
   const shareId = event.queryStringParameters?.id;
 
   if (!shareId) {
-    return {
-      statusCode: 400,
-      headers: responseHeaders,
-      body: JSON.stringify({ error: 'Missing share ID' }),
-    };
+    return jsonResponse(400, { error: 'Missing share ID' });
   }
 
   const result = await db.execute({
@@ -158,14 +131,9 @@ async function getShare(event, db) {
   });
 
   if (result.rows.length === 0) {
-    return {
-      statusCode: 404,
-      headers: responseHeaders,
-      body: JSON.stringify({ error: 'Share not found' }),
-    };
+    return jsonResponse(404, { error: 'Share not found' });
   }
 
-  // Update access stats
   await db.execute({
     sql: `UPDATE shares
           SET access_count = access_count + 1,
@@ -183,39 +151,24 @@ async function getShare(event, db) {
     createdAt: row.created_at,
   };
 
-  // Table/Marcus format: return full stored data
   if (storedData.type === 'table' || storedData.type === 'marcus') {
-    return {
-      statusCode: 200,
-      headers: responseHeaders,
-      body: JSON.stringify({ ...baseResponse, ...storedData }),
-    };
+    return jsonResponse(200, { ...baseResponse, ...storedData });
   }
 
-  // Worldviews format: has worldviews and activeWorldviewId
   if (storedData.worldviews && storedData.activeWorldviewId) {
-    return {
-      statusCode: 200,
-      headers: responseHeaders,
-      body: JSON.stringify({
-        ...baseResponse,
-        worldviews: storedData.worldviews,
-        activeWorldviewId: storedData.activeWorldviewId,
-      }),
-    };
+    return jsonResponse(200, {
+      ...baseResponse,
+      worldviews: storedData.worldviews,
+      activeWorldviewId: storedData.activeWorldviewId,
+    });
   }
 
-  // Detect questions format vs legacy credences format
   const firstQuestion = Object.values(storedData)[0];
   const isQuestionsFormat =
     firstQuestion && typeof firstQuestion === 'object' && 'credences' in firstQuestion;
 
-  return {
-    statusCode: 200,
-    headers: responseHeaders,
-    body: JSON.stringify({
-      ...baseResponse,
-      ...(isQuestionsFormat ? { questions: storedData } : { credences: storedData }),
-    }),
-  };
+  return jsonResponse(200, {
+    ...baseResponse,
+    ...(isQuestionsFormat ? { questions: storedData } : { credences: storedData }),
+  });
 }
