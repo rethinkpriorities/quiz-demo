@@ -1,17 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateTableShareUrl } from '../utils/tableShareUrl';
-
-/**
- * Fallback clipboard copy using execCommand.
- */
-function copyToClipboardFallback(text) {
-  const textArea = document.createElement('textarea');
-  textArea.value = text;
-  document.body.appendChild(textArea);
-  textArea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textArea);
-}
+import { copyToClipboard } from '../utils/clipboard';
 
 /**
  * Hook for Table Mode share URL generation and clipboard copy.
@@ -38,16 +27,7 @@ export function useTableShareUrl({ worldviews, credences, stages }) {
         stages,
       });
 
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(url);
-        } else {
-          copyToClipboardFallback(url);
-        }
-      } catch {
-        copyToClipboardFallback(url);
-      }
-
+      await copyToClipboard(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch (err) {

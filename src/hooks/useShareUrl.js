@@ -1,17 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateShareUrl } from '../utils/shareUrl';
-
-/**
- * Fallback clipboard copy using execCommand.
- */
-function copyToClipboardFallback(text) {
-  const textArea = document.createElement('textarea');
-  textArea.value = text;
-  document.body.appendChild(textArea);
-  textArea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textArea);
-}
+import { copyToClipboard } from '../utils/clipboard';
 
 /**
  * Hook for share URL generation and clipboard copy functionality.
@@ -64,25 +53,14 @@ export function useShareUrl({
       worldviewNames,
       marketplaceBudget,
     };
-    const urlPromise = generateShareUrl(worldviewsForShare, activeWorldviewId, shareOptions).then(
-      ({ url }) => url
-    );
 
     try {
-      if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
-        const blobPromise = urlPromise.then((url) => new Blob([url], { type: 'text/plain' }));
-        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blobPromise })]);
-      } else {
-        const url = await urlPromise;
-        try {
-          await navigator.clipboard.writeText(url);
-        } catch {
-          copyToClipboardFallback(url);
-        }
-      }
+      const { url } = await generateShareUrl(worldviewsForShare, activeWorldviewId, shareOptions);
+      await copyToClipboard(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch (err) {
+      console.error('[Share] Failed to generate share URL:', err);
       setError(err.message || 'Failed to create share link');
       window.setTimeout(() => setError(null), 5000);
     } finally {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Share2, Check, Loader2 } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
@@ -7,10 +7,11 @@ import EditPanel from './ui/EditPanel';
 import ResultCard from './ui/ResultCard';
 import QuestionIcon from './ui/QuestionIcon';
 import InfoTooltip from './ui/InfoTooltip';
+import ShareButton from './ui/ShareButton';
 import { useQuiz } from '../context/useQuiz';
+import { useShareUrl } from '../hooks/useShareUrl';
 import { QUESTION_TYPES } from '../constants/config';
 import { getEnabledMethods } from '../constants/calculationMethods';
-import { generateShareUrl } from '../utils/shareUrl';
 import {
   useEmailCopy,
   processEmailPlaceholder,
@@ -57,16 +58,25 @@ function ResultsScreen() {
   const budget = marketplaceBudget ?? 897;
   const [budgetInput, setBudgetInput] = useState(String(budget));
 
-  const [copied, setCopied] = useState(false);
-  const [shareLoading, setShareLoading] = useState(false);
-  const [shareError, setShareError] = useState(null);
-
   // Email copy functionality for feedback card
   const {
     email: feedbackEmail,
     copied: feedbackEmailCopied,
     handleEmailClick: handleFeedbackEmailClick,
   } = useEmailCopy(copy.results.feedbackEmail);
+
+  const {
+    copied: shareCopied,
+    loading: shareLoading,
+    error: shareError,
+    handleShare: handleShareClick,
+  } = useShareUrl({
+    worldviews,
+    activeWorldviewId,
+    selectedCalculations: isCalculationSelectEnabled ? selectedCalculations : null,
+    worldviewNames,
+    marketplaceBudget,
+  });
 
   const enabledMethods = getEnabledMethods();
 
@@ -125,68 +135,6 @@ function ResultsScreen() {
     }
   };
 
-  const handleShareClick = async () => {
-    setShareError(null);
-
-    const showCopiedFeedback = () => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    };
-
-    const copyToClipboardFallback = (text) => {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-    };
-
-    // Build worldviews state for backend
-    const worldviewsForShare = {};
-    for (const [worldviewId, worldview] of Object.entries(worldviews)) {
-      const questionStates = {};
-      for (const [questionId, qState] of Object.entries(worldview.questions)) {
-        questionStates[questionId] = {
-          credences: qState.credences,
-          inputMode: qState.inputMode,
-          lockedKeys: qState.lockedKeys,
-          originalCredences: qState.originalCredences,
-        };
-      }
-      worldviewsForShare[worldviewId] = { questions: questionStates };
-    }
-
-    setShareLoading(true);
-
-    const shareOptions = {
-      selectedCalculations: isCalculationSelectEnabled ? selectedCalculations : null,
-      worldviewNames,
-    };
-
-    try {
-      const { url } = await generateShareUrl(worldviewsForShare, activeWorldviewId, shareOptions);
-
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(url);
-        } else {
-          copyToClipboardFallback(url);
-        }
-      } catch {
-        copyToClipboardFallback(url);
-      }
-
-      showCopiedFeedback();
-    } catch (err) {
-      console.error('[Share] Failed to generate share URL:', err);
-      setShareError(err.message || 'Failed to create share link');
-      window.setTimeout(() => setShareError(null), 5000);
-    } finally {
-      setShareLoading(false);
-    }
-  };
-
   const getPanelConfigs = (question) =>
     question.options.map((opt) => ({
       key: opt.key,
@@ -196,19 +144,6 @@ function ResultsScreen() {
     }));
 
   const useSideBySide = features.calculations?.sideBySideComparison === true;
-
-  const getShareButtonIcon = () => {
-    if (shareLoading) return <Loader2 size={16} className={styles.spinning} />;
-    if (copied) return <Check size={16} />;
-    return <Share2 size={16} />;
-  };
-
-  const getShareButtonText = () => {
-    if (shareLoading) return 'Creating link...';
-    if (shareError) return shareError;
-    if (copied) return copy.results.shareCopied;
-    return copy.results.shareButton;
-  };
 
   // Filter out intermission questions for edit panels
   const editableQuestions = questionsConfig.filter((q) => q.type !== QUESTION_TYPES.INTERMISSION);
@@ -416,14 +351,12 @@ function ResultsScreen() {
             {copy.navigation.backToQuiz}
           </button>
           {features.ui?.shareResults && (
-            <button
+            <ShareButton
+              loading={shareLoading}
+              copied={shareCopied}
+              error={shareError}
               onClick={handleShareClick}
-              disabled={shareLoading}
-              className={`btn btn-secondary ${copied ? styles.copied : ''} ${shareError ? styles.error : ''}`}
-            >
-              {getShareButtonIcon()}
-              {getShareButtonText()}
-            </button>
+            />
           )}
           {features.ui?.resetButton && (
             <button
