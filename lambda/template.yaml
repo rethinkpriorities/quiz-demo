@@ -11,6 +11,10 @@ Parameters:
     Type: String
     Description: Turso auth token
     NoEcho: true
+  AnthropicApiKey:
+    Type: String
+    Description: Anthropic API key for AI explanation
+    NoEcho: true
 
 Resources:
   ShareFunction:
@@ -59,6 +63,48 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: '*'
 
+  ExplainFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: quiz-demo-explain
+      CodeUri: explain/
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Timeout: 60
+      MemorySize: 256
+      Environment:
+        Variables:
+          ANTHROPIC_API_KEY: !Ref AnthropicApiKey
+
+  ExplainFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt ExplainFunction.Arn
+      Cors:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  ExplainFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ExplainFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  ExplainFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ExplainFunction
+      Action: lambda:InvokeFunction
+      Principal: '*'
+
 Outputs:
   ShareFunctionUrl:
     Description: Function URL for the Share API
@@ -66,3 +112,9 @@ Outputs:
   ShareFunctionArn:
     Description: ARN of the Share function
     Value: !GetAtt ShareFunction.Arn
+  ExplainFunctionUrl:
+    Description: Function URL for the Explain API
+    Value: !GetAtt ExplainFunctionUrl.FunctionUrl
+  ExplainFunctionArn:
+    Description: ARN of the Explain function
+    Value: !GetAtt ExplainFunction.Arn

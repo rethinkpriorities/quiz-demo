@@ -93,6 +93,8 @@ Looks up `cause.timeframe` (e.g., "short") and uses that key to find the specifi
 
 The vite server (`npm run dev`) is faster but can't reach the serverless functions. Use `netlify dev` when testing anything that hits `/api/*` endpoints.
 
+> **Note:** Netlify is NOT part of production infrastructure. We only use `netlify dev` as a local convenience for running serverless functions during development. Production runs on AWS Lambda + GitHub Pages. If `netlify dev` stops being useful locally, remove it and all references to it (`netlify.toml`, `netlify/functions/`, these docs).
+
 ### Testing
 - `npm test` - run tests in watch mode
 - `npm run test:run` - single run
@@ -133,16 +135,16 @@ netlify dev                       # Run frontend + functions at localhost:8888
 - Local `.env` file (gitignored) points to local SQLite
 
 ### Serverless Functions
-Two copies of the share function (kept in sync):
-- `netlify/functions/share.js` — Local dev with `netlify dev`
-- `lambda/share/index.mjs` — Production (AWS Lambda)
+Two copies of each function (kept in sync):
+- `netlify/functions/share.js` / `lambda/share/index.mjs` — Share URL API
+- `netlify/functions/explain.js` / `lambda/explain/index.mjs` — AI Explanation API
 
-### Deploying the Lambda
+### Deploying the Lambdas
 
 The Lambda auto-deploy GitHub Action is disabled — deploy manually from CLI:
 
 ```bash
-cd lambda/share && npm ci && cd ..
+cd lambda/share && npm ci && cd ../explain && npm ci && cd ..
 sam build
 sam deploy \
   --stack-name quiz-demo-share \
@@ -151,9 +153,16 @@ sam deploy \
   --parameter-overrides \
     TursoDatabaseUrl="<turso-url>" \
     TursoAuthToken="<turso-token>" \
+    AnthropicApiKey="<anthropic-key>" \
   --no-confirm-changeset \
   --no-fail-on-empty-changeset
 ```
+
+> **NOT YET DEPLOYED:** The Explain Lambda (`quiz-demo-explain`) has not been deployed to production yet. To enable the AI explanation feature:
+> 1. Deploy using the command above (which now includes `AnthropicApiKey`)
+> 2. Copy the `ExplainFunctionUrl` from the deploy output
+> 3. Set `VITE_EXPLAIN_API_URL` in GitHub repo secrets to that URL
+> 4. Set `ui.aiExplanation` to `true` in `config/features.json`
 
 **If SAM deploy fails** with `EarlyValidation::PropertyValidation` (CloudFormation validation hook issue), deploy the code directly:
 

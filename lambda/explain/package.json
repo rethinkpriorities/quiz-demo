@@ -1,0 +1,7 @@
+{
+  "name": "quiz-explain-lambda",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI Explanation API for Donor Compass Quiz",
+  "main": "index.mjs"
+}

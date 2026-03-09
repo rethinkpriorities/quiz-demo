@@ -14,8 +14,10 @@
     "questionInfo": true,
     "answerInfo": true,
     "calculationSelect": true,
-    "feedbackCard": true
-  },
+    "feedbackCard": true,
+    "methodsInfo": true,
+    "aiExplanation": false
+},
 
   "calculations": {
     "order": ["credenceWeighted", "mec", "borda"],
