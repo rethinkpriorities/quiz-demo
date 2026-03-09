@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Sparkles, HelpCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Header from './layout/Header';
 import ProgressBar from './layout/ProgressBar';
@@ -8,8 +8,11 @@ import ResultCard from './ui/ResultCard';
 import QuestionIcon from './ui/QuestionIcon';
 import InfoTooltip from './ui/InfoTooltip';
 import ShareButton from './ui/ShareButton';
+import MethodsInfoModal from './ui/MethodsInfoModal';
+import ExplanationModal from './ui/ExplanationModal';
 import { useQuiz } from '../context/useQuiz';
 import { useShareUrl } from '../hooks/useShareUrl';
+import { useExplanation } from '../hooks/useExplanation';
 import { QUESTION_TYPES } from '../constants/config';
 import { getEnabledMethods } from '../constants/calculationMethods';
 import {
@@ -77,6 +80,75 @@ function ResultsScreen() {
     worldviewNames,
     marketplaceBudget,
   });
+
+  // Methods info modal state
+  const [showMethodsInfo, setShowMethodsInfo] = useState(false);
+
+  // AI explanation modal state
+  const [showExplanation, setShowExplanation] = useState(false);
+  const {
+    loading: explainLoading,
+    explanation,
+    error: explainError,
+    fetchExplanation,
+    clearCache: clearExplanationCache,
+  } = useExplanation();
+
+  const handleExplainClick = () => {
+    // Determine which method is active
+    const usingSideBySide = features.calculations?.sideBySideComparison === true && hasChanged;
+    const activeMethodKey = usingSideBySide
+      ? selectedCalculations.right
+      : selectedCalculations.left;
+    const activeResults = calculationResults?.[activeMethodKey];
+
+    // Build human-readable credences using question titles and option labels
+    const credences = {};
+    for (const question of questionsConfig) {
+      const state = stateMap[question.id];
+      if (!state?.credences) continue;
+      const labeledCredences = {};
+      for (const opt of question.options) {
+        const value = state.credences[opt.key];
+        if (value != null && value > 0) {
+          labeledCredences[opt.label] = value;
+        }
+      }
+      if (Object.keys(labeledCredences).length > 0) {
+        credences[question.editPanelTitle || question.id] = labeledCredences;
+      }
+    }
+
+    // Build human-readable results using project names
+    const labeledResults = {};
+    if (activeResults) {
+      for (const [key, value] of Object.entries(activeResults)) {
+        if (key === 'evs') continue;
+        const projectName = projectsConfig.projects[key]?.name || key;
+        labeledResults[projectName] = value;
+      }
+    }
+
+    // Get method description from copy.json
+    const methodInfo = copy.results.methodsInfo.methods[activeMethodKey];
+    const methodTitle = methodInfo?.title || activeMethodKey;
+    const methodDescription = methodInfo?.description || '';
+
+    setShowExplanation(true);
+    fetchExplanation({
+      method: activeMethodKey,
+      methodTitle,
+      methodDescription,
+      results: labeledResults,
+      credences,
+      budget,
+    });
+  };
+
+  const handleExplainRetry = () => {
+    clearExplanationCache();
+    handleExplainClick();
+  };
 
   const enabledMethods = getEnabledMethods();
 
@@ -308,6 +380,23 @@ function ResultsScreen() {
           renderStandardResultsGrid()
         )}
 
+        {(features.ui?.methodsInfo || features.ui?.aiExplanation) && (
+          <div className={styles.infoButtonRow}>
+            {features.ui?.methodsInfo && (
+              <button className={styles.infoButton} onClick={() => setShowMethodsInfo(true)}>
+                <HelpCircle size={16} />
+                {copy.results.methodsInfo.buttonLabel}
+              </button>
+            )}
+            {features.ui?.aiExplanation && (
+              <button className={styles.infoButton} onClick={handleExplainClick}>
+                <Sparkles size={16} />
+                {copy.results.aiExplanation.buttonLabel}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className={styles.adjustPanel}>
           <div className={styles.adjustHeader}>
             <span className={styles.adjustTitle}>{copy.results.adjustCredencesHeading}</span>
@@ -382,6 +471,17 @@ function ResultsScreen() {
               )}
             </ReactMarkdown>
           </div>
+        )}
+        {showMethodsInfo && <MethodsInfoModal onClose={() => setShowMethodsInfo(false)} />}
+
+        {showExplanation && (
+          <ExplanationModal
+            loading={explainLoading}
+            explanation={explanation}
+            error={explainError}
+            onRetry={handleExplainRetry}
+            onClose={() => setShowExplanation(false)}
+          />
         )}
       </div>
     </div>

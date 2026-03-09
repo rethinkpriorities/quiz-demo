@@ -240,6 +240,36 @@
   border-top: 2px solid var(--border-subtle);
 }
 
+/* Info/Explain button row between results and adjust panel */
+.infoButtonRow {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+  flex-wrap: wrap;
+}
+
+.infoButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-circle);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.infoButton:hover {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+  background: var(--overlay-subtle);
+}
+
 .adjustPanel {
   background: var(--overlay-subtle);
   border-radius: var(--radius-lg);

@@ -42,6 +42,31 @@
     "shareButton": "Share Results",
     "shareCopied": "Link copied!",
     "calculationSelectTooltip": "There are different ways to advise allocations based on your inputs. The next version of the tool will let you compare different methods and explain clearly what is happening behind the scenes for each of these options. The current calculations are placeholders.",
+    "methodsInfo": {
+      "buttonLabel": "How do these calculations work?",
+      "modalTitle": "About the Calculation Methods",
+      "methods": {
+        "credenceWeighted": {
+          "title": "Credence-Weighted Parliament",
+          "description": "Imagine a parliament where each worldview gets seats proportional to your credence in it. Each worldview \"votes\" for the projects it thinks are best. A worldview that values animal welfare highly will vote for animal charities; one that prioritizes near-term human health will vote for malaria prevention.\n\nThe final allocation is the parliament's combined vote, weighted by how many seats each worldview holds. If you give 60% credence to one view and 40% to another, the first view gets 60% of the seats.\n\nThis method respects moral uncertainty—it doesn't force you to pick one ethical framework. Instead, it spreads your resources across causes in proportion to your beliefs."
+        },
+        "mec": {
+          "title": "Maximum Expected Choiceworthiness",
+          "description": "This method treats each worldview like a possible state of the world and asks: \"Which project has the highest expected value across all my worldviews?\"\n\nFor each project, it calculates a weighted average of how \"choiceworthy\" that project is under each worldview (using your credences as weights). The project with the highest expected choiceworthiness gets the next unit of funding.\n\nUnlike the parliament method, MEC can concentrate funding heavily in one project if that project scores well across many worldviews. It maximizes expected impact rather than spreading bets."
+        },
+        "borda": {
+          "title": "Borda Count",
+          "description": "Each worldview ranks all projects from best to worst. The top-ranked project gets the most points, the second gets fewer, and so on. These points are then weighted by your credences and summed across all worldviews.\n\nBorda Count tends to favor \"consensus\" projects—ones that rank reasonably well under many different worldviews, even if they're not the top pick for any single view. It avoids extreme allocations and naturally diversifies.\n\nThis method is inspired by voting theory and is especially useful when you want to find broadly acceptable options across different ethical perspectives."
+        }
+      }
+    },
+    "aiExplanation": {
+      "buttonLabel": "Explain My Results",
+      "modalTitle": "Understanding Your Results",
+      "loadingText": "Analyzing your results...",
+      "errorText": "Unable to generate explanation. Please try again.",
+      "retryButton": "Try Again"
+    },
     "methods": {
       "credenceWeighted": {
         "icon": "shopping-cart",
