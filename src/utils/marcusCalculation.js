@@ -633,12 +633,34 @@ function _nashDisagreementUtilities(
   );
 }
 
+/**
+ * Compute a budget_by_credence proportional allocation for a given budget.
+ * Each worldview i receives (credences[i] × budget) directed to its best project.
+ * Used as the universal proportional fallback when Nash bargaining has no feasible improvement.
+ */
+function _computeBudgetByCredenceAllocation(
+  worldviewScores,
+  credences,
+  budget,
+  projects,
+  tieBreak,
+  rng
+) {
+  const alloc = {};
+  for (const p of projects) alloc[p] = 0;
+  const bestProjects = worldviewScores.map((scores) => _argmaxProject(scores, tieBreak, rng));
+  for (let i = 0; i < credences.length; i++) {
+    alloc[bestProjects[i]] += credences[i] * budget;
+  }
+  return alloc;
+}
+
 function voteNashBargaining(
   data,
   funding,
   increment,
   customWorldviews,
-  { disagreementPoint = null, tieBreak = null, randomSeed = null } = {}
+  { disagreementPoint = null, tieBreak = null, randomSeed = null, remaining = null } = {}
 ) {
   const allocations = {};
   for (const p of Object.keys(data)) allocations[p] = 0;
@@ -674,15 +696,27 @@ function voteNashBargaining(
     fallbackScores[projectId] = arraySum(gains);
   }
 
-  let candidates;
-  if (Object.keys(feasibleScores).length) {
-    const bestValue = Math.max(...Object.values(feasibleScores));
-    candidates = Object.keys(feasibleScores).filter((p) => isClose(feasibleScores[p], bestValue));
-  } else {
-    const bestValue = Math.max(...Object.values(fallbackScores));
-    candidates = Object.keys(fallbackScores).filter((p) => isClose(fallbackScores[p], bestValue));
+  if (!Object.keys(feasibleScores).length) {
+    // No project Pareto-dominates the disagreement point. Allocate the full
+    // remaining budget proportionally (budget_by_credence style) and stop.
+    const budget = remaining ?? increment;
+    return {
+      ..._computeBudgetByCredenceAllocation(
+        worldviewScores,
+        credences,
+        budget,
+        projects,
+        tieBreak,
+        rng
+      ),
+      __stopAfterApplying__: true,
+    };
   }
 
+  const bestValue = Math.max(...Object.values(feasibleScores));
+  const candidates = Object.keys(feasibleScores).filter((p) =>
+    isClose(feasibleScores[p], bestValue)
+  );
   const selectedProject = _chooseFromCandidates(candidates, tieBreak, rng);
   allocations[selectedProject] = increment;
   return allocations;
@@ -1037,7 +1071,7 @@ function allocateBudget(
 
   while (remaining > 0) {
     const increment = Math.min(incrementSize, remaining);
-    const allocationsResult = votingMethod(data, funding, increment, kwargs);
+    const allocationsResult = votingMethod(data, funding, increment, { ...kwargs, remaining });
 
     if (typeof allocationsResult !== 'object') {
       throw new TypeError('Voting methods must return an object of allocations.');
@@ -1050,6 +1084,8 @@ function allocateBudget(
     }
 
     remaining -= increment;
+
+    if (allocationsResult.__stopAfterApplying__) break;
   }
 
   return { funding };
