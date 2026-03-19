@@ -371,4 +371,105 @@ describe('voteNashBargaining proportional fallback', () => {
     expect(funding.projectA).toBeCloseTo(100, 4);
     expect(funding.projectB).toBeCloseTo(0, 4);
   });
+
+  /**
+   * Test 9 (Setup E): Three worldviews with unequal credences (40% / 40% / 20%),
+   * each exclusively valuing a different project.
+   *
+   * budget_by_credence disagreement utilities:
+   *   W1: 0.4×scores[W1][A] + 0.4×scores[W1][B] + 0.2×scores[W1][C] = 0.4×1 = 0.4
+   *   W2: 0.4×0 + 0.4×1 + 0.2×0 = 0.4
+   *   W3: 0.4×0 + 0.4×0 + 0.2×1 = 0.2
+   *
+   * Gains:
+   *   A → (+0.6, -0.4, -0.2)  infeasible  (harms W2 and W3)
+   *   B → (-0.4, +0.6, -0.2)  infeasible  (harms W1 and W3)
+   *   C → (-0.4, -0.4, +0.8)  infeasible  (harms W1 and W2)
+   *
+   * All infeasible → proportional fallback.
+   * Verifies that the minority worldview (W3 at 20%) still receives its full
+   * proportional share — projectC should get exactly 20, not 0.
+   *
+   * Expected: A=40, B=40, C=20
+   */
+  it('proportional fallback allocates to the minority worldview (20%) as well as the majorities (Setup E)', () => {
+    const projectData = {
+      projectA: makeProject('type_a', 1),
+      projectB: makeProject('type_b', 1),
+      projectC: makeProject('type_c', 1),
+    };
+    const worldviews = [
+      makeWorldview(0.4, { type_a: 1, type_b: 0, type_c: 0 }), // W1 best=A
+      makeWorldview(0.4, { type_a: 0, type_b: 1, type_c: 0 }), // W2 best=B
+      makeWorldview(0.2, { type_a: 0, type_b: 0, type_c: 1 }), // W3 best=C (minority)
+    ];
+
+    const { funding } = computeMarcusAllocation(
+      projectData,
+      worldviews,
+      'nashBargaining',
+      100,
+      10,
+      BUDGET_BY_CREDENCE_OPTS
+    );
+
+    expect(funding.projectA).toBeCloseTo(40, 4);
+    expect(funding.projectB).toBeCloseTo(40, 4);
+    expect(funding.projectC).toBeCloseTo(20, 4);
+    expect(funding.projectA + funding.projectB + funding.projectC).toBeCloseTo(100, 4);
+  });
+
+  /**
+   * Test 10 (Setup F): Three worldviews with equal credences (1/3 each) arranged
+   * in a Condorcet cycle — non-exclusive preferences where each project is
+   * infeasible because it harms exactly one worldview.
+   *
+   * W1 (1/3): scores A=1,   B=0.5, C=0    best=A
+   * W2 (1/3): scores A=0,   B=1,   C=0.5  best=B
+   * W3 (1/3): scores A=0.5, B=0,   C=1    best=C
+   *
+   * budget_by_credence disagreement utilities (by cyclic symmetry, all equal):
+   *   W1: (1/3)(1 + 0.5 + 0)   = 0.5
+   *   W2: (1/3)(0 + 1   + 0.5) = 0.5
+   *   W3: (1/3)(0.5 + 0 + 1)   = 0.5
+   *
+   * Gains (each project yields -0.5 for exactly one worldview):
+   *   A → (+0.5, -0.5,  0  )  infeasible
+   *   B → ( 0,   +0.5, -0.5)  infeasible
+   *   C → (-0.5,  0,   +0.5)  infeasible
+   *
+   * All infeasible → proportional fallback: W1→A (1/3), W2→B (1/3), W3→C (1/3).
+   * First Nash test with a 3-way equal fallback driven by a cycle structure.
+   *
+   * Note: 1/3 + 1/3 + 1/3 ≈ 0.9999999999999999 in IEEE 754, which passes
+   * isClose(total, 1.0, 1e-6).
+   *
+   * Expected: A≈33.3, B≈33.3, C≈33.3
+   */
+  it('proportional fallback splits equally among 3 projects when a Condorcet cycle makes all infeasible (Setup F)', () => {
+    const projectData = {
+      projectA: makeProject('type_a', 1),
+      projectB: makeProject('type_b', 1),
+      projectC: makeProject('type_c', 1),
+    };
+    const worldviews = [
+      makeWorldview(1 / 3, { type_a: 1, type_b: 0.5, type_c: 0 }), // W1 best=A
+      makeWorldview(1 / 3, { type_a: 0, type_b: 1, type_c: 0.5 }), // W2 best=B
+      makeWorldview(1 / 3, { type_a: 0.5, type_b: 0, type_c: 1 }), // W3 best=C
+    ];
+
+    const { funding } = computeMarcusAllocation(
+      projectData,
+      worldviews,
+      'nashBargaining',
+      100,
+      10,
+      BUDGET_BY_CREDENCE_OPTS
+    );
+
+    expect(funding.projectA).toBeCloseTo(100 / 3, 3);
+    expect(funding.projectB).toBeCloseTo(100 / 3, 3);
+    expect(funding.projectC).toBeCloseTo(100 / 3, 3);
+    expect(funding.projectA + funding.projectB + funding.projectC).toBeCloseTo(100, 4);
+  });
 });
