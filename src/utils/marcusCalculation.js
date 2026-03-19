@@ -294,6 +294,21 @@ function findClosestWorldview(worldviewPositions, targetPoint) {
   return bestIdx;
 }
 
+/**
+ * Returns indices of ALL worldviews tied for minimum distance to targetPoint.
+ */
+function findClosestWorldviews(worldviewPositions, targetPoint) {
+  let bestDist = euclideanDistance(worldviewPositions[0], targetPoint);
+  for (let i = 1; i < worldviewPositions.length; i++) {
+    const d = euclideanDistance(worldviewPositions[i], targetPoint);
+    if (d < bestDist) bestDist = d;
+  }
+  return worldviewPositions
+    .map((pos, i) => ({ i, d: euclideanDistance(pos, targetPoint) }))
+    .filter(({ d }) => isClose(d, bestDist))
+    .map(({ i }) => i);
+}
+
 // =============================================================================
 // MULTI-STAGE AGGREGATION
 // =============================================================================
@@ -371,6 +386,20 @@ function _argmaxProject(scores, tieBreak = 'deterministic', rng = null) {
   const bestValue = Math.max(...Object.values(scores));
   const candidates = Object.keys(scores).filter((p) => isClose(scores[p], bestValue));
   return _chooseFromCandidates(candidates, tieBreak, rng);
+}
+
+/**
+ * Split `increment` evenly among all projects tied for the highest score.
+ * Returns a full allocations object (all projects, zeros for non-winners).
+ */
+function _splitAmongTied(scores, increment) {
+  const bestValue = Math.max(...Object.values(scores));
+  const winners = Object.keys(scores).filter((p) => isClose(scores[p], bestValue));
+  const share = increment / winners.length;
+  const result = {};
+  for (const p of Object.keys(scores)) result[p] = 0;
+  for (const p of winners) result[p] = share;
+  return result;
 }
 
 function _extractAndValidateCredences(customWorldviews, requireSumToOne = false, tolerance = 1e-6) {
@@ -461,12 +490,11 @@ function voteCredenceWeightedCustom(data, funding, increment, customWorldviews) 
   }
   if (isClose(totalCredence, 0.0, 1e-12)) return allocations;
 
-  const rng = _buildRng(AGGREGATION_DEFAULTS.tie_break, null);
   for (let i = 0; i < customWorldviews.length; i++) {
     const share = credences[i] * increment;
     const marginalValues = _computeWorldviewMarginalValues(data, funding, customWorldviews[i]);
-    const bestProject = _argmaxProject(marginalValues, 'deterministic', rng);
-    allocations[bestProject] += share;
+    const split = _splitAmongTied(marginalValues, share);
+    for (const p of Object.keys(split)) allocations[p] += split[p];
   }
 
   return allocations;
@@ -521,8 +549,8 @@ function voteMec(
     }
     expectedScores[projectId] = s;
   }
-  const bestProject = _argmaxProject(expectedScores, tieBreak, rng);
-  allocations[bestProject] = increment;
+  const split = _splitAmongTied(expectedScores, increment);
+  for (const p of Object.keys(split)) allocations[p] += split[p];
   return allocations;
 }
 
@@ -546,7 +574,8 @@ function voteMet(
   const maxIdx = argmax(credences);
   const maxCredence = credences[maxIdx];
 
-  let selectedIdx = maxIdx;
+  // Collect the indices of all selected worldviews (may be >1 on a tie).
+  let selectedIndices;
 
   if (maxCredence < threshold) {
     const projects = Object.keys(data);
@@ -556,12 +585,22 @@ function voteMet(
     const { pearsonMatrix, rankMatrix } = calculatePairwiseSimilarities(adapters, projects);
     const positions = embedWorldviewsIn2dSpace(pearsonMatrix, rankMatrix);
     const centroid = calculateWeightedCentroid(positions, credences);
-    selectedIdx = findClosestWorldview(positions, centroid);
+    selectedIndices = findClosestWorldviews(positions, centroid);
+  } else {
+    // All worldviews tied for the max credence share the selection equally.
+    selectedIndices = credences
+      .map((c, i) => ({ c, i }))
+      .filter(({ c }) => isClose(c, maxCredence))
+      .map(({ i }) => i);
   }
 
-  const selectedScores = worldviewScores[selectedIdx];
-  const bestProject = _argmaxProject(selectedScores, tieBreak, rng);
-  allocations[bestProject] = increment;
+  // Each selected worldview directs an equal share of the increment to its
+  // best project(s), splitting further if there is a within-worldview tie.
+  const sharePerWorldview = increment / selectedIndices.length;
+  for (const idx of selectedIndices) {
+    const split = _splitAmongTied(worldviewScores[idx], sharePerWorldview);
+    for (const p of Object.keys(split)) allocations[p] += split[p];
+  }
   return allocations;
 }
 
@@ -890,17 +929,33 @@ function voteBorda(
   for (const p of projects) bordaScores[p] = 0.0;
 
   for (let idx = 0; idx < worldviewScores.length; idx++) {
-    const ranking = _buildProjectRanking(worldviewScores[idx]);
-    for (let rankIdx = 0; rankIdx < ranking.length; rankIdx++) {
-      const points = nProjects - 1 - rankIdx;
-      bordaScores[ranking[rankIdx]] += credences[idx] * points;
+    const scores = worldviewScores[idx];
+    // Group projects by score so ties within a worldview get equal Borda points
+    // (the average of the rank-points they would collectively occupy).
+    const sorted = projects.slice().sort((a, b) => scores[b] - scores[a]);
+    let rankIdx = 0;
+    while (rankIdx < sorted.length) {
+      // Find the end of this score group.
+      let groupEnd = rankIdx + 1;
+      while (
+        groupEnd < sorted.length &&
+        isClose(scores[sorted[groupEnd]], scores[sorted[rankIdx]])
+      ) {
+        groupEnd++;
+      }
+      // Average the points for ranks rankIdx..groupEnd-1.
+      let pointsSum = 0;
+      for (let r = rankIdx; r < groupEnd; r++) pointsSum += nProjects - 1 - r;
+      const avgPoints = pointsSum / (groupEnd - rankIdx);
+      for (let r = rankIdx; r < groupEnd; r++) {
+        bordaScores[sorted[r]] += credences[idx] * avgPoints;
+      }
+      rankIdx = groupEnd;
     }
   }
 
-  const bestValue = Math.max(...Object.values(bordaScores));
-  const winners = projects.filter((p) => isClose(bordaScores[p], bestValue));
-  const selectedProject = _chooseFromCandidates(winners, tieBreak, rng);
-  allocations[selectedProject] = increment;
+  const split = _splitAmongTied(bordaScores, increment);
+  for (const p of Object.keys(split)) allocations[p] += split[p];
   return allocations;
 }
 
@@ -1001,8 +1056,8 @@ function voteSplitCycle(
     winners = projects.filter((p) => isClose(netScores[p], bestNet));
   }
 
-  const selectedProject = _chooseFromCandidates(winners, tieBreak, rng);
-  allocations[selectedProject] = increment;
+  const share = increment / winners.length;
+  for (const p of winners) allocations[p] = share;
   return allocations;
 }
 
