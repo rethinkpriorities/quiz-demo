@@ -569,5 +569,3 @@ MIT License - feel free to use and modify as needed.
 
 **Questions or Issues?**
 See the testing checklist and refactoring notes for detailed documentation.
-
-Test changes
