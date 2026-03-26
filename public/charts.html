@@ -308,27 +308,27 @@ async function initDatasets() {
   const selA = document.getElementById('selectA');
   const selB = document.getElementById('selectB');
 
-  selA.innerHTML = availableDatasets.map(d =>
-    `<option value="${d.filename}">${d.name}</option>`
+  selA.innerHTML = availableDatasets.map((d, i) =>
+    `<option value="${i}">${d.name}</option>`
   ).join('');
   selA.disabled = false;
 
   selB.innerHTML = `<option value="">— none —</option>` +
-    availableDatasets.map(d =>
-      `<option value="${d.filename}">${d.name}</option>`
+    availableDatasets.map((d, i) =>
+      `<option value="${i}">${d.name}</option>`
     ).join('');
   selB.disabled = false;
 
   // Auto-load the first (most recent) dataset
-  await loadDatasetFromSelect('A');
+  loadDatasetFromSelect('A');
 }
 
-async function loadDatasetFromSelect(which) {
+function loadDatasetFromSelect(which) {
   const sel = document.getElementById('select' + which);
   const el  = document.getElementById('status' + which);
-  const filename = sel.value;
+  const idx = sel.value;
 
-  if (!filename) {
+  if (idx === '') {
     if (which === 'B') {
       dsB = null;
       el.textContent = '';
@@ -338,33 +338,26 @@ async function loadDatasetFromSelect(which) {
     return;
   }
 
-  el.textContent = 'Loading…';
-  el.className = 'status';
-  sel.disabled = true;
+  const entry = availableDatasets[Number(idx)];
+  const parsed = entry.data;
 
-  try {
-    const res = await fetch('./datasets/' + filename);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const parsed = await res.json();
-    if (!parsed.projects) throw new Error('Missing "projects" key');
-
-    if (which === 'A') {
-      ds = parsed;
-      el.textContent = `✓ ${Object.keys(ds.projects).length} projects`;
-      el.className = 'status ok';
-      document.getElementById('dsName').textContent = ds.name || '';
-      initControls();
-    } else {
-      dsB = parsed;
-      el.textContent = `✓ ${Object.keys(dsB.projects).length} projects`;
-      el.className = 'status ok';
-      if (activeTab === 'ab') render();
-    }
-  } catch (e) {
-    el.textContent = 'Error: ' + e.message.slice(0, 80);
+  if (!parsed.projects) {
+    el.textContent = 'Error: Missing "projects" key';
     el.className = 'status err';
-  } finally {
-    sel.disabled = false;
+    return;
+  }
+
+  if (which === 'A') {
+    ds = parsed;
+    el.textContent = `✓ ${Object.keys(ds.projects).length} projects`;
+    el.className = 'status ok';
+    document.getElementById('dsName').textContent = ds.name || '';
+    initControls();
+  } else {
+    dsB = parsed;
+    el.textContent = `✓ ${Object.keys(dsB.projects).length} projects`;
+    el.className = 'status ok';
+    if (activeTab === 'ab') render();
   }
 }
 
