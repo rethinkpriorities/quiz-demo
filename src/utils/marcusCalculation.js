@@ -514,7 +514,9 @@ function voteCredenceWeightedCustom(
       customWorldviews[i],
       fundingCaps
     );
-    perWorldviewScores[customWorldviews[i].name || `wv_${i}`] = marginalValues;
+    let key = customWorldviews[i].name || `wv_${i}`;
+    if (key in perWorldviewScores) key = `${key} (${i})`;
+    perWorldviewScores[key] = marginalValues;
     const split = _splitAmongTied(marginalValues, share);
     for (const p of Object.keys(split)) allocations[p] += split[p];
   }

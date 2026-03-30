@@ -13,9 +13,9 @@
   background: #0f4d6a;
   border-radius: 12px;
   padding: 3rem;
-  max-width: 48rem;
+  max-width: 90vw;
   width: 100%;
-  max-height: 85vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -113,15 +113,102 @@
   height: 280px;
   flex-shrink: 0;
   margin-bottom: 1rem;
+  cursor: crosshair;
 }
 
-.debugContent {
-  margin: 0;
+.iterationDetail {
   font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
   font-size: 0.75rem;
   line-height: 1.5;
   color: var(--text-secondary);
-  white-space: pre;
-  overflow-x: auto;
-  tab-size: 2;
+}
+
+.iterationHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.stoppedBadge,
+.cappedBadge,
+.unbeatenBadge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.stoppedBadge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.cappedBadge {
+  background: rgba(250, 204, 21, 0.2);
+  color: #fde68a;
+}
+
+.unbeatenBadge {
+  background: rgba(74, 222, 128, 0.2);
+  color: #86efac;
+}
+
+.iterationTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+}
+
+.iterationTable th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.7rem;
+}
+
+.iterationTable td {
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.iterationTable th:nth-child(n + 2),
+.iterationTable td:nth-child(n + 2) {
+  text-align: right;
+}
+
+.arrow {
+  text-align: center !important;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.colorDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+.deltaPositive {
+  color: #4ade80;
+}
+
+.drReduced {
+  color: #fde68a;
+}
+
+.noSelection {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  font-style: italic;
+  padding: 1rem 0;
 }
