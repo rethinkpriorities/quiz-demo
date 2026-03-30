@@ -227,6 +227,7 @@ const initialState = {
   selectedCalculations: { left: null, right: null },
   marketplaceBudget: null,
   fundingCaps: {}, // { projectId: number ($M) } — empty = no caps
+  drOverrides: {}, // { projectId: power (0-1) } — empty = dataset default
   justCompletedWorldview: null, // ID of worldview just completed (for hub alert)
 };
 
@@ -245,6 +246,7 @@ const ACTIONS = {
   SET_WORLDVIEW_NAME: 'SET_WORLDVIEW_NAME',
   SET_MARKETPLACE_BUDGET: 'SET_MARKETPLACE_BUDGET',
   SET_FUNDING_CAPS: 'SET_FUNDING_CAPS',
+  SET_DR_OVERRIDES: 'SET_DR_OVERRIDES',
   SET_SELECTED_PRESET: 'SET_SELECTED_PRESET',
   SET_JUST_COMPLETED_WORLDVIEW: 'SET_JUST_COMPLETED_WORLDVIEW',
   CLEAR_JUST_COMPLETED_WORLDVIEW: 'CLEAR_JUST_COMPLETED_WORLDVIEW',
@@ -420,6 +422,7 @@ function quizReducer(state, action) {
         currentStep: sessionStep,
         selectedCalculations: sourceSelectedCalculations,
         fundingCaps: sourceFundingCaps,
+        drOverrides: sourceDrOverrides,
       } = action.payload;
 
       // Helper to restore a single question's state
@@ -480,6 +483,7 @@ function quizReducer(state, action) {
           activeWorldviewId: sourceActiveId,
           selectedCalculations: sourceSelectedCalculations || state.selectedCalculations,
           fundingCaps: sourceFundingCaps || state.fundingCaps,
+          drOverrides: sourceDrOverrides || state.drOverrides,
         };
       }
 
@@ -526,6 +530,9 @@ function quizReducer(state, action) {
 
     case ACTIONS.SET_FUNDING_CAPS:
       return { ...state, fundingCaps: action.payload };
+
+    case ACTIONS.SET_DR_OVERRIDES:
+      return { ...state, drOverrides: action.payload };
 
     case ACTIONS.SET_SELECTED_CALCULATIONS:
       return {
@@ -751,6 +758,7 @@ export function QuizProvider({ children }) {
         activeWorldviewId: state.activeWorldviewId,
         selectedCalculations: state.selectedCalculations,
         fundingCaps: state.fundingCaps,
+        drOverrides: state.drOverrides,
       });
     }, 300);
 
@@ -766,6 +774,7 @@ export function QuizProvider({ children }) {
     state.activeWorldviewId,
     state.selectedCalculations,
     state.fundingCaps,
+    state.drOverrides,
     isHydrating,
   ]);
 
@@ -834,6 +843,10 @@ export function QuizProvider({ children }) {
 
   const setFundingCaps = useCallback((caps) => {
     dispatch({ type: ACTIONS.SET_FUNDING_CAPS, payload: caps });
+  }, []);
+
+  const setDrOverrides = useCallback((overrides) => {
+    dispatch({ type: ACTIONS.SET_DR_OVERRIDES, payload: overrides });
   }, []);
 
   const setWorldviewName = useCallback((worldviewId, name) => {
@@ -931,13 +944,14 @@ export function QuizProvider({ children }) {
 
   // Calculate a single method by key
   const computeMethod = useCallback(
-    (key, credences, debugConfig, budget, fundingCaps) => {
+    (key, credences, debugConfig, budget, fundingCaps, drOverrides) => {
       const opts = {
         budget: budget || dataset.budget,
         projectData: dataset.projects,
         datasetId: dataset.id,
         incrementSize: dataset.incrementSize,
         fundingCaps,
+        drOverrides,
       };
       switch (key) {
         case 'credenceWeighted':
@@ -997,7 +1011,8 @@ export function QuizProvider({ children }) {
         currentCredences,
         state.debugConfig,
         state.marketplaceBudget,
-        state.fundingCaps
+        state.fundingCaps,
+        state.drOverrides
       );
     }
     return results;
@@ -1008,6 +1023,7 @@ export function QuizProvider({ children }) {
     state.debugConfig,
     state.marketplaceBudget,
     state.fundingCaps,
+    state.drOverrides,
   ]);
 
   const originalCalculationResults = useMemo(() => {
@@ -1019,7 +1035,8 @@ export function QuizProvider({ children }) {
         originalCredences,
         state.debugConfig,
         state.marketplaceBudget,
-        state.fundingCaps
+        state.fundingCaps,
+        state.drOverrides
       );
     }
     return results;
@@ -1030,6 +1047,7 @@ export function QuizProvider({ children }) {
     state.debugConfig,
     state.marketplaceBudget,
     state.fundingCaps,
+    state.drOverrides,
   ]);
 
   // Check if any credences have changed from originals
@@ -1139,6 +1157,7 @@ export function QuizProvider({ children }) {
       selectedCalculations: state.selectedCalculations,
       marketplaceBudget: state.marketplaceBudget ?? dataset.budget,
       fundingCaps: state.fundingCaps,
+      drOverrides: state.drOverrides,
       justCompletedWorldview: state.justCompletedWorldview,
       shareUrlError,
       isHydrating,
@@ -1165,6 +1184,7 @@ export function QuizProvider({ children }) {
       switchWorldview,
       setMarketplaceBudget,
       setFundingCaps,
+      setDrOverrides,
       setSelectedCalculations,
       setWorldviewName,
       clearJustCompletedWorldview,
@@ -1207,6 +1227,7 @@ export function QuizProvider({ children }) {
       state.selectedCalculations,
       state.marketplaceBudget,
       state.fundingCaps,
+      state.drOverrides,
       state.justCompletedWorldview,
       shareUrlError,
       isHydrating,
@@ -1224,6 +1245,7 @@ export function QuizProvider({ children }) {
       switchWorldview,
       setMarketplaceBudget,
       setFundingCaps,
+      setDrOverrides,
       setSelectedCalculations,
       setWorldviewName,
       clearJustCompletedWorldview,

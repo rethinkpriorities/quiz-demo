@@ -109,7 +109,7 @@ const MAX_TOTAL_BUDGET = 1000;
 
 export function useTableState() {
   const { dataset } = useDataset();
-  const { fundingCaps, isHydrating } = useQuiz();
+  const { fundingCaps, drOverrides, isHydrating } = useQuiz();
 
   const [worldviews, setWorldviews] = useState(
     () => _savedState?.worldviews ?? tableConfig.presets.map((p) => createWorldview(p.id))
@@ -241,7 +241,8 @@ export function useTableState() {
         dataset.projects,
         worldviewsWithCredences,
         stagesWithCaps,
-        dataset.incrementSize
+        dataset.incrementSize,
+        drOverrides
       );
       console.log(
         '[table] recalc stages',
@@ -265,7 +266,7 @@ export function useTableState() {
       for (const id of Object.keys(dataset.projects)) empty[id] = 0;
       return { allocations: empty, funding: empty, stageResults: [] };
     }
-  }, [debouncedState, dataset, isHydrating, fundingCaps]);
+  }, [debouncedState, dataset, isHydrating, fundingCaps, drOverrides]);
 
   const addWorldview = useCallback(() => {
     setWorldviews((prev) => {

@@ -15,6 +15,7 @@ import {
   adjustForExtinctionRisk,
   getDiminishingReturnsFactor,
 } from './projectScoring.js';
+import { applyDrOverrides } from './drOverrides.js';
 
 // =============================================================================
 // HELPERS
@@ -1293,13 +1294,20 @@ export function computeMarcusAllocation(
  * @param {number} incrementSize - Step size in $M
  * @returns {{ allocations: Object, funding: Object, stageResults: Array }}
  */
-export function computeMultiStageAllocation(projectData, worldviews, stages, incrementSize) {
+export function computeMultiStageAllocation(
+  projectData,
+  worldviews,
+  stages,
+  incrementSize,
+  drOverrides
+) {
   // Strip display-only fields once
-  const cleanData = {};
+  let cleanData = {};
   for (const [id, project] of Object.entries(projectData)) {
     const { name, color, ...data } = project;
     cleanData[id] = data;
   }
+  cleanData = applyDrOverrides(cleanData, drOverrides);
 
   const cumulativeFunding = {};
   for (const projectId of Object.keys(cleanData)) {

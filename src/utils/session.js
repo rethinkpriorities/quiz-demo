@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   SKIP_CONFLICT: 'quiz_skip_conflict',
 };
 
-const STATE_VERSION = 8;
+const STATE_VERSION = 9;
 
 /**
  * Get or create a session ID for this browser tab.
@@ -42,6 +42,7 @@ export function saveQuizState(state) {
     worldviewNames,
     marketplaceBudget,
     fundingCaps,
+    drOverrides,
   } = state;
 
   const worldviewData = {};
@@ -72,6 +73,7 @@ export function saveQuizState(state) {
       worldviewNames,
       marketplaceBudget,
       fundingCaps,
+      drOverrides,
     },
   };
 
