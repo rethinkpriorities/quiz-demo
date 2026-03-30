@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Copy, Check } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import AllocationBar from './AllocationBar';
 import { copyToClipboard } from '../../utils/clipboard';
 import styles from '../../styles/components/ResultsModal.module.css';
@@ -8,6 +9,34 @@ import tableStyles from '../../styles/components/TableMode.module.css';
 function ResultsModal({ results, projectEntries, fundingCaps = {}, totalBudget, onClose }) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('results');
+
+  const chartData = useMemo(() => {
+    if (!results.debugTrace?.length) return [];
+    const zeroPoint = { iteration: 0 };
+    for (const [id] of projectEntries) zeroPoint[id] = 0;
+    return [
+      zeroPoint,
+      ...results.debugTrace.map((entry, i) => ({
+        iteration: i + 1,
+        ...entry.fundingAfter,
+      })),
+    ];
+  }, [results.debugTrace, projectEntries]);
+
+  const projectColors = useMemo(() => {
+    const map = {};
+    for (const [id, project] of projectEntries) {
+      map[id] = project.color;
+    }
+    return map;
+  }, [projectEntries]);
+
+  const allocatedIds = useMemo(() => {
+    if (!results.debugTrace?.length) return [];
+    return projectEntries
+      .map(([id]) => id)
+      .filter((id) => results.debugTrace.some((entry) => entry.fundingAfter[id] > 0));
+  }, [results.debugTrace, projectEntries]);
 
   const handleCopy = async () => {
     const header = 'Project\tAllocation %\tFunding ($M)';
@@ -59,7 +88,54 @@ function ResultsModal({ results, projectEntries, fundingCaps = {}, totalBudget, 
               ))}
             </div>
           ) : (
-            <pre className={styles.debugContent}>{JSON.stringify(results.debugTrace, null, 2)}</pre>
+            <>
+              {chartData.length > 0 && (
+                <div className={styles.chartContainer}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <XAxis
+                        dataKey="iteration"
+                        tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                        axisLine={{ stroke: 'var(--border-subtle)' }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                        axisLine={{ stroke: 'var(--border-subtle)' }}
+                        tickLine={false}
+                        tickFormatter={(v) => `$${v}M`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: '#0a3549',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                        labelFormatter={(v) => `Iteration ${v}`}
+                        formatter={(value, name) => {
+                          const project = projectEntries.find(([id]) => id === name);
+                          return [`$${Math.round(value)}M`, project?.[1]?.name || name];
+                        }}
+                      />
+                      {allocatedIds.map((id) => (
+                        <Area
+                          key={id}
+                          type="monotone"
+                          dataKey={id}
+                          stroke={projectColors[id]}
+                          fill="none"
+                          isAnimationActive={false}
+                        />
+                      ))}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              <pre className={styles.debugContent}>
+                {JSON.stringify(results.debugTrace, null, 2)}
+              </pre>
+            </>
           )}
         </div>
         {activeTab === 'results' && (

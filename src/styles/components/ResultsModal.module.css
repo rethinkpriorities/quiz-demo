@@ -109,6 +109,12 @@
   color: #4ade80;
 }
 
+.chartContainer {
+  height: 280px;
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+}
+
 .debugContent {
   margin: 0;
   font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
