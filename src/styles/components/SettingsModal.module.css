@@ -122,6 +122,43 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.overridesHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 0 0.25rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.overridesHeaderLabel {
+  flex: 1;
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.overridesHeaderCol {
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Match the width of the inputs + prefix/suffix they sit above */
+.overridesHeaderCol:first-of-type {
+  width: calc(5.5rem + 1.5rem); /* input + $ + M + gaps */
+}
+
+.overridesHeaderCol:last-child {
+  width: 5.5rem;
+}
+
 .capsList {
   display: flex;
   flex-direction: column;
@@ -196,4 +233,12 @@
 .capInput::placeholder {
   color: rgba(255, 255, 255, 0.3);
   text-align: right;
+}
+
+.sectionHint {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  margin: 0.5rem 0 0;
+  line-height: 1.4;
 }

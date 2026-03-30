@@ -6,7 +6,7 @@ import styles from '../../styles/components/SettingsModal.module.css';
 
 function SettingsModal({ onClose }) {
   const { dataset, datasets, setActiveDataset } = useDataset();
-  const { fundingCaps, setFundingCaps } = useQuiz();
+  const { fundingCaps, setFundingCaps, drOverrides, setDrOverrides } = useQuiz();
 
   // Local state mirrors fundingCaps for controlled inputs
   const projectEntries = useMemo(
@@ -20,6 +20,14 @@ function SettingsModal({ onClose }) {
       caps[id] = fundingCaps[id] != null ? String(fundingCaps[id]) : '';
     }
     return caps;
+  });
+
+  const [localDr, setLocalDr] = useState(() => {
+    const dr = {};
+    for (const { id } of projectEntries) {
+      dr[id] = drOverrides[id] != null ? String(drOverrides[id]) : '';
+    }
+    return dr;
   });
 
   const handleSelect = (id) => {
@@ -42,6 +50,22 @@ function SettingsModal({ onClose }) {
       setFundingCaps(newCaps);
     },
     [fundingCaps, setFundingCaps]
+  );
+
+  const handleDrChange = useCallback(
+    (projectId, value) => {
+      setLocalDr((prev) => ({ ...prev, [projectId]: value }));
+
+      const num = parseFloat(value);
+      const newOverrides = { ...drOverrides };
+      if (value === '' || isNaN(num)) {
+        delete newOverrides[projectId];
+      } else {
+        newOverrides[projectId] = Math.max(0, Math.min(1, num));
+      }
+      setDrOverrides(newOverrides);
+    },
+    [drOverrides, setDrOverrides]
   );
 
   return (
@@ -71,7 +95,12 @@ function SettingsModal({ onClose }) {
           </div>
 
           <div className={styles.capsSection}>
-            <h3 className={styles.sectionTitle}>Funding Caps</h3>
+            <h3 className={styles.sectionTitle}>Project Overrides</h3>
+            <div className={styles.overridesHeader}>
+              <span className={styles.overridesHeaderLabel}>Project</span>
+              <span className={styles.overridesHeaderCol}>Cap ($M)</span>
+              <span className={styles.overridesHeaderCol}>DR power</span>
+            </div>
             <div className={styles.capsList}>
               {projectEntries.map(({ id, name, color }) => (
                 <div key={id} className={styles.capRow}>
@@ -86,15 +115,26 @@ function SettingsModal({ onClose }) {
                       className={styles.capInput}
                       value={localCaps[id] ?? ''}
                       onChange={(e) => handleCapChange(id, e.target.value)}
-                      placeholder="No limit"
+                      placeholder="None"
                       min="0"
                       step="10"
                     />
                     <span className={styles.capSuffix}>M</span>
                   </div>
+                  <input
+                    type="number"
+                    className={styles.capInput}
+                    value={localDr[id] ?? ''}
+                    onChange={(e) => handleDrChange(id, e.target.value)}
+                    placeholder="Default"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                  />
                 </div>
               ))}
             </div>
+            <p className={styles.sectionHint}>DR power: exponent 0–1. Empty = dataset default.</p>
           </div>
         </div>
       </div>

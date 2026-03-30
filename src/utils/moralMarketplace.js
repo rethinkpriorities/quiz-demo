@@ -14,6 +14,7 @@
 
 import questionsConfig from '../../config/questions.json';
 import { calculateAllProjects, adjustForExtinctionRisk } from './projectScoring.js';
+import { applyDrOverrides } from './drOverrides.js';
 import {
   quizToWorldviews,
   Q_TIMEFRAMES,
@@ -441,16 +442,17 @@ function emptyResult(data) {
  * @returns {Object} Allocation percentages { project_id: percentage }
  */
 function runAllocation(votingMethod, credences, options = {}) {
-  const { projectData, datasetId, incrementSize = 10, fundingCaps } = options;
+  const { projectData, datasetId, incrementSize = 10, fundingCaps, drOverrides } = options;
   if (!HAS_ALL_QUESTIONS || !projectData) return emptyResult(projectData);
 
   const budget = Math.min(options.budget || MAX_BUDGET_M, MAX_BUDGET_M);
   const credArrays = convertCredences(credences);
   const worldviews = computeWorldviewCredences(credArrays);
+  const effectiveProjectData = applyDrOverrides(projectData, drOverrides);
   const packed = packForParliament(
     getPrecomputedResults(projectData, datasetId),
     worldviews,
-    projectData
+    effectiveProjectData
   );
 
   const { funding } = allocateBudget(projectData, votingMethod, budget, {
