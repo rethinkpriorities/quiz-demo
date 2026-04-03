@@ -105,6 +105,45 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: '*'
 
+  DonateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: quiz-demo-donate
+      CodeUri: donate/
+      Handler: index.handler
+      Runtime: nodejs22.x
+      Timeout: 30
+      MemorySize: 256
+
+  DonateFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt DonateFunction.Arn
+      Cors:
+        AllowOrigins:
+          - 'https://rethinkpriorities.github.io'
+        AllowMethods:
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  DonateFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DonateFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  DonateFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DonateFunction
+      Action: lambda:InvokeFunction
+      Principal: '*'
+
 Outputs:
   ShareFunctionUrl:
     Description: Function URL for the Share API
@@ -118,3 +157,9 @@ Outputs:
   ExplainFunctionArn:
     Description: ARN of the Explain function
     Value: !GetAtt ExplainFunction.Arn
+  DonateFunctionUrl:
+    Description: Function URL for the Donate API
+    Value: !GetAtt DonateFunctionUrl.FunctionUrl
+  DonateFunctionArn:
+    Description: ARN of the Donate function
+    Value: !GetAtt DonateFunction.Arn

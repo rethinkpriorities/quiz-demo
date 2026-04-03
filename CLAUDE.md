@@ -382,20 +382,17 @@ Entry point: "Get advice on how to split donations" from post-results actions. D
 - **C. Combine your views with RP's advice** — Opens multi-worldview allocation screen (see #7).
 - **D. Make a donation through the RP DAF** — Generates pre-filled PDF or email specifying the requested split.
 
-### 4. Diminishing Returns Line Chart
-"See how scores change as I donate more money" — opens a line chart. X-axis: total donation amount. Y-axis: fund score. One line per fund, adjusted using existing diminishing returns factors per fund.
-
-### 5. Sensitivity Analysis (Change One Input)
+### 4. Sensitivity Analysis (Change One Input)
 User picks one of the four questions and selects a different option. Displays a grouped bar chart: for each fund, one bar for original inputs and one bar for new inputs, in fixed fund order.
 
 **Two actions:**
 - "Update to new inputs" — replaces original inputs, removes before bars
 - "Save as separate comparison" — keeps both sets for later reference
 
-### 6. Compare Quiz Runs
+### 5. Compare Quiz Runs
 If the user has saved prior runs, they can select up to 3 and view them as a grouped bar chart (one bar per run per fund, fixed fund order). If no second run exists, user is prompted to retake the quiz first. Runs identified by label (auto-generated timestamp or user-defined name).
 
-### 7. Multi-Worldview Allocation Screen
+### 6. Multi-Worldview Allocation Screen
 Computes recommended donation allocation by aggregating across multiple worldviews using budget-by-credence as the sole aggregation method.
 
 **Worldviews included:**
@@ -413,7 +410,7 @@ Computes recommended donation allocation by aggregating across multiple worldvie
 
 **Post-allocation actions:** Save results, add a new worldview (retake quiz), compare to a single worldview (grouped bar chart), reset all inputs, go to advanced mode.
 
-### 8. AI Results Explanation (Future)
+### 7. AI Results Explanation (Future)
 "Explain these results" button below charts opens LLM interface. Marked as "Future version" in spec. Backend Lambda exists (`lambda/explain/`) but is not deployed or connected to the simple quiz frontend.
 
 ---
