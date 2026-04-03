@@ -47,7 +47,6 @@
 .optionButton:hover {
   background: var(--overlay-light);
   border-color: var(--border-medium);
-  transform: translateY(-1px);
 }
 
 .optionSelected {

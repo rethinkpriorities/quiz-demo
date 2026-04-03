@@ -3,6 +3,8 @@ import { Settings } from 'lucide-react';
 import { useTableState } from '../../hooks/useTableState';
 import { useTableShareUrl } from '../../hooks/useTableShareUrl';
 import { parseTableShareUrl, parseTableHash } from '../../utils/tableShareUrl';
+import { useQuiz } from '../../context/useQuiz';
+import { useDataset } from '../../context/DatasetContext';
 import SpreadsheetInput from './SpreadsheetInput';
 import ResultsPanel from './ResultsPanel';
 import ShareButton from '../ui/ShareButton';
@@ -45,6 +47,9 @@ function TableModeScreen() {
     hydrateFromShare,
   } = useTableState();
 
+  const { fundingCaps, drOverrides, setFundingCaps, setDrOverrides } = useQuiz();
+  const { dataset, datasets, setActiveDataset } = useDataset();
+
   const [hydrating, setHydrating] = useState(false);
   const [shareError, setShareError] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -60,9 +65,14 @@ function TableModeScreen() {
       window.setTimeout(() => setShareError(null), 5000);
     } else if (data) {
       hydrateFromShare(data);
+      if (data.fundingCaps) setFundingCaps(data.fundingCaps);
+      if (data.drOverrides) setDrOverrides(data.drOverrides);
+      if (data.datasetId && datasets.some((d) => d.id === data.datasetId)) {
+        setActiveDataset(data.datasetId);
+      }
     }
     clearShareParam();
-  }, [hydrateFromShare]);
+  }, [hydrateFromShare, setFundingCaps, setDrOverrides, datasets, setActiveDataset]);
 
   // Hydrate from share URL on mount
   useEffect(() => {
@@ -100,6 +110,9 @@ function TableModeScreen() {
     worldviews,
     credences,
     stages,
+    fundingCaps,
+    drOverrides,
+    datasetId: dataset.id,
   });
 
   if (hydrating) {

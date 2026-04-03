@@ -133,9 +133,17 @@ if (copyConfig) {
 
 // Validate dataset files in config/datasets/
 const datasetsDir = join(projectRoot, 'config', 'datasets');
-const datasetFiles = existsSync(datasetsDir)
-  ? readdirSync(datasetsDir).filter((f) => f.endsWith('.json'))
-  : [];
+const allDatasetEntries = existsSync(datasetsDir) ? readdirSync(datasetsDir) : [];
+
+// Flag any non-.json files in the datasets directory
+const nonJsonFiles = allDatasetEntries.filter((f) => !f.startsWith('.') && !f.endsWith('.json'));
+if (nonJsonFiles.length > 0) {
+  console.error('✗ Non-.json files found in config/datasets/:');
+  nonJsonFiles.forEach((f) => console.error(`  ${f} (must have .json extension)`));
+  hasErrors = true;
+}
+
+const datasetFiles = allDatasetEntries.filter((f) => f.endsWith('.json'));
 
 /**
  * Validate a projects+dimensions bundle (used for dataset files).

@@ -86,6 +86,7 @@ function ResultsScreen() {
     worldviewNames,
     marketplaceBudget,
     fundingCaps,
+    datasetId: dataset.id,
   });
 
   // Methods info modal state

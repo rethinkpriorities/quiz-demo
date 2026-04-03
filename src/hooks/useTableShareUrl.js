@@ -11,7 +11,14 @@ import { copyToClipboard } from '../utils/clipboard';
  * @param {Array} options.stages
  * @returns {{ copied: boolean, loading: boolean, error: string|null, handleShare: Function }}
  */
-export function useTableShareUrl({ worldviews, credences, stages }) {
+export function useTableShareUrl({
+  worldviews,
+  credences,
+  stages,
+  fundingCaps,
+  drOverrides,
+  datasetId,
+}) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,6 +32,9 @@ export function useTableShareUrl({ worldviews, credences, stages }) {
         worldviews,
         credences,
         stages,
+        fundingCaps,
+        drOverrides,
+        datasetId,
       });
 
       await copyToClipboard(url);
@@ -37,7 +47,7 @@ export function useTableShareUrl({ worldviews, credences, stages }) {
     } finally {
       setLoading(false);
     }
-  }, [worldviews, credences, stages]);
+  }, [worldviews, credences, stages, fundingCaps, drOverrides, datasetId]);
 
   return { copied, loading, error, handleShare };
 }
