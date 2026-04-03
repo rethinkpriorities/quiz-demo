@@ -67,7 +67,7 @@ function SimpleQuizScreen() {
           </div>
 
           {/* More options + manual input */}
-          <SimpleMoreOptions question={currentQuestion} />
+          <SimpleMoreOptions key={currentQuestion.id} question={currentQuestion} />
 
           {/* Navigation */}
           <div className={styles.navRow}>

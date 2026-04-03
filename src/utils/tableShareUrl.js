@@ -37,6 +37,11 @@ export async function generateTableShareUrl(state) {
     worldviews: state.worldviews,
     credences: state.credences,
     stages: state.stages,
+    ...(state.fundingCaps &&
+      Object.keys(state.fundingCaps).length > 0 && { fundingCaps: state.fundingCaps }),
+    ...(state.drOverrides &&
+      Object.keys(state.drOverrides).length > 0 && { drOverrides: state.drOverrides }),
+    ...(state.datasetId && { datasetId: state.datasetId }),
   };
 
   const response = await fetch(endpoints.share, {
@@ -94,6 +99,10 @@ export async function parseTableShareUrl() {
       result.totalBudget = data.totalBudget;
       result.methodOptions = data.methodOptions;
     }
+
+    if (data.fundingCaps) result.fundingCaps = data.fundingCaps;
+    if (data.drOverrides) result.drOverrides = data.drOverrides;
+    if (data.datasetId) result.datasetId = data.datasetId;
 
     return result;
   } catch (err) {

@@ -71,11 +71,11 @@ async function createShare(event, db) {
   }
 
   const body = JSON.parse(bodyStr);
-  const { type, sessionId, quizVersion } = body;
+  const { type, sessionId, quizVersion, datasetId } = body;
 
   let dataToStore;
   if (type === 'table' || type === 'marcus') {
-    const { worldviews, credences, stages, selectedMethod, totalBudget, methodOptions } = body;
+    const { worldviews, credences, stages, selectedMethod, totalBudget, methodOptions, fundingCaps, drOverrides } = body;
     if (!worldviews) {
       return jsonResponse(400, { error: 'Missing worldviews' });
     }
@@ -87,13 +87,18 @@ async function createShare(event, db) {
       dataToStore.totalBudget = totalBudget;
       dataToStore.methodOptions = methodOptions;
     }
+    if (fundingCaps) dataToStore.fundingCaps = fundingCaps;
+    if (drOverrides) dataToStore.drOverrides = drOverrides;
   } else {
+
     const { worldviews, activeWorldviewId } = body;
     if (!worldviews || !activeWorldviewId) {
       return jsonResponse(400, { error: 'Missing worldviews or activeWorldviewId' });
     }
     dataToStore = { worldviews, activeWorldviewId };
   }
+
+  if (datasetId) dataToStore.datasetId = datasetId;
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const shortId = generateShortId();
@@ -157,6 +162,7 @@ async function getShare(event, db) {
       ...baseResponse,
       worldviews: storedData.worldviews,
       activeWorldviewId: storedData.activeWorldviewId,
+      ...(storedData.datasetId && { datasetId: storedData.datasetId }),
     });
   }
 

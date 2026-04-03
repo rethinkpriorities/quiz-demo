@@ -21,6 +21,7 @@ export function useShareUrl({
   worldviewNames,
   marketplaceBudget,
   fundingCaps,
+  datasetId,
 }) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,7 @@ export function useShareUrl({
       worldviewNames,
       marketplaceBudget,
       fundingCaps,
+      datasetId,
     };
 
     try {
@@ -75,6 +77,7 @@ export function useShareUrl({
     worldviewNames,
     marketplaceBudget,
     fundingCaps,
+    datasetId,
   ]);
 
   return { copied, loading, error, handleShare };

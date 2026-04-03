@@ -551,7 +551,7 @@ function quizReducer(state, action) {
 export const QuizContext = createContext(null);
 
 export function QuizProvider({ children }) {
-  const { dataset } = useDataset();
+  const { dataset, datasets, setActiveDataset } = useDataset();
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [shareUrlError, setShareUrlError] = useState(null);
   const [isHydrating, setIsHydrating] = useState(true);
@@ -559,6 +559,16 @@ export function QuizProvider({ children }) {
   // Initialize session ID lazily (only once on first render)
   const [sessionId] = useState(() => getOrCreateSessionId());
   const saveTimeoutRef = useRef(null);
+
+  // Try to switch to the dataset from share data (fall back to current if unavailable)
+  const tryRestoreDataset = useCallback(
+    (datasetId) => {
+      if (datasetId && datasets.some((d) => d.id === datasetId)) {
+        setActiveDataset(datasetId);
+      }
+    },
+    [datasets, setActiveDataset]
+  );
 
   // Hydration effect: check for share URL and/or session storage on mount
   useEffect(() => {
@@ -641,13 +651,14 @@ export function QuizProvider({ children }) {
 
       // No conflict - load share data directly
       dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: shareResult });
+      tryRestoreDataset(shareResult.datasetId);
       clearShareHash();
       clearQuizState(); // Clear any old session data
       setIsHydrating(false);
     };
 
     hydrate();
-  }, []);
+  }, [tryRestoreDataset]);
 
   // Listen for hash changes (e.g., user pastes URL while already on page)
   useEffect(() => {
@@ -685,13 +696,14 @@ export function QuizProvider({ children }) {
 
       // No conflict - load share data directly
       dispatch({ type: ACTIONS.RESTORE_FROM_URL, payload: shareResult });
+      tryRestoreDataset(shareResult.datasetId);
       clearShareHash();
       clearQuizState();
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [tryRestoreDataset]);
 
   // Conflict resolution handlers
   const handleKeepMine = useCallback(() => {
@@ -709,11 +721,12 @@ export function QuizProvider({ children }) {
         type: ACTIONS.RESTORE_FROM_URL,
         payload: conflictState.shareData,
       });
+      tryRestoreDataset(conflictState.shareData.datasetId);
       clearQuizState(); // Clear session since we're loading shared
     }
     clearShareHash();
     setConflictState(null);
-  }, [conflictState]);
+  }, [conflictState, tryRestoreDataset]);
 
   const handleOpenNewTab = useCallback(() => {
     // Set flag so the new tab skips conflict detection
