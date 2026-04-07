@@ -1,4 +1,37 @@
-/* global exports */
+/* global exports, process */
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+function generateShortId(length = 7) {
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  }
+  return result;
+}
+
+async function getDbClient() {
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+
+  if (!url) {
+    throw new Error('Missing TURSO_DATABASE_URL');
+  }
+
+  // Local file: use native client (has SQLite bindings)
+  // Remote Turso: use web client (HTTP only, no native deps)
+  if (url.startsWith('file:')) {
+    const { createClient } = await import('@libsql/client');
+    return createClient({ url });
+  }
+
+  if (!authToken) {
+    throw new Error('Missing TURSO_AUTH_TOKEN for remote database');
+  }
+
+  const { createClient } = await import('@libsql/client/web');
+  return createClient({ url, authToken });
+}
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +52,17 @@ function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function logEmail(name, refId, memo) {
+  const date = new Date().toISOString().split('T')[0];
+  console.log('========== EMAIL NOTIFICATION (local dev) ==========');
+  console.log(`To:      ${process.env.NOTIFY_EMAIL || 'giving@rethinkpriorities.org'}`);
+  console.log(`From:    ${process.env.SENDER_EMAIL || 'noreply@rethinkpriorities.org'}`);
+  console.log(`Subject: Donation intent: ${name} — ${date}`);
+  console.log('--- Body ---');
+  console.log(memo);
+  console.log('================================================');
+}
+
 exports.handler = async function (event) {
   const { httpMethod } = event;
 
@@ -32,7 +76,7 @@ exports.handler = async function (event) {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { name, email, anonymity, splitPreference, splits, amount, refId } = body;
+    const { name, email, anonymity, splitPreference, splits, amount, refId, memo } = body;
 
     // Validate required fields
     const errors = [];
@@ -50,21 +94,44 @@ exports.handler = async function (event) {
       }
     }
 
+    if (!memo || !memo.trim()) errors.push('memo is required');
+
     if (errors.length) {
       return jsonResponse(400, { error: errors.join('; ') });
     }
 
-    // For now, echo back success (side effects TBD)
-    console.log('Donation intent received:', {
-      refId,
-      name: name.trim(),
-      email: email.trim(),
-      anonymity,
-      splitPreference,
-      amount: amount || null,
-    });
+    // Save to database
+    const db = await getDbClient();
+    let id;
 
-    return jsonResponse(201, { success: true, refId });
+    for (let attempt = 0; attempt < 5; attempt++) {
+      id = generateShortId();
+      try {
+        await db.execute({
+          sql: `INSERT INTO donations (id, ref_id, email, form_data, memo)
+                VALUES (?, ?, ?, ?, ?)`,
+          args: [id, refId, email.trim(), JSON.stringify(body), memo],
+        });
+        break;
+      } catch (error) {
+        if (error.message?.includes('UNIQUE constraint')) {
+          id = null;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!id) {
+      return jsonResponse(500, { error: 'Failed to generate unique ID' });
+    }
+
+    console.log('Donation intent saved:', { id, refId, email: email.trim() });
+
+    // Log email locally (no SES in dev)
+    logEmail(name.trim(), refId, memo);
+
+    return jsonResponse(201, { success: true, refId, id, emailSent: false });
   } catch (error) {
     console.error('Function error:', error);
     return jsonResponse(500, { error: 'Internal server error' });

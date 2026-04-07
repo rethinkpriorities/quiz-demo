@@ -339,14 +339,45 @@ A donation intent form where donors provide their details, choose a fund split p
 
 **Funds:** Each fund entry has an `id` matching a project slug from the dataset (`givewell`, `leaf`, `ea_awf`, `longview_ai`, `longview_nuclear`, `sentinel_bio`), a display `name`, a `sub` label, and a `defaultPct` (currently all `null`/TBD).
 
-**Backend:** POST to `/api/donate` Lambda. Currently validates required fields and echoes success — no database writes or email side effects yet.
+**Backend:** POST to `/api/donate` Lambda. Validates required fields, saves to Turso DB (`donations` table), and sends email notification via AWS SES to a configurable recipient. The full POST body is stored as a JSON blob in `form_data` for flexibility.
 
 **Support footer:** Hidden on `#donate` (checked in `App.jsx`).
 
+**Deploying to production (steps in order):**
+
+1. **Fix frontend URL routing** — `api.js` currently sends donate requests to `${VITE_API_URL}/donate`, which hits the share Lambda. Add a separate `VITE_DONATE_API_URL` env var since each Lambda gets its own Function URL.
+
+2. **Run migration on prod Turso:**
+   ```bash
+   turso db shell donor-compass < migrations/002_donations.sql
+   ```
+
+3. **Deploy the donate Lambda** (direct deploy — SAM deploy fails, see Lambda Deployment notes above):
+   ```bash
+   cd lambda/donate && npm ci && cd ..
+   sam build
+   cd .aws-sam/build/DonateFunction
+   zip -r /tmp/lambda-donate.zip .
+   aws lambda update-function-code \
+     --function-name quiz-demo-donate \
+     --zip-file fileb:///tmp/lambda-donate.zip
+   ```
+
+4. **Set Lambda env vars** — The direct deploy skips CloudFormation parameter overrides, so set these manually in the Lambda console (or via `aws lambda update-function-configuration`):
+   - `TURSO_DATABASE_URL` — same Turso URL as the share Lambda
+   - `TURSO_AUTH_TOKEN` — same Turso token as the share Lambda
+   - `NOTIFY_EMAIL` — recipient for donation notifications (e.g. `giving@rethinkpriorities.org`)
+   - `SENDER_EMAIL` — verified SES sender (e.g. `noreply@rethinkpriorities.org`)
+
+5. **Verify SES email addresses** — If the AWS account is in the SES sandbox (likely), both sender and recipient addresses must be verified (each gets a confirmation email to click). For production volume, request SES production access via the AWS console.
+
+6. **Set `VITE_DONATE_API_URL` in GitHub repo secrets** — Get the Function URL:
+   ```bash
+   aws lambda get-function-url-config --function-name quiz-demo-donate
+   ```
+   Add it to the repo secrets and redeploy the frontend to GitHub Pages.
+
 **Not yet implemented:**
-- Lambda side effects (email notification to RP, database persistence)
-- Lambda not deployed to production yet (SAM template is ready)
-- `VITE_DONATE_API_URL` not set in GitHub repo secrets
 - `defaultPct` values on funds are all `null` (awaiting RP's recommended split)
 - No link from quiz results screen to `#donate` yet
 - No session persistence (form resets on reload)
@@ -359,9 +390,10 @@ A donation intent form where donors provide their details, choose a fund split p
 | `src/components/donate/DonationPage.jsx` | Main form component (controlled state, memo generation, submit) |
 | `src/components/donate/SplitEditor.jsx` | Fund split percentage editor with validation |
 | `src/styles/components/DonationPage.module.css` | Styling (dark teal theme, CSS variables) |
-| `lambda/donate/index.mjs` | AWS Lambda handler (validate + echo) |
-| `lambda/donate/package.json` | Lambda package manifest |
-| `netlify/functions/donate.js` | Local dev mirror (CommonJS) |
+| `lambda/donate/index.mjs` | AWS Lambda handler (validate, DB write, SES email) |
+| `lambda/donate/package.json` | Lambda package manifest (`@libsql/client`, `@aws-sdk/client-ses`) |
+| `netlify/functions/donate.js` | Local dev mirror (DB write, email logged to console) |
+| `migrations/002_donations.sql` | Creates `donations` table + indexes |
 | `donation_intent_form.html` | Original standalone HTML reference |
 
 ### Key Architecture Notes

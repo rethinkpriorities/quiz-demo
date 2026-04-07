@@ -1,5 +1,33 @@
 // AWS Lambda handler for donation intent API
 
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+function generateShortId(length = 7) {
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  }
+  return result;
+}
+
+async function getDbClient() {
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+
+  if (!url) {
+    throw new Error('Missing TURSO_DATABASE_URL');
+  }
+
+  if (!authToken) {
+    throw new Error('Missing TURSO_AUTH_TOKEN');
+  }
+
+  const { createClient } = await import('@libsql/client/web');
+  return createClient({ url, authToken });
+}
+
 const RESPONSE_HEADERS = {
   'Content-Type': 'application/json',
 };
@@ -16,6 +44,30 @@ function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+async function sendNotificationEmail(name, refId, memo) {
+  const senderEmail = process.env.SENDER_EMAIL;
+  const notifyEmail = process.env.NOTIFY_EMAIL;
+
+  if (!senderEmail || !notifyEmail) {
+    console.warn('SENDER_EMAIL or NOTIFY_EMAIL not configured, skipping email');
+    return false;
+  }
+
+  const date = new Date().toISOString().split('T')[0];
+  const ses = new SESClient({});
+
+  await ses.send(new SendEmailCommand({
+    Source: senderEmail,
+    Destination: { ToAddresses: [notifyEmail] },
+    Message: {
+      Subject: { Data: `Donation intent: ${name} — ${date}` },
+      Body: { Text: { Data: memo } },
+    },
+  }));
+
+  return true;
+}
+
 export async function handler(event) {
   const httpMethod = event.requestContext?.http?.method || event.httpMethod;
 
@@ -28,7 +80,12 @@ export async function handler(event) {
   }
 
   try {
-    const body = JSON.parse(event.body || '{}');
+    let bodyStr = event.body || '{}';
+    if (event.isBase64Encoded) {
+      bodyStr = Buffer.from(bodyStr, 'base64').toString('utf-8');
+    }
+
+    const body = JSON.parse(bodyStr);
     const { name, email, anonymity, splitPreference, splits, amount, refId, memo } = body;
 
     // Validate required fields
@@ -47,21 +104,49 @@ export async function handler(event) {
       }
     }
 
+    if (!memo || !memo.trim()) errors.push('memo is required');
+
     if (errors.length) {
       return jsonResponse(400, { error: errors.join('; ') });
     }
 
-    // For now, echo back success (side effects TBD)
-    console.log('Donation intent received:', {
-      refId,
-      name: name.trim(),
-      email: email.trim(),
-      anonymity,
-      splitPreference,
-      amount: amount || null,
-    });
+    // Save to database
+    const db = await getDbClient();
+    let id;
 
-    return jsonResponse(201, { success: true, refId });
+    for (let attempt = 0; attempt < 5; attempt++) {
+      id = generateShortId();
+      try {
+        await db.execute({
+          sql: `INSERT INTO donations (id, ref_id, email, form_data, memo)
+                VALUES (?, ?, ?, ?, ?)`,
+          args: [id, refId, email.trim(), JSON.stringify(body), memo],
+        });
+        break;
+      } catch (error) {
+        if (error.message?.includes('UNIQUE constraint')) {
+          id = null;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!id) {
+      return jsonResponse(500, { error: 'Failed to generate unique ID' });
+    }
+
+    console.log('Donation intent saved:', { id, refId, email: email.trim() });
+
+    // Send email notification
+    let emailSent = false;
+    try {
+      emailSent = await sendNotificationEmail(name.trim(), refId, memo);
+    } catch (error) {
+      console.error('Email send failed:', error);
+    }
+
+    return jsonResponse(201, { success: true, refId, id, emailSent });
   } catch (error) {
     console.error('Function error:', error);
     return jsonResponse(500, { error: 'Internal server error' });

@@ -15,6 +15,14 @@ Parameters:
     Type: String
     Description: Anthropic API key for AI explanation
     NoEcho: true
+  NotifyEmail:
+    Type: String
+    Description: Email address to receive donation notifications
+    Default: giving@rethinkpriorities.org
+  SenderEmail:
+    Type: String
+    Description: Verified SES sender email address
+    Default: noreply@rethinkpriorities.org
 
 Resources:
   ShareFunction:
@@ -114,6 +122,18 @@ Resources:
       Runtime: nodejs22.x
       Timeout: 30
       MemorySize: 256
+      Environment:
+        Variables:
+          TURSO_DATABASE_URL: !Ref TursoDatabaseUrl
+          TURSO_AUTH_TOKEN: !Ref TursoAuthToken
+          NOTIFY_EMAIL: !Ref NotifyEmail
+          SENDER_EMAIL: !Ref SenderEmail
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+              Resource: '*'
 
   DonateFunctionUrl:
     Type: AWS::Lambda::Url
