@@ -13,7 +13,9 @@ import {
   computeSimpleAllocations,
   worldviewToTableHandoff,
 } from '../utils/simpleQuizScoring';
+import { detectShareUrl, parseShareUrl, clearShareHash } from '../utils/shareUrl';
 import quizConfig from '../../config/simpleQuizConfig.json';
+import specialBlendConfig from '../../config/specialBlend.json';
 import features from '../../config/features.json';
 
 const STORAGE_KEY = 'simple_quiz_state';
@@ -34,6 +36,13 @@ const initialState = {
   manualOverrides: {},
   savedWorldviews: [], // [{ worldview, name, uid }]
   currentRunName: null, // null = auto-generated, string = user-set
+  budget: 100, // in $M, default 100
+  // Results display preferences
+  activeView: 'current', // uid of a saved worldview | 'current'
+  blendEnabled: specialBlendConfig.defaultEnabled,
+  blendCredence: specialBlendConfig.defaultCredence,
+  userCredencesRaw: {}, // per-run credence sliders
+  lockedKeys: [], // locked credence slider keys
 };
 
 function reducer(state, action) {
@@ -59,6 +68,8 @@ function reducer(state, action) {
       };
     case 'GO_TO_STEP':
       return { ...state, currentStep: action.step };
+    case 'SET_BUDGET':
+      return { ...state, budget: action.budget };
     case 'SAVE_WORLDVIEW':
       return {
         ...state,
@@ -93,10 +104,35 @@ function reducer(state, action) {
           wv.uid === action.uid ? { ...wv, name: action.name } : wv
         ),
       };
+    case 'SET_ACTIVE_VIEW':
+      return { ...state, activeView: action.activeView };
+    case 'SET_BLEND_ENABLED':
+      return { ...state, blendEnabled: action.blendEnabled };
+    case 'SET_BLEND_CREDENCE':
+      return { ...state, blendCredence: action.blendCredence };
+    case 'SET_USER_CREDENCES_RAW':
+      return { ...state, userCredencesRaw: action.userCredencesRaw };
+    case 'SET_LOCKED_KEYS':
+      return { ...state, lockedKeys: action.lockedKeys };
     case 'RESET':
       return { ...initialState };
     case 'HYDRATE':
-      return { ...action.state };
+      return { ...initialState, ...action.state };
+    case 'RESTORE_FROM_URL':
+      return {
+        ...state,
+        currentStep: 'results',
+        selections: action.selections || {},
+        manualOverrides: action.manualOverrides || {},
+        savedWorldviews: action.savedWorldviews || [],
+        currentRunName: action.currentRunName || null,
+        budget: action.budget || state.budget,
+        activeView: action.activeView || 'current',
+        blendEnabled: action.blendEnabled ?? state.blendEnabled,
+        blendCredence: action.blendCredence ?? state.blendCredence,
+        userCredencesRaw: action.userCredencesRaw || {},
+        lockedKeys: action.lockedKeys || [],
+      };
     default:
       return state;
   }
@@ -141,7 +177,49 @@ const _savedState = loadState();
 export function SimpleQuizProvider({ children }) {
   const { dataset } = useDataset();
 
-  const [state, dispatch] = useReducer(reducer, _savedState || initialState);
+  const [state, dispatch] = useReducer(
+    reducer,
+    _savedState ? { ...initialState, ..._savedState } : initialState
+  );
+  // Start hydrating only if share feature is enabled and there might be a share URL
+  const [isHydrating, setIsHydrating] = useState(
+    () => !!(features.ui?.shareResults && detectShareUrl().hasShare)
+  );
+
+  // Share URL hydration on mount
+  useEffect(() => {
+    if (!isHydrating) return;
+
+    const hydrate = async () => {
+      try {
+        const shareResult = await parseShareUrl();
+
+        if (shareResult?.type === 'simple') {
+          dispatch({
+            type: 'RESTORE_FROM_URL',
+            selections: shareResult.selections,
+            manualOverrides: shareResult.manualOverrides,
+            savedWorldviews: shareResult.savedWorldviews,
+            currentRunName: shareResult.currentRunName,
+            budget: shareResult.budget,
+            activeView: shareResult.activeView,
+            blendEnabled: shareResult.blendEnabled,
+            blendCredence: shareResult.blendCredence,
+            userCredencesRaw: shareResult.userCredencesRaw,
+            lockedKeys: shareResult.lockedKeys,
+          });
+          clearShareHash();
+        }
+        // If not type: 'simple', leave the hash for QuizContext to handle (if simpleQuiz is off)
+      } catch {
+        // Parse error — ignore, fall through to session state
+      }
+
+      setIsHydrating(false);
+    };
+
+    hydrate();
+  }, []);
 
   // Persist state changes (debounced). Don't save disclaimer/welcome steps.
   const saveRef = useRef(null);
@@ -186,6 +264,37 @@ export function SimpleQuizProvider({ children }) {
     clearState();
   }, []);
 
+  // --- Budget ---
+  const budget = state.budget;
+  const setBudget = useCallback((val) => dispatch({ type: 'SET_BUDGET', budget: val }), []);
+
+  // --- Results display preferences ---
+  const activeView = state.activeView;
+  const setActiveView = useCallback(
+    (v) => dispatch({ type: 'SET_ACTIVE_VIEW', activeView: v }),
+    []
+  );
+  const blendEnabled = state.blendEnabled;
+  const setBlendEnabled = useCallback(
+    (v) => dispatch({ type: 'SET_BLEND_ENABLED', blendEnabled: v }),
+    []
+  );
+  const blendCredence = state.blendCredence;
+  const setBlendCredence = useCallback(
+    (v) => dispatch({ type: 'SET_BLEND_CREDENCE', blendCredence: v }),
+    []
+  );
+  const userCredencesRaw = state.userCredencesRaw;
+  const setUserCredencesRaw = useCallback(
+    (v) => dispatch({ type: 'SET_USER_CREDENCES_RAW', userCredencesRaw: v }),
+    []
+  );
+  const lockedKeys = state.lockedKeys;
+  const setLockedKeys = useCallback(
+    (v) => dispatch({ type: 'SET_LOCKED_KEYS', lockedKeys: v }),
+    []
+  );
+
   // --- Selections ---
   const selectOption = useCallback(
     (questionId, optionId) => dispatch({ type: 'SELECT_OPTION', questionId, optionId }),
@@ -220,9 +329,6 @@ export function SimpleQuizProvider({ children }) {
     () => assembleWorldview(state.selections, state.manualOverrides, questions),
     [state.selections, state.manualOverrides]
   );
-
-  // Budget state (in $K, default 100 = $100K)
-  const [budget, setBudget] = useState(100);
 
   // Merge saved worldviews + current worldview, each at equal credence (1/N)
   const allWorldviews = useMemo(() => {
@@ -288,6 +394,7 @@ export function SimpleQuizProvider({ children }) {
       questions,
       totalQuestions,
       progressPercentage,
+      isHydrating,
       // Scoring
       worldview,
       allocations,
@@ -302,6 +409,17 @@ export function SimpleQuizProvider({ children }) {
       goToAdvancedMode,
       currentRunName,
       setCurrentRunName,
+      // Results display preferences
+      activeView,
+      setActiveView,
+      blendEnabled,
+      setBlendEnabled,
+      blendCredence,
+      setBlendCredence,
+      userCredencesRaw,
+      setUserCredencesRaw,
+      lockedKeys,
+      setLockedKeys,
       // Actions
       selectOption,
       setManualOverride,
@@ -318,10 +436,22 @@ export function SimpleQuizProvider({ children }) {
       state.savedWorldviews,
       currentQuestion,
       progressPercentage,
+      isHydrating,
       worldview,
       allocations,
       budget,
       currentRunName,
+      activeView,
+      setActiveView,
+      blendEnabled,
+      setBlendEnabled,
+      blendCredence,
+      setBlendCredence,
+      userCredencesRaw,
+      setUserCredencesRaw,
+      lockedKeys,
+      setLockedKeys,
+      setBudget,
       startQuiz,
       goToStep,
       goForward,

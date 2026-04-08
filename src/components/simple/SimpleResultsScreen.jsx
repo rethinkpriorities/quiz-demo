@@ -11,7 +11,10 @@ import {
   blendWorldviews,
   computeBlendedAllocations,
 } from '../../utils/simpleQuizScoring';
+import ShareButton from '../ui/ShareButton';
+import { useSimpleShareUrl } from '../../hooks/useSimpleShareUrl';
 import specialBlendConfig from '../../../config/specialBlend.json';
+import features from '../../../config/features.json';
 import styles from '../../styles/components/SimpleQuiz.module.css';
 import resultStyles from '../../styles/components/Results.module.css';
 import copy from '../../../config/copy.json';
@@ -37,25 +40,25 @@ function SimpleResultsScreen() {
     goToAdvancedMode,
     resetQuiz,
     goBack,
+    // Results display preferences (persisted in context)
+    activeView: activeViewRaw,
+    setActiveView,
+    blendEnabled,
+    setBlendEnabled,
+    blendCredence,
+    setBlendCredence,
+    userCredencesRaw,
+    setUserCredencesRaw,
+    lockedKeys,
+    setLockedKeys,
   } = useSimpleQuiz();
   const { dataset } = useDataset();
 
-  // uid of a saved worldview | 'current'
-  const [activeViewRaw, setActiveView] = useState('current');
   const [editingId, setEditingId] = useState(null); // uid | 'current' | null
   const [editingName, setEditingName] = useState('');
   const editInputRef = useRef(null);
 
   const [budgetInput, setBudgetInput] = useState(String(budget));
-
-  // Blend state
-  const [blendEnabled, setBlendEnabled] = useState(specialBlendConfig.defaultEnabled);
-  const [blendCredence, setBlendCredence] = useState(specialBlendConfig.defaultCredence);
-
-  // Per-run credence sliders (keyed by 'current' + saved uids).
-  // Raw state holds user adjustments; derived credences reconcile against current keys.
-  const [userCredencesRaw, setUserCredencesRaw] = useState({});
-  const [lockedKeys, setLockedKeys] = useState([]);
 
   // Derive credences: if keys match raw state, use it; otherwise equal split.
   const userCredences = useMemo(() => {
@@ -122,7 +125,7 @@ function SimpleResultsScreen() {
       const adjusted = adjustCredences(key, newValue, userCredences, null, lockedKeys);
       setUserCredencesRaw(adjusted);
     },
-    [userCredences, lockedKeys]
+    [userCredences, lockedKeys, setUserCredencesRaw]
   );
 
   // Build userCredences array in worldview order for blendWorldviews
@@ -219,6 +222,8 @@ function SimpleResultsScreen() {
     if (e.key === 'Enter') commitRename();
     if (e.key === 'Escape') setEditingId(null);
   };
+
+  const { copied, loading: shareLoading, error: shareError, handleShare } = useSimpleShareUrl();
 
   const hasSaved = savedWorldviews.length > 0;
 
@@ -451,6 +456,14 @@ function SimpleResultsScreen() {
             <button className="btn btn-secondary btn-sm" onClick={goBack}>
               &larr; Back
             </button>
+            {features.ui?.shareResults && (
+              <ShareButton
+                loading={shareLoading}
+                copied={copied}
+                error={shareError}
+                onClick={handleShare}
+              />
+            )}
             <button className="btn btn-primary btn-sm" onClick={handleDonate}>
               Donate &rarr;
             </button>
