@@ -1,8 +1,10 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { ChevronRight } from 'lucide-react';
 import Header from '../layout/Header';
 import ResultCard from '../ui/ResultCard';
 import CompactSlider from '../ui/CompactSlider';
 import InfoTooltip from '../ui/InfoTooltip';
+import EditAnswersPanel from './EditAnswersPanel';
 import { useSimpleQuiz } from '../../context/useSimpleQuiz';
 import { useDataset } from '../../context/DatasetContext';
 import { adjustCredences } from '../../utils/calculations';
@@ -30,6 +32,10 @@ function SimpleResultsScreen() {
     worldview,
     budget,
     setBudget,
+    selections,
+    manualOverrides,
+    selectOption,
+    setManualOverride,
     savedWorldviews,
     currentRunName,
     setCurrentRunName,
@@ -40,6 +46,8 @@ function SimpleResultsScreen() {
     goToAdvancedMode,
     resetQuiz,
     goBack,
+    updateSavedSelection,
+    updateSavedManualOverride,
     // Results display preferences (persisted in context)
     activeView: activeViewRaw,
     setActiveView,
@@ -56,6 +64,7 @@ function SimpleResultsScreen() {
 
   const [editingId, setEditingId] = useState(null); // uid | 'current' | null
   const [editingName, setEditingName] = useState('');
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const editInputRef = useRef(null);
 
   const [budgetInput, setBudgetInput] = useState(String(budget));
@@ -227,6 +236,57 @@ function SimpleResultsScreen() {
 
   const hasSaved = savedWorldviews.length > 0;
 
+  // Which worldview the edit panel is targeting.
+  // When not blending, follows activeView. When blending, independent selection.
+  const [editViewUid, setEditViewUid] = useState('current');
+
+  // Sync editViewUid to activeView when not blending
+  const effectiveEditView = blendEnabled ? editViewUid : activeView;
+
+  // Build choices for the edit panel's worldview selector (only used when blending with multiple)
+  const editWorldviewChoices = useMemo(() => {
+    if (!hasSaved) return null; // single worldview, no selector needed
+    return [
+      ...savedWorldviews.map((sw) => ({ uid: sw.uid, name: sw.name })),
+      { uid: 'current', name: currentRunName },
+    ];
+  }, [savedWorldviews, currentRunName, hasSaved]);
+
+  // Edit panel: route to the targeted view's selections/overrides + handlers
+  const editSelections = useMemo(() => {
+    if (effectiveEditView === 'current') return selections;
+    const saved = savedWorldviews.find((sw) => sw.uid === effectiveEditView);
+    return saved?.selections || {};
+  }, [effectiveEditView, selections, savedWorldviews]);
+
+  const editManualOverrides = useMemo(() => {
+    if (effectiveEditView === 'current') return manualOverrides;
+    const saved = savedWorldviews.find((sw) => sw.uid === effectiveEditView);
+    return saved?.manualOverrides || {};
+  }, [effectiveEditView, manualOverrides, savedWorldviews]);
+
+  const handleEditSelect = useCallback(
+    (questionId, optionId) => {
+      if (effectiveEditView === 'current') {
+        selectOption(questionId, optionId);
+      } else {
+        updateSavedSelection(effectiveEditView, questionId, optionId);
+      }
+    },
+    [effectiveEditView, selectOption, updateSavedSelection]
+  );
+
+  const handleEditManual = useCallback(
+    (questionId, value) => {
+      if (effectiveEditView === 'current') {
+        setManualOverride(questionId, value);
+      } else {
+        updateSavedManualOverride(effectiveEditView, questionId, value);
+      }
+    },
+    [effectiveEditView, setManualOverride, updateSavedManualOverride]
+  );
+
   const activeLabel = useMemo(() => {
     if (activeView === 'current') return currentRunName;
     const saved = savedWorldviews.find((sw) => sw.uid === activeView);
@@ -281,6 +341,9 @@ function SimpleResultsScreen() {
           </p>
 
           <div className={resultStyles.budgetRow}>
+            <button className={styles.navBack} onClick={goBack}>
+              &larr; Back
+            </button>
             <label className={resultStyles.budgetLabel}>
               {copy.results.budgetLabel}
               {copy.results.budgetInfo && <InfoTooltip content={copy.results.budgetInfo} />}
@@ -311,35 +374,86 @@ function SimpleResultsScreen() {
             </div>
           )}
 
-          {/* Worldview list (always shown when there are saved runs) */}
-          {hasSaved && (
-            <div className={styles.savedWorldviewsList}>
-              <h3 className={styles.savedWorldviewsHeading}>Your Worldviews</h3>
+          {/* Worldview list + blend controls side by side */}
+          <div className={styles.controlsRow}>
+            {hasSaved && (
+              <div className={styles.savedWorldviewsList}>
+                <h3 className={styles.savedWorldviewsHeading}>Your Worldviews</h3>
 
-              {savedWorldviews.map((sw) =>
-                blendEnabled ? (
+                {savedWorldviews.map((sw) =>
+                  blendEnabled ? (
+                    <div
+                      key={sw.uid}
+                      className={`${styles.savedWorldviewItem} ${styles.savedWorldviewWithSlider}`}
+                    >
+                      <span className={styles.savedWorldviewNameGroup}>
+                        {renderNameCell(sw.uid, sw.name)}
+                      </span>
+                      <div className={styles.savedWorldviewSliderCell}>
+                        <CompactSlider
+                          label=""
+                          value={userCredences[sw.uid] || 0}
+                          onChange={(val) => handleUserCredenceChange(sw.uid, val)}
+                          color="#2a9ab5"
+                          credences={userCredences}
+                          sliderKey={sw.uid}
+                          lockedKeys={lockedKeys}
+                          setLockedKeys={setLockedKeys}
+                        />
+                      </div>
+                      <button
+                        className={styles.savedWorldviewRemove}
+                        onClick={() => removeWorldview(sw.uid)}
+                        title="Remove worldview"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      key={sw.uid}
+                      className={`${styles.savedWorldviewItem} ${styles.savedWorldviewClickable} ${activeView === sw.uid ? styles.savedWorldviewActive : ''}`}
+                      onClick={() => setActiveView(sw.uid)}
+                    >
+                      <span className={styles.savedWorldviewNameGroup}>
+                        {renderNameCell(sw.uid, sw.name)}
+                      </span>
+                      <button
+                        className={styles.savedWorldviewRemove}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeWorldview(sw.uid);
+                        }}
+                        title="Remove worldview"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  )
+                )}
+
+                {blendEnabled ? (
                   <div
-                    key={sw.uid}
                     className={`${styles.savedWorldviewItem} ${styles.savedWorldviewWithSlider}`}
                   >
                     <span className={styles.savedWorldviewNameGroup}>
-                      {renderNameCell(sw.uid, sw.name)}
+                      {renderNameCell('current', currentRunName)}
                     </span>
                     <div className={styles.savedWorldviewSliderCell}>
                       <CompactSlider
                         label=""
-                        value={userCredences[sw.uid] || 0}
-                        onChange={(val) => handleUserCredenceChange(sw.uid, val)}
+                        value={userCredences['current'] || 0}
+                        onChange={(val) => handleUserCredenceChange('current', val)}
                         color="#2a9ab5"
                         credences={userCredences}
-                        sliderKey={sw.uid}
+                        sliderKey="current"
                         lockedKeys={lockedKeys}
                         setLockedKeys={setLockedKeys}
                       />
                     </div>
                     <button
                       className={styles.savedWorldviewRemove}
-                      onClick={() => removeWorldview(sw.uid)}
+                      onClick={removeCurrent}
                       title="Remove worldview"
                     >
                       &times;
@@ -347,135 +461,120 @@ function SimpleResultsScreen() {
                   </div>
                 ) : (
                   <div
-                    key={sw.uid}
-                    className={`${styles.savedWorldviewItem} ${styles.savedWorldviewClickable} ${activeView === sw.uid ? styles.savedWorldviewActive : ''}`}
-                    onClick={() => setActiveView(sw.uid)}
+                    className={`${styles.savedWorldviewItem} ${styles.savedWorldviewClickable} ${activeView === 'current' ? styles.savedWorldviewActive : ''}`}
+                    onClick={() => setActiveView('current')}
                   >
                     <span className={styles.savedWorldviewNameGroup}>
-                      {renderNameCell(sw.uid, sw.name)}
+                      {renderNameCell('current', currentRunName)}
                     </span>
                     <button
                       className={styles.savedWorldviewRemove}
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeWorldview(sw.uid);
+                        removeCurrent();
                       }}
                       title="Remove worldview"
                     >
                       &times;
                     </button>
                   </div>
-                )
-              )}
+                )}
+              </div>
+            )}
 
-              {blendEnabled ? (
-                <div className={`${styles.savedWorldviewItem} ${styles.savedWorldviewWithSlider}`}>
-                  <span className={styles.savedWorldviewNameGroup}>
-                    {renderNameCell('current', currentRunName)}
-                  </span>
-                  <div className={styles.savedWorldviewSliderCell}>
-                    <CompactSlider
-                      label=""
-                      value={userCredences['current'] || 0}
-                      onChange={(val) => handleUserCredenceChange('current', val)}
-                      color="#2a9ab5"
-                      credences={userCredences}
-                      sliderKey="current"
-                      lockedKeys={lockedKeys}
-                      setLockedKeys={setLockedKeys}
-                    />
-                  </div>
-                  <button
-                    className={styles.savedWorldviewRemove}
-                    onClick={removeCurrent}
-                    title="Remove worldview"
-                  >
-                    &times;
-                  </button>
+            {/* Blend controls */}
+            <div className={styles.blendControls}>
+              <label className={styles.blendToggle}>
+                <input
+                  type="checkbox"
+                  checked={blendEnabled}
+                  onChange={(e) => setBlendEnabled(e.target.checked)}
+                />
+                <span className={styles.blendToggleLabel}>Mix with {specialBlendConfig.label}</span>
+                <InfoTooltip content="When enabled, your preferences are combined with Rethink Priorities' expert worldviews using credence-weighted allocation." />
+              </label>
+
+              {blendEnabled && (
+                <div className={styles.blendSliders}>
+                  <CompactSlider
+                    label="Your views"
+                    value={100 - blendCredence}
+                    onChange={(val) => setBlendCredence(100 - val)}
+                    color="#2a9ab5"
+                    credences={{ user: 100 - blendCredence, blend: blendCredence }}
+                    sliderKey="user"
+                    hideLock
+                  />
+                  <CompactSlider
+                    label={specialBlendConfig.label}
+                    value={blendCredence}
+                    onChange={(val) => setBlendCredence(val)}
+                    color="#2a9ab5"
+                    credences={{ user: 100 - blendCredence, blend: blendCredence }}
+                    sliderKey="blend"
+                    hideLock
+                  />
                 </div>
-              ) : (
-                <div
-                  className={`${styles.savedWorldviewItem} ${styles.savedWorldviewClickable} ${activeView === 'current' ? styles.savedWorldviewActive : ''}`}
-                  onClick={() => setActiveView('current')}
-                >
-                  <span className={styles.savedWorldviewNameGroup}>
-                    {renderNameCell('current', currentRunName)}
-                  </span>
-                  <button
-                    className={styles.savedWorldviewRemove}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeCurrent();
-                    }}
-                    title="Remove worldview"
-                  >
-                    &times;
+              )}
+            </div>
+          </div>
+
+          <EditAnswersPanel
+            selections={editSelections}
+            manualOverrides={editManualOverrides}
+            onSelectOption={handleEditSelect}
+            onSetManualOverride={handleEditManual}
+            worldviewChoices={blendEnabled ? editWorldviewChoices : null}
+            editViewUid={effectiveEditView}
+            onChangeEditView={setEditViewUid}
+          />
+
+          <div className={styles.resultsActions}>
+            <div className={styles.actionBlock}>
+              <p className={styles.actionBlockText}>{copy.results.saveAndRetakeDescription}</p>
+              <button className="btn btn-primary btn-sm" onClick={saveAndRetake}>
+                Save &amp; Retake Quiz
+              </button>
+            </div>
+
+            <div className={styles.actionBlock}>
+              <p className={styles.actionBlockText}>{copy.results.donateDescription}</p>
+              <button className="btn btn-primary btn-sm" onClick={handleDonate}>
+                Donate &rarr;
+              </button>
+            </div>
+
+            <div className={styles.actionBlock}>
+              <button
+                className={styles.advancedToggle}
+                onClick={() => setAdvancedOpen(!advancedOpen)}
+              >
+                <ChevronRight
+                  size={14}
+                  className={`${styles.advancedToggleIcon} ${advancedOpen ? styles.advancedToggleIconOpen : ''}`}
+                />
+                Advanced Options
+              </button>
+              {advancedOpen && (
+                <div className={styles.advancedPanel}>
+                  {features.ui?.shareResults && (
+                    <ShareButton
+                      loading={shareLoading}
+                      copied={copied}
+                      error={shareError}
+                      onClick={handleShare}
+                      variant="btn-primary btn-sm"
+                    />
+                  )}
+                  <button className="btn btn-primary btn-sm" onClick={goToAdvancedMode}>
+                    Go to Advanced Mode &rarr;
+                  </button>
+                  <button className="btn btn-primary btn-sm" onClick={handleStartOver}>
+                    Start Over
                   </button>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Blend controls */}
-          <div className={styles.blendControls}>
-            <label className={styles.blendToggle}>
-              <input
-                type="checkbox"
-                checked={blendEnabled}
-                onChange={(e) => setBlendEnabled(e.target.checked)}
-              />
-              <span className={styles.blendToggleLabel}>Mix with {specialBlendConfig.label}</span>
-              <InfoTooltip content="When enabled, your preferences are combined with Rethink Priorities' expert worldviews using credence-weighted allocation." />
-            </label>
-
-            {blendEnabled && (
-              <div className={styles.blendSliders}>
-                <CompactSlider
-                  label="Your views"
-                  value={100 - blendCredence}
-                  onChange={(val) => setBlendCredence(100 - val)}
-                  color="#2a9ab5"
-                  credences={{ user: 100 - blendCredence, blend: blendCredence }}
-                  sliderKey="user"
-                  hideLock
-                />
-                <CompactSlider
-                  label={specialBlendConfig.label}
-                  value={blendCredence}
-                  onChange={(val) => setBlendCredence(val)}
-                  color="#2a9ab5"
-                  credences={{ user: 100 - blendCredence, blend: blendCredence }}
-                  sliderKey="blend"
-                  hideLock
-                />
-              </div>
-            )}
-          </div>
-
-          <div className={styles.resultsActions}>
-            <button className="btn btn-secondary btn-sm" onClick={goBack}>
-              &larr; Back
-            </button>
-            {features.ui?.shareResults && (
-              <ShareButton
-                loading={shareLoading}
-                copied={copied}
-                error={shareError}
-                onClick={handleShare}
-              />
-            )}
-            <button className="btn btn-primary btn-sm" onClick={handleDonate}>
-              Donate &rarr;
-            </button>
-            <button className="btn btn-primary btn-sm" onClick={saveAndRetake}>
-              Save &amp; Retake Quiz
-            </button>
-            <button className="btn btn-primary btn-sm" onClick={goToAdvancedMode}>
-              Go to Advanced Mode &rarr;
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={handleStartOver}>
-              Start Over
-            </button>
           </div>
         </div>
       </main>

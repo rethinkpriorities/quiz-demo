@@ -12,6 +12,7 @@ import {
   assembleWorldview,
   computeSimpleAllocations,
   worldviewToTableHandoff,
+  reverseMapWorldview,
 } from '../utils/simpleQuizScoring';
 import { detectShareUrl, parseShareUrl, clearShareHash } from '../utils/shareUrl';
 import quizConfig from '../../config/simpleQuizConfig.json';
@@ -45,6 +46,20 @@ const initialState = {
   lockedKeys: [], // locked credence slider keys
 };
 
+/**
+ * Ensure all saved worldviews have selections + manualOverrides.
+ * For legacy entries that only have { worldview, name, uid }, reverse-map
+ * the worldview back to selections/manualOverrides via reverseMapWorldview().
+ */
+function normalizeSavedWorldviews(savedWorldviews) {
+  if (!savedWorldviews?.length) return savedWorldviews || [];
+  return savedWorldviews.map((sw) => {
+    if (sw.selections != null) return sw;
+    const { selections, manualOverrides } = reverseMapWorldview(sw.worldview);
+    return { ...sw, selections, manualOverrides };
+  });
+}
+
 function reducer(state, action) {
   switch (action.type) {
     case 'SELECT_OPTION':
@@ -75,7 +90,13 @@ function reducer(state, action) {
         ...state,
         savedWorldviews: [
           ...state.savedWorldviews,
-          { worldview: action.worldview, name: action.name, uid: crypto.randomUUID() },
+          {
+            worldview: action.worldview,
+            name: action.name,
+            uid: crypto.randomUUID(),
+            selections: { ...state.selections },
+            manualOverrides: { ...state.manualOverrides },
+          },
         ],
         // Reset quiz selections for a new run
         selections: {},
@@ -114,17 +135,51 @@ function reducer(state, action) {
       return { ...state, userCredencesRaw: action.userCredencesRaw };
     case 'SET_LOCKED_KEYS':
       return { ...state, lockedKeys: action.lockedKeys };
+    case 'UPDATE_SAVED_SELECTION':
+      return {
+        ...state,
+        savedWorldviews: state.savedWorldviews.map((sw) => {
+          if (sw.uid !== action.uid) return sw;
+          const newSelections = { ...sw.selections, [action.questionId]: action.optionId };
+          const newManualOverrides = { ...sw.manualOverrides, [action.questionId]: null };
+          return {
+            ...sw,
+            selections: newSelections,
+            manualOverrides: newManualOverrides,
+            worldview: assembleWorldview(newSelections, newManualOverrides, questions),
+          };
+        }),
+      };
+    case 'UPDATE_SAVED_MANUAL_OVERRIDE':
+      return {
+        ...state,
+        savedWorldviews: state.savedWorldviews.map((sw) => {
+          if (sw.uid !== action.uid) return sw;
+          const newManualOverrides = { ...sw.manualOverrides, [action.questionId]: action.value };
+          const newSelections = { ...sw.selections, [action.questionId]: null };
+          return {
+            ...sw,
+            selections: newSelections,
+            manualOverrides: newManualOverrides,
+            worldview: assembleWorldview(newSelections, newManualOverrides, questions),
+          };
+        }),
+      };
     case 'RESET':
       return { ...initialState };
     case 'HYDRATE':
-      return { ...initialState, ...action.state };
+      return {
+        ...initialState,
+        ...action.state,
+        savedWorldviews: normalizeSavedWorldviews(action.state.savedWorldviews),
+      };
     case 'RESTORE_FROM_URL':
       return {
         ...state,
         currentStep: 'results',
         selections: action.selections || {},
         manualOverrides: action.manualOverrides || {},
-        savedWorldviews: action.savedWorldviews || [],
+        savedWorldviews: normalizeSavedWorldviews(action.savedWorldviews || []),
         currentRunName: action.currentRunName || null,
         budget: action.budget || state.budget,
         activeView: action.activeView || 'current',
@@ -179,7 +234,13 @@ export function SimpleQuizProvider({ children }) {
 
   const [state, dispatch] = useReducer(
     reducer,
-    _savedState ? { ...initialState, ..._savedState } : initialState
+    _savedState
+      ? {
+          ...initialState,
+          ..._savedState,
+          savedWorldviews: normalizeSavedWorldviews(_savedState.savedWorldviews),
+        }
+      : initialState
   );
   // Start hydrating only if share feature is enabled and there might be a share URL
   const [isHydrating, setIsHydrating] = useState(
@@ -367,6 +428,14 @@ export function SimpleQuizProvider({ children }) {
     dispatch({ type: 'RENAME_WORLDVIEW', uid, name });
   }, []);
 
+  const updateSavedSelection = useCallback((uid, questionId, optionId) => {
+    dispatch({ type: 'UPDATE_SAVED_SELECTION', uid, questionId, optionId });
+  }, []);
+
+  const updateSavedManualOverride = useCallback((uid, questionId, value) => {
+    dispatch({ type: 'UPDATE_SAVED_MANUAL_OVERRIDE', uid, questionId, value });
+  }, []);
+
   // --- Table handoff ---
   const goToAdvancedMode = useCallback(() => {
     // Build handoff from all worldviews (saved + current)
@@ -428,6 +497,8 @@ export function SimpleQuizProvider({ children }) {
       removeWorldview,
       removeCurrent,
       renameWorldview,
+      updateSavedSelection,
+      updateSavedManualOverride,
     }),
     [
       state.currentStep,
@@ -466,6 +537,8 @@ export function SimpleQuizProvider({ children }) {
       removeCurrent,
       removeWorldview,
       renameWorldview,
+      updateSavedSelection,
+      updateSavedManualOverride,
     ]
   );
 
