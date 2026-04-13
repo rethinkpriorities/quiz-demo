@@ -27,13 +27,20 @@ const SimpleQuizContext = createContext(null);
 const questions = quizConfig.questions;
 const totalQuestions = questions.length;
 
+// Pre-select the isDefault option for each question that has one
+const defaultSelections = {};
+for (const q of questions) {
+  const def = q.options.find((o) => o.isDefault);
+  if (def) defaultSelections[q.id] = def.id;
+}
+
 // --- Reducer ---
 
 const firstStep = features.ui?.disclaimerPage ? 'disclaimer' : 'welcome';
 
 const initialState = {
   currentStep: firstStep, // 'disclaimer' | 'welcome' | 0..N-1 | 'results'
-  selections: {},
+  selections: { ...defaultSelections },
   manualOverrides: {},
   savedWorldviews: [], // [{ worldview, name, uid }]
   currentRunName: null, // null = auto-generated, string = user-set
@@ -98,8 +105,8 @@ function reducer(state, action) {
             manualOverrides: { ...state.manualOverrides },
           },
         ],
-        // Reset quiz selections for a new run
-        selections: {},
+        // Reset quiz selections for a new run (re-apply defaults)
+        selections: { ...defaultSelections },
         manualOverrides: {},
         currentStep: 0,
         currentRunName: null,
@@ -114,7 +121,7 @@ function reducer(state, action) {
     case 'REMOVE_CURRENT':
       return {
         ...state,
-        selections: {},
+        selections: { ...defaultSelections },
         manualOverrides: {},
         currentRunName: null,
       };
