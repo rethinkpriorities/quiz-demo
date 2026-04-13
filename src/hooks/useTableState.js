@@ -417,23 +417,36 @@ export function useTableState() {
   }, []);
 
   const hydrateFromShare = useCallback((shareData) => {
+    const newWorldviews = shareData.worldviews || worldviews;
+    const newCredences = shareData.credences || credences;
+    let newStages = stages;
+
     if (shareData.worldviews) setWorldviews(shareData.worldviews);
     if (shareData.credences) setCredences(shareData.credences);
     if (shareData.stages) {
       setStages(shareData.stages);
+      newStages = shareData.stages;
     } else if (shareData.selectedMethod) {
       // Backward compat: convert old format to single stage
-      setStages([
-        {
-          id: crypto.randomUUID(),
-          method: shareData.selectedMethod,
-          budget: shareData.totalBudget ?? tableConfig.totalBudget,
-          options: shareData.methodOptions?.[shareData.selectedMethod] ?? {},
-        },
-      ]);
+      const stage = {
+        id: crypto.randomUUID(),
+        method: shareData.selectedMethod,
+        budget: shareData.totalBudget ?? tableConfig.totalBudget,
+        options: shareData.methodOptions?.[shareData.selectedMethod] ?? {},
+      };
+      setStages([stage]);
+      newStages = [stage];
     }
     setLockedKeys([]);
-  }, []);
+
+    // Bypass the 150ms debounce so the first visible render uses hydrated state
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setDebouncedState({
+      worldviews: newWorldviews,
+      credences: newCredences,
+      stages: newStages,
+    });
+  }, [worldviews, credences, stages]);
 
   return {
     worldviews,

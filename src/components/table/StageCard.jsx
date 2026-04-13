@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MethodOption from './MethodOption';
 import tableConfig from '../../../config/tableMode.json';
 import styles from '../../styles/components/TableMode.module.css';
@@ -15,6 +15,13 @@ function StageCard({
   const [editing, setEditing] = useState(false);
   const [budgetInput, setBudgetInput] = useState(String(stage.budget));
   const displayValue = editing ? budgetInput : String(stage.budget);
+
+  // Sync local budget input when stage.budget changes externally (e.g. share URL hydration)
+  useEffect(() => {
+    if (!editing) {
+      setBudgetInput(String(stage.budget));
+    }
+  }, [stage.budget, editing]);
 
   const methodConfig = tableConfig.votingMethods.find((m) => m.key === stage.method);
 
