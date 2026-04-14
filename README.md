@@ -4,9 +4,7 @@ An interactive tool to help you allocate resources across different causes based
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/react-18.3.1-blue.svg)
-![Vite](https://img.shields.io/badge/vite-6.0.5-purple.svg)
 
-## 📖 Overview
 
 **Donor Compass** is a Rethink Priorities tool that helps you navigate moral uncertainty by:
 
