@@ -219,7 +219,9 @@ Anonymity: ${anonText}`;
     return (
       <>
         {match[1]}
-        <a href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</a>
+        <a href={match[3]} target="_blank" rel="noopener noreferrer">
+          {match[2]}
+        </a>
         {match[4]}
       </>
     );
