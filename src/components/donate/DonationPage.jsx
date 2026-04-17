@@ -141,6 +141,31 @@ Donor email: ${form.email}
 Anonymity: ${anonText}`;
   }, [form]);
 
+  // --- Email extras (team-only; not shown in memo) ---
+  const emailExtras = useMemo(() => {
+    const lines = [];
+
+    if (form.amount) {
+      lines.push(`Amount: $${form.amount}`);
+    } else {
+      lines.push('Amount: (not specified)');
+    }
+
+    if (form.splitPreference === 'defer') {
+      lines.push('Split: deferring to RP');
+    } else if (form.splitPreference === 'custom') {
+      lines.push('Split:');
+      for (const fund of activeFunds) {
+        const pct = form.splits[fund.id];
+        if (pct != null && pct !== '') {
+          lines.push(`  - ${fund.name}: ${pct}%`);
+        }
+      }
+    }
+
+    return lines.join('\n');
+  }, [form, activeFunds]);
+
   // --- Actions ---
   function handleCopy() {
     const missing = getMissingFields();
@@ -178,6 +203,7 @@ Anonymity: ${anonText}`;
           amount: form.amount || undefined,
           refId: refId.current,
           memo,
+          emailExtras,
         }),
       });
       if (!res.ok) throw new Error('Request failed');
