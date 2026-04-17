@@ -212,6 +212,19 @@ Anonymity: ${anonText}`;
     );
   }
 
+  // Render a string containing one markdown link [text](url)
+  function renderWithLink(text) {
+    const match = text.match(/^(.*?)\[(.+?)\]\((.+?)\)(.*)$/);
+    if (!match) return text;
+    return (
+      <>
+        {match[1]}
+        <a href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</a>
+        {match[4]}
+      </>
+    );
+  }
+
   const showSplitEditor = form.splitPreference !== 'defer';
   const isComplete = form.name.trim() && form.email.trim() && form.anonymity;
 
@@ -226,6 +239,9 @@ Anonymity: ${anonText}`;
             <div className={styles.eyebrow}>{config.intro.eyebrow}</div>
             <h1 className={styles.introTitle}>{config.intro.title}</h1>
             <p className={styles.introDesc}>{config.intro.description}</p>
+            {config.intro.about && (
+              <p className={styles.introAbout}>{renderWithLink(config.intro.about)}</p>
+            )}
           </div>
 
           <div className={styles.divider} />
@@ -418,6 +434,22 @@ Anonymity: ${anonText}`;
               )}
             </div>
 
+            {config.memo.transferInstructions && (
+              <div className={styles.transferInstructions}>
+                <p>{renderWithLink(config.memo.transferInstructions)}</p>
+                {config.memo.detailedInstructionsUrl && (
+                  <a
+                    href={config.memo.detailedInstructionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.transferLink}
+                  >
+                    {config.memo.detailedInstructionsText}
+                  </a>
+                )}
+              </div>
+            )}
+
             {warning && <div className={styles.missingWarning}>{warning}</div>}
 
             <button
@@ -433,6 +465,10 @@ Anonymity: ${anonText}`;
                   : config.actions.submit}
             </button>
 
+            {config.actions.submitSubtext && submitState !== 'success' && (
+              <p className={styles.submitSubtext}>{config.actions.submitSubtext}</p>
+            )}
+
             {submitState === 'success' && (
               <div className={styles.notifyConfirm}>
                 {config.actions.successMessage.split('{email}')[0]}
@@ -447,6 +483,10 @@ Anonymity: ${anonText}`;
           </div>
 
           <div className={styles.legalNote}>{config.legal}</div>
+
+          {config.pageFooter && (
+            <div className={styles.pageFooter}>{renderWithLink(config.pageFooter)}</div>
+          )}
         </div>
       </main>
 
