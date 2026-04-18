@@ -39,6 +39,19 @@
   max-width: 560px;
 }
 
+.introAbout {
+  margin-top: var(--spacing-6);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+  max-width: 640px;
+}
+
+.introAbout a {
+  color: var(--color-teal-light);
+  text-decoration: underline;
+}
+
 .divider {
   height: 1px;
   background: var(--border-subtle);
@@ -475,6 +488,48 @@
 
 .refId strong {
   color: var(--text-secondary);
+}
+
+/* --- Transfer instructions --- */
+.transferInstructions {
+  margin-top: var(--spacing-8);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.transferInstructions p {
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.transferInstructions a,
+.transferLink {
+  color: var(--color-teal-light);
+  text-decoration: underline;
+  font-size: var(--text-sm);
+}
+
+/* --- Submit subtext --- */
+.submitSubtext {
+  margin-top: var(--spacing-2);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* --- Page footer --- */
+.pageFooter {
+  margin-top: var(--spacing-12);
+  padding-top: var(--spacing-8);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.pageFooter a {
+  color: var(--color-teal-light);
+  text-decoration: underline;
 }
 
 /* --- Legal --- */
