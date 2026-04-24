@@ -149,38 +149,46 @@ function SimpleResultsScreen() {
     return allUserWorldviewKeys.map((k) => userCredences[k] || 0);
   }, [allUserWorldviewKeys, userCredences]);
 
-  // Compute allocations for the active view (per-fund)
-  const rawAllocations = useMemo(() => {
+  // Compute allocations for the active view (per-fund). Wrapped in try/catch
+  // so a transient invalid state (e.g. credences briefly drifting due to rapid
+  // slider drags) can't blank the entire results view — null signals failure
+  // and we fall back to the last successful result.
+  const freshAllocations = useMemo(() => {
     if (!dataset?.projects) return {};
 
-    const multipleUserWorldviews = allUserWorldviews.length > 1;
+    try {
+      const multipleUserWorldviews = allUserWorldviews.length > 1;
 
-    if (blendEnabled || multipleUserWorldviews) {
-      // Credence-weighted across user worldviews, optionally blended with the RP preset set.
-      // When blendEnabled is off we still want credence weighting across user worldviews;
-      // passing blendCredence=0 zeroes out the RP share without changing the code path.
-      const combined = blendWorldviews(
-        blendEnabled ? specialBlendConfig.worldviews : [],
-        allUserWorldviews,
-        blendEnabled ? blendCredence : 0,
-        userCredencesArray
-      );
-      return computeBlendedAllocations(
-        combined,
+      if (blendEnabled || multipleUserWorldviews) {
+        // Credence-weighted across user worldviews, optionally blended with the RP preset set.
+        // When blendEnabled is off we still want credence weighting across user worldviews;
+        // passing blendCredence=0 zeroes out the RP share without changing the code path.
+        const combined = blendWorldviews(
+          blendEnabled ? specialBlendConfig.worldviews : [],
+          allUserWorldviews,
+          blendEnabled ? blendCredence : 0,
+          userCredencesArray
+        );
+        return computeBlendedAllocations(
+          combined,
+          dataset.projects,
+          budget,
+          dataset.incrementSize || 10,
+          dataset.drStepSize || 10
+        );
+      }
+
+      return computeSimpleAllocations(
+        [{ ...activeWorldview, credence: 1.0 }],
         dataset.projects,
         budget,
         dataset.incrementSize || 10,
         dataset.drStepSize || 10
       );
+    } catch (err) {
+      console.error('Allocation compute failed — keeping previous results:', err);
+      return null;
     }
-
-    return computeSimpleAllocations(
-      [{ ...activeWorldview, credence: 1.0 }],
-      dataset.projects,
-      budget,
-      dataset.incrementSize || 10,
-      dataset.drStepSize || 10
-    );
   }, [
     activeWorldview,
     allUserWorldviews,
@@ -190,6 +198,17 @@ function SimpleResultsScreen() {
     blendCredence,
     userCredencesArray,
   ]);
+
+  // Cache the last successful allocations so a transient compute error falls
+  // back to what the user last saw instead of blanking the results view.
+  // Adjusting state during render is supported by React for this "remember
+  // last valid value" pattern — see react.dev.
+  const [lastGoodAllocations, setLastGoodAllocations] = useState({});
+  if (freshAllocations !== null && freshAllocations !== lastGoodAllocations) {
+    setLastGoodAllocations(freshAllocations);
+  }
+
+  const rawAllocations = freshAllocations ?? lastGoodAllocations;
 
   // Cluster allocations for display when fund clustering is enabled
   const displayAllocations = useMemo(
