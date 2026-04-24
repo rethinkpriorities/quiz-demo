@@ -105,6 +105,17 @@ export function blendWorldviews(blendWvs, userWvs, blendCredence, userCredences)
     });
   }
 
+  // Normalize to guarantee strict sum=1.0 regardless of any floating-point drift
+  // in the caller's credences (e.g. rapid slider drags can leave user credences
+  // summing to 100.49 instead of 100). The downstream voting method enforces
+  // sum==1.0 within 1e-6 tolerance, so we correct any drift here.
+  const total = combined.reduce((s, wv) => s + wv.credence, 0);
+  if (total > 0 && Math.abs(total - 1.0) > 1e-9) {
+    for (const wv of combined) {
+      wv.credence = wv.credence / total;
+    }
+  }
+
   return combined;
 }
 

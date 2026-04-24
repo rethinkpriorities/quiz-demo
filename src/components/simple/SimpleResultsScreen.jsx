@@ -16,12 +16,14 @@ import {
 import { clusterAllocations, getClusterEntries } from '../../utils/fundClusters';
 import ShareButton from '../ui/ShareButton';
 import NetworkBlockedModal from '../ui/NetworkBlockedModal';
+import SupportFooter from '../ui/SupportFooter';
 import { useSimpleShareUrl } from '../../hooks/useSimpleShareUrl';
 import specialBlendConfig from '../../../config/specialBlend.json';
 import features from '../../../config/features.json';
 import styles from '../../styles/components/SimpleQuiz.module.css';
 import resultStyles from '../../styles/components/Results.module.css';
 import copy from '../../../config/copy.json';
+import donationConfig from '../../../config/donationPage.json';
 
 const DONATE_HANDOFF_KEY = 'donate_handoff';
 
@@ -147,38 +149,46 @@ function SimpleResultsScreen() {
     return allUserWorldviewKeys.map((k) => userCredences[k] || 0);
   }, [allUserWorldviewKeys, userCredences]);
 
-  // Compute allocations for the active view (per-fund)
-  const rawAllocations = useMemo(() => {
+  // Compute allocations for the active view (per-fund). Wrapped in try/catch
+  // so a transient invalid state (e.g. credences briefly drifting due to rapid
+  // slider drags) can't blank the entire results view — null signals failure
+  // and we fall back to the last successful result.
+  const freshAllocations = useMemo(() => {
     if (!dataset?.projects) return {};
 
-    const multipleUserWorldviews = allUserWorldviews.length > 1;
+    try {
+      const multipleUserWorldviews = allUserWorldviews.length > 1;
 
-    if (blendEnabled || multipleUserWorldviews) {
-      // Credence-weighted across user worldviews, optionally blended with the RP preset set.
-      // When blendEnabled is off we still want credence weighting across user worldviews;
-      // passing blendCredence=0 zeroes out the RP share without changing the code path.
-      const combined = blendWorldviews(
-        blendEnabled ? specialBlendConfig.worldviews : [],
-        allUserWorldviews,
-        blendEnabled ? blendCredence : 0,
-        userCredencesArray
-      );
-      return computeBlendedAllocations(
-        combined,
+      if (blendEnabled || multipleUserWorldviews) {
+        // Credence-weighted across user worldviews, optionally blended with the RP preset set.
+        // When blendEnabled is off we still want credence weighting across user worldviews;
+        // passing blendCredence=0 zeroes out the RP share without changing the code path.
+        const combined = blendWorldviews(
+          blendEnabled ? specialBlendConfig.worldviews : [],
+          allUserWorldviews,
+          blendEnabled ? blendCredence : 0,
+          userCredencesArray
+        );
+        return computeBlendedAllocations(
+          combined,
+          dataset.projects,
+          budget,
+          dataset.incrementSize || 10,
+          dataset.drStepSize || 10
+        );
+      }
+
+      return computeSimpleAllocations(
+        [{ ...activeWorldview, credence: 1.0 }],
         dataset.projects,
         budget,
         dataset.incrementSize || 10,
         dataset.drStepSize || 10
       );
+    } catch (err) {
+      console.error('Allocation compute failed — keeping previous results:', err);
+      return null;
     }
-
-    return computeSimpleAllocations(
-      [{ ...activeWorldview, credence: 1.0 }],
-      dataset.projects,
-      budget,
-      dataset.incrementSize || 10,
-      dataset.drStepSize || 10
-    );
   }, [
     activeWorldview,
     allUserWorldviews,
@@ -188,6 +198,17 @@ function SimpleResultsScreen() {
     blendCredence,
     userCredencesArray,
   ]);
+
+  // Cache the last successful allocations so a transient compute error falls
+  // back to what the user last saw instead of blanking the results view.
+  // Adjusting state during render is supported by React for this "remember
+  // last valid value" pattern — see react.dev.
+  const [lastGoodAllocations, setLastGoodAllocations] = useState({});
+  if (freshAllocations !== null && freshAllocations !== lastGoodAllocations) {
+    setLastGoodAllocations(freshAllocations);
+  }
+
+  const rawAllocations = freshAllocations ?? lastGoodAllocations;
 
   // Cluster allocations for display when fund clustering is enabled
   const displayAllocations = useMemo(
@@ -380,26 +401,26 @@ function SimpleResultsScreen() {
 
           {displayAllocations && (
             <div className={styles.resultsRow}>
-              <div className={resultStyles.singleResultCard}>
-                <label className={resultStyles.budgetLabel}>
-                  <span className={styles.budgetLabelRow}>
-                    {copy.results.budgetLabel}
-                    {copy.results.budgetInfo && <InfoTooltip content={copy.results.budgetInfo} />}
-                  </span>
-                  <div className={resultStyles.budgetInputWrapper}>
-                    <span className={resultStyles.currencyPrefix}>$</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={budgetInput}
-                      onChange={handleBudgetChange}
-                      onBlur={handleBudgetBlur}
-                      onKeyDown={handleBudgetKeyDown}
-                      className={resultStyles.budgetInput}
-                    />
-                    <span className={resultStyles.budgetUnit}>M</span>
-                  </div>
-                </label>
+              <label className={styles.resultsBudgetLabel}>
+                <span className={styles.budgetLabelRow}>
+                  {copy.results.budgetLabel}
+                  {copy.results.budgetInfo && <InfoTooltip content={copy.results.budgetInfo} />}
+                </span>
+                <div className={resultStyles.budgetInputWrapper}>
+                  <span className={resultStyles.currencyPrefix}>$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={budgetInput}
+                    onChange={handleBudgetChange}
+                    onBlur={handleBudgetBlur}
+                    onKeyDown={handleBudgetKeyDown}
+                    className={resultStyles.budgetInput}
+                  />
+                  <span className={resultStyles.budgetUnit}>M</span>
+                </div>
+              </label>
+              <div className={styles.resultsCardCell}>
                 <ResultCard
                   methodKey={methodKey}
                   results={displayAllocations}
@@ -407,11 +428,17 @@ function SimpleResultsScreen() {
                   simpleMode={true}
                 />
               </div>
-              {copy.results.resultsExplanation && (
+              {(copy.results.resultsExplanationLead || copy.results.resultsExplanation) && (
                 <div className={styles.resultsExplanation}>
-                  {copy.results.resultsExplanation.split('\n\n').map((p, i) => (
-                    <p key={i}>{p}</p>
-                  ))}
+                  <p>
+                    {copy.results.resultsExplanationLead && (
+                      <span className={styles.resultsExplanationLead}>
+                        {copy.results.resultsExplanationLead}
+                      </span>
+                    )}
+                    {copy.results.resultsExplanationLead && copy.results.resultsExplanation && ' '}
+                    {copy.results.resultsExplanation}
+                  </p>
                 </div>
               )}
             </div>
@@ -577,6 +604,11 @@ function SimpleResultsScreen() {
               )}
             </div>
           </div>
+
+          <SupportFooter
+            lead={donationConfig.pageFooterLead}
+            contact={copy.results.supportContact}
+          />
         </div>
       </main>
 
