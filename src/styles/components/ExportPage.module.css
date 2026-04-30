@@ -1,0 +1,150 @@
+/* Data Export Page Styles
+   Matches the dark teal theme used throughout the app. */
+
+.pageWrap {
+  max-width: 640px;
+  width: 100%;
+  padding: 0 var(--spacing-12);
+}
+
+.intro {
+  margin-bottom: var(--spacing-8);
+  animation: fadeUp 0.5s ease both;
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-6);
+}
+
+.introTitle {
+  font-size: var(--text-heading);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-8);
+}
+
+.introDesc {
+  font-size: var(--text-xl);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+  max-width: 560px;
+}
+
+.introDesc code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.92em;
+  background: var(--overlay-medium);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--spacing-8) 0;
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  animation: fadeUp 0.5s ease both;
+  animation-delay: 0.05s;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+  margin-top: var(--spacing-8);
+}
+
+.fieldLabel:first-child {
+  margin-top: 0;
+}
+
+.fieldHint {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  margin-top: var(--spacing-4);
+  line-height: 1.5;
+}
+
+.textInput {
+  width: 100%;
+  padding: var(--spacing-5) var(--spacing-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--overlay-medium);
+  font-family: var(--font-body);
+  font-size: var(--text-xl);
+  font-weight: var(--font-light);
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.textInput::placeholder {
+  color: var(--text-muted);
+}
+
+.textInput:focus {
+  border-color: var(--color-teal-light);
+  box-shadow: 0 0 0 3px rgba(42, 154, 181, 0.15);
+}
+
+.dateRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-8);
+}
+
+@media (max-width: 500px) {
+  .dateRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.warning {
+  margin-top: var(--spacing-8);
+  padding: var(--spacing-5) var(--spacing-6);
+  background: rgba(224, 122, 95, 0.15);
+  border: 1px solid rgba(224, 122, 95, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--color-coral);
+  line-height: 1.5;
+}
+
+.success {
+  margin-top: var(--spacing-8);
+  padding: var(--spacing-5) var(--spacing-6);
+  background: rgba(42, 154, 181, 0.15);
+  border: 1px solid rgba(42, 154, 181, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--color-teal-light);
+  line-height: 1.5;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
