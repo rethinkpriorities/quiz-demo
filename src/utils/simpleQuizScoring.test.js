@@ -68,9 +68,11 @@ describe('assembleWorldview', () => {
       animal_weights: 'rp_default',
       discount_factors: 'all_equal',
       p_extinction: 'rp_default',
-      risk_profile: 'upside_skeptical',
     };
-    const wv = assembleWorldview(selections, {}, questions);
+    const credences = {
+      risk_profile: { neutral: 0, upside_skeptical: 100, downside_critical: 0, wlu_moderate: 0 },
+    };
+    const wv = assembleWorldview(selections, {}, questions, credences);
     expect(wv.moral_weights.chickens_birds).toBe(0.4);
     expect(wv.discount_factors).toEqual([1, 1, 1, 1, 1, 1]);
     expect(wv.p_extinction).toBe(0.4);
@@ -310,6 +312,29 @@ describe('blendWorldviews', () => {
     expect(result[2].credence).toBeCloseTo(0.8);
     expect(result[3].credence).toBeCloseTo(0.2);
   });
+
+  it('normalizes drifted user credences so the result sums to exactly 1.0', () => {
+    // Rapid slider drags can leave userCredences slightly over/under 100.
+    // blendWorldviews must absorb that drift so downstream voting methods
+    // (which enforce strict sum==1.0) don't throw and blank the screen.
+    const userWvs = [
+      {
+        moral_weights: { human_life_years: 1 },
+        discount_factors: [1, 1, 1, 1, 1, 1],
+        risk_profile: 0,
+        p_extinction: 0,
+      },
+      {
+        moral_weights: { human_life_years: 0.5 },
+        discount_factors: [1, 0, 0, 0, 0, 0],
+        risk_profile: 0,
+        p_extinction: 0,
+      },
+    ];
+    const drifted = blendWorldviews([], userWvs, 0, [50.2, 50.3]); // sums to 100.5
+    const total = drifted.reduce((s, wv) => s + wv.credence, 0);
+    expect(total).toBeCloseTo(1.0, 10);
+  });
 });
 
 describe('computeBlendedAllocations', () => {
@@ -405,14 +430,19 @@ describe('reverseMapWorldview', () => {
       animal_weights: 'rp_default',
       discount_factors: 'all_equal',
       p_extinction: 'rp_default',
-      risk_profile: 'upside_skeptical',
     };
-    const wv = assembleWorldview(selections, {}, questions);
+    const credences = {
+      risk_profile: { neutral: 0, upside_skeptical: 100, downside_critical: 0, wlu_moderate: 0 },
+    };
+    const wv = assembleWorldview(selections, {}, questions, credences);
     const result = reverseMapWorldview(wv);
     expect(result.selections.animal_weights).toBe('rp_default');
     expect(result.selections.discount_factors).toBe('all_equal');
     expect(result.selections.p_extinction).toBe('rp_default');
-    expect(result.selections.risk_profile).toBe('upside_skeptical');
+    // risk_profile is credence-type → reverse-mapped to credences, not selections
+    expect(result.selections.risk_profile).toBeUndefined();
+    expect(result.credences.risk_profile).toBeDefined();
+    expect(result.credences.risk_profile.upside_skeptical).toBe(100);
     expect(Object.values(result.manualOverrides).filter((v) => v != null)).toHaveLength(0);
   });
 
