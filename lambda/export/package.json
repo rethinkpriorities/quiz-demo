@@ -1,0 +1,11 @@
+{
+  "name": "quiz-export-lambda",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Data export API for Donor Compass",
+  "main": "index.mjs",
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "jszip": "^3.10.1"
+  }
+}

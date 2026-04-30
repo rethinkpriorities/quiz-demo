@@ -177,6 +177,7 @@ Two copies of each function (kept in sync):
 - `netlify/functions/share.js` / `lambda/share/index.mjs` — Share URL API
 - `netlify/functions/explain.js` / `lambda/explain/index.mjs` — AI Explanation API
 - `netlify/functions/donate.js` / `lambda/donate/index.mjs` — Donation Intent API
+- `netlify/functions/export.js` / `lambda/export/index.mjs` — Data Export API
 
 ### Deploying the Lambdas
 
@@ -273,6 +274,7 @@ Summary of implemented features. See `docs/CLAUDE-ARCHIVE.md` for detailed imple
 | Simple Quiz | `ui.simpleQuiz` | Simplified 4-question quiz with direct worldview mapping and bar chart results. **Defaults to ON.** See below. |
 | Support RP Footer | `ui.supportFooter` | Fixed footer on all screens with RP donation link. |
 | Donation Page | N/A (hash route) | Donation intent form at `#donate`. Config-driven copy, Lambda backend. See below. |
+| Data Export | `ui.exportPage` | Admin page at `#export` to download donations + shares as a zipped CSV pair, filtered by date range. API key auth. See below. |
 
 ### Simple Quiz
 
@@ -376,6 +378,59 @@ aws lambda update-function-code \
 | `netlify/functions/donate.js` | Local dev mirror (DB write, email logged to console) |
 | `migrations/002_donations.sql` | Creates `donations` table + indexes |
 | `donation_intent_form.html` | Original standalone HTML reference |
+
+### Data Export
+
+**Route:** `#export` (hash-based, like `#donate`)
+**Flag:** `ui.exportPage` (default: `false`)
+
+Admin-only page for downloading raw rows from the `donations` and `shares` tables as a zipped pair of CSVs (`donations.csv` + `shares.csv`), filtered by `created_at` date range. Authenticated by a shared API key the user pastes into the form.
+
+**Flow:** User enters API key + From/To dates → GET `/export?from=YYYY-MM-DD&to=YYYY-MM-DD` with `x-api-key` header → Lambda queries both tables, builds CSVs, zips with JSZip, returns base64 zip with `Content-Disposition: attachment` → browser downloads `export-{from}_{to}.zip`.
+
+**Failure modes (all return JSON with an `error` field):**
+- `401` — missing or wrong API key
+- `400` — missing dates, malformed dates, or `from > to`
+- `413` — either table returned more than 10,000 rows; user must narrow the range
+- `500` — server misconfigured (no `EXPORT_API_KEY`) or DB error
+
+**Rows are returned raw.** `donations.form_data` stays as a JSON string in a single CSV cell — consumers parse it themselves. Date filter uses inclusive bounds in UTC: `from 00:00:00` to `to 23:59:59`.
+
+**Local dev:** Set `EXPORT_API_KEY=<anything>` in `.env`, then `netlify dev`. Visit `http://localhost:8888/#export` (toggle `ui.exportPage` to `true` first).
+
+**Production deployment status:** Deployed manually 2026-04-29. Function URL: `https://yvts3kg5ge66i7gincdplnmory0lqljf.lambda-url.us-east-1.on.aws/`. API key stored in 1Password as "Donor Compass — Export API Key". The Lambda was created with `aws lambda create-function` (the SAM stack only tracks `ShareFunction` — donate/explain/export are managed manually, same pattern as the others).
+
+**Redeploying code changes** (function already exists, same as share/donate):
+```bash
+cd lambda/export && npm ci && cd ..
+sam build
+cd .aws-sam/build/ExportFunction
+zip -r /tmp/lambda-export.zip .
+aws lambda update-function-code \
+  --function-name quiz-demo-export \
+  --zip-file fileb:///tmp/lambda-export.zip
+```
+
+**Rotating the API key:**
+```bash
+NEW_KEY=$(openssl rand -hex 32)
+op item edit "Donor Compass — Export API Key" "credential[concealed]=$NEW_KEY"
+aws lambda update-function-configuration \
+  --function-name quiz-demo-export \
+  --environment "Variables={TURSO_DATABASE_URL=$(op item get w66obijiatjkw5omgun2wjqnym --fields label=url --reveal | tr -d '[:space:]'),TURSO_AUTH_TOKEN=$(op item get w66obijiatjkw5omgun2wjqnym --fields label=api-token --reveal | tr -d '[:space:]'),EXPORT_API_KEY=$NEW_KEY}"
+```
+
+**Frontend wiring:** `VITE_EXPORT_API_URL` GitHub secret must be set to the Function URL above. `ui.exportPage` flag in `config/features.json` controls visibility.
+
+**Files:**
+
+| File | Purpose |
+|------|---------|
+| `lambda/export/index.mjs` | AWS Lambda handler (auth, validate, query, zip, base64 response) |
+| `lambda/export/package.json` | Lambda package manifest (`@libsql/client`, `jszip`) |
+| `netlify/functions/export.js` | Local dev mirror against `dev.db` |
+| `src/components/export/ExportPage.jsx` | Form UI (API key, date pickers, download button) |
+| `src/styles/components/ExportPage.module.css` | Styling (matches dark teal theme) |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
@@ -496,3 +551,6 @@ Computes recommended donation allocation by aggregating across multiple worldvie
 | `src/components/simple/` | Simple quiz UI components (welcome, questions, more options, results) |
 | `config/donationPage.json` | Donation page copy, fund list with project slugs, validation messages |
 | `src/components/donate/` | Donation page UI components (form, split editor) |
+| `lambda/export/` | Data export Lambda (auth, query, zip CSVs) |
+| `netlify/functions/export.js` | Data export local dev mirror |
+| `src/components/export/ExportPage.jsx` | Data export admin page UI |
