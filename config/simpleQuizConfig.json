@@ -4,7 +4,7 @@
       "id": "animal_weights",
       "title": "Animal Moral Weights",
       "heading": "How much should animal welfare factor into funding decisions?",
-      "info": "Moral weights determine how much you value improvements to different types of beings. Human life-years are the baseline (1.0). Your answer here affects how the model scores funds that focus on animal welfare.",
+      "info": "Funds have different types of effects. For example, some focus on saving or improving the lives of humans, while others try to reduce animal suffering. In order to compare their cost-effectiveness, we need to decide on moral weights: how much value you place on these different types of effects relative to each other.",
       "icon": "paw",
       "previewText": "Animal welfare weights",
       "worldviewField": "moral_weights",
@@ -43,7 +43,7 @@
         },
         {
           "id": "rp_default",
-          "label": "Animals matter, but less than humans",
+          "label": "Animals matter, but somewhat less than humans",
           "shortLabel": "Moderate animal weight",
           "description": "Animal welfare is given meaningful consideration though not weighted equally with human welfare.",
           "isDefault": true,
@@ -81,7 +81,7 @@
     {
       "id": "discount_factors",
       "title": "Time Discounting",
-      "heading": "How much should future benefits and harms count compared to those happening now?",
+      "heading": "How much value do you place on effects in the far future relative to those occurring sooner?",
       "info": "You might have reasons to discount effects that happen in the future. For example, the further out an effect is, the greater the chance that something intervenes and the estimated effect never occurs.\n\nThe model divides effects into six time periods: 0\u20135 years, 5\u201310 years, 10\u201320 years, 20\u2013100 years, 100\u2013500 years, and 500+ years. Each option sets a multiplier for each period. A multiplier of 0 means effects in that period are ignored entirely; 1 means they count fully.",
       "icon": "hourglass",
       "previewText": "Time horizon preferences",
@@ -96,18 +96,18 @@
         },
         {
           "id": "next_100_years",
-          "label": "Mid-term only",
-          "shortLabel": "Mid-term only",
-          "description": "Only the next century matters, with more weight on the near term. Effects beyond 100 years are ignored.",
-          "value": [1.0, 0.9, 0.8, 0.6, 0.0, 0.0]
+          "label": "Near and midterm only",
+          "shortLabel": "Near & midterm",
+          "description": "The further out an effect is, the less weight it gets. Effects more than 100 years out are ignored.",
+          "value": [1.0, 0.95, 0.9, 0.5, 0.0, 0.0]
         },
         {
           "id": "rp_default",
-          "label": "All time periods matter, near term gets more weight",
-          "shortLabel": "Near-term focus",
-          "description": "Near-term effects count fully. Effects further out are progressively discounted, with distant effects counting very little.",
+          "label": "All time periods matter, but long term gets little weight",
+          "shortLabel": "Long term discounted",
+          "description": "Effects in the near term get the most weight. Effects 100 years out and beyond get little weight.",
           "isDefault": true,
-          "value": [1.0, 0.9, 0.8, 0.1, 0.001, 0.00001]
+          "value": [1.0, 0.95, 0.9, 0.5, 0.001, 0.00001]
         },
         {
           "id": "all_equal",
