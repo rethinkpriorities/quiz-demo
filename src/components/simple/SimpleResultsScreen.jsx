@@ -80,7 +80,9 @@ function SimpleResultsScreen() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const editInputRef = useRef(null);
 
-  const [budgetInput, setBudgetInput] = useState(String(budget));
+  const [budgetInput, setBudgetInput] = useState(
+    Math.round(budget * 1_000_000).toLocaleString('en-US')
+  );
 
   // Derive credences: if keys match raw state, use it; otherwise equal split.
   const userCredences = useMemo(() => {
@@ -249,23 +251,24 @@ function SimpleResultsScreen() {
   const methodKey = 'credenceWeighted';
 
   const handleBudgetChange = (e) => {
-    const raw = e.target.value;
+    const raw = e.target.value.replace(/,/g, '');
     if (raw === '') {
       setBudgetInput('');
       return;
     }
     if (!/^\d*$/.test(raw)) return;
-    const cleaned = raw.replace(/^0+/, '') || '';
+    const cleaned = raw.replace(/^0+/, '') || '0';
     const val = Number(cleaned);
-    if (val >= 0 && val <= 1000) {
-      setBudgetInput(cleaned);
-      if (val > 0) setBudget(val);
+    if (val >= 0 && val <= 1_000_000_000) {
+      setBudgetInput(val.toLocaleString('en-US'));
+      if (val > 0) setBudget(val / 1_000_000);
     }
   };
 
   const handleBudgetBlur = () => {
-    if (!budgetInput || Number(budgetInput) <= 0) {
-      setBudgetInput(String(budget));
+    const numeric = Number(budgetInput.replace(/,/g, ''));
+    if (!budgetInput || numeric <= 0) {
+      setBudgetInput(Math.round(budget * 1_000_000).toLocaleString('en-US'));
     }
   };
 
@@ -473,8 +476,8 @@ function SimpleResultsScreen() {
                     onBlur={handleBudgetBlur}
                     onKeyDown={handleBudgetKeyDown}
                     className={resultStyles.budgetInput}
+                    style={{ width: 130 }}
                   />
-                  <span className={resultStyles.budgetUnit}>M</span>
                 </div>
               </label>
               <div className={styles.resultsCardCell}>
