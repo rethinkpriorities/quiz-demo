@@ -27,6 +27,18 @@
   letter-spacing: var(--tracking-tight);
 }
 
+.questionHeadingTight {
+  margin-bottom: var(--spacing-8);
+}
+
+.questionSubheading {
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  color: var(--text-gray);
+  margin-bottom: var(--spacing-12);
+  font-family: var(--font-body);
+}
+
 .optionsGrid {
   display: grid;
   gap: var(--spacing-6);

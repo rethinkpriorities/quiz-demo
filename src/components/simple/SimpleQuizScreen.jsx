@@ -4,7 +4,9 @@ import InfoTooltip from '../ui/InfoTooltip';
 import CompactSlider from '../ui/CompactSlider';
 import CredencePresetsRow from './CredencePresetsRow';
 import SimpleMoreOptions from './SimpleMoreOptions';
+import ManualInput from './ManualInput';
 import { useSimpleQuiz } from '../../context/useSimpleQuiz';
+import { useDataset } from '../../context/DatasetContext';
 import { useCredenceAnimation } from '../../hooks/useCredenceAnimation';
 import { adjustCredences, roundCredences } from '../../utils/calculations';
 import styles from '../../styles/components/SimpleQuiz.module.css';
@@ -24,6 +26,7 @@ function SimpleQuizScreen() {
     credences,
     selectedPresets,
     selectOption,
+    setManualOverride,
     setQuestionCredences,
     setQuestionSelectedPreset,
     questionLockedKeys,
@@ -31,6 +34,7 @@ function SimpleQuizScreen() {
     goForward,
     goBack,
   } = useSimpleQuiz();
+  const { dataset } = useDataset();
 
   // Thumb tween for preset transitions (the percent text stays bound to the
   // real context value so it snaps; only the slider thumb interpolates).
@@ -39,6 +43,7 @@ function SimpleQuizScreen() {
   if (!currentQuestion) return null;
 
   const isCredence = currentQuestion.type === 'credence';
+  const isSliderOnly = currentQuestion.presentation === 'slider-only';
   const questionIndex = currentStep;
   const selectedId = selections[currentQuestion.id];
   const hasManualOverride = manualOverrides[currentQuestion.id] != null;
@@ -46,7 +51,10 @@ function SimpleQuizScreen() {
   const hasNonZeroCredence = Object.values(questionCredences).some((v) => v > 0);
   const hasSelection = isCredence
     ? hasNonZeroCredence || hasManualOverride
-    : selectedId != null || hasManualOverride;
+    : isSliderOnly || selectedId != null || hasManualOverride;
+  const sliderDefaultValue = isSliderOnly
+    ? (currentQuestion.options.find((o) => o.isDefault)?.value ?? null)
+    : null;
 
   const handleSelect = (optionId) => {
     selectOption(currentQuestion.id, optionId);
@@ -93,7 +101,9 @@ function SimpleQuizScreen() {
         >
           <div className={styles.questionNumber}>Question {questionIndex + 1}</div>
 
-          <h2 className={styles.questionHeading}>
+          <h2
+            className={`${styles.questionHeading} ${currentQuestion.subheading ? styles.questionHeadingTight : ''}`}
+          >
             {currentQuestion.heading}
             {features.ui?.questionInfo && currentQuestion.info && (
               <>
@@ -102,8 +112,20 @@ function SimpleQuizScreen() {
               </>
             )}
           </h2>
+          {currentQuestion.subheading && (
+            <p className={styles.questionSubheading}>{currentQuestion.subheading}</p>
+          )}
 
-          {isCredence ? (
+          {isSliderOnly ? (
+            <ManualInput
+              type={currentQuestion.manualInputType}
+              question={currentQuestion}
+              selectedValue={sliderDefaultValue}
+              override={manualOverrides[currentQuestion.id]}
+              onSet={(value) => setManualOverride(currentQuestion.id, value)}
+              dataset={dataset}
+            />
+          ) : isCredence ? (
             <div className={styles.credenceTwoColumn}>
               {currentQuestion.presets?.length > 0 && (
                 <div>
@@ -161,7 +183,9 @@ function SimpleQuizScreen() {
           )}
 
           {/* More options + manual input */}
-          <SimpleMoreOptions key={currentQuestion.id} question={currentQuestion} />
+          {!isSliderOnly && (
+            <SimpleMoreOptions key={currentQuestion.id} question={currentQuestion} />
+          )}
 
           {/* Navigation */}
           <div className={styles.navRow}>
