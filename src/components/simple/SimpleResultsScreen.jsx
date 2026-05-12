@@ -449,13 +449,6 @@ function SimpleResultsScreen() {
       <main className="screen-main">
         <div className={styles.resultsContainer}>
           <h1 className={styles.resultsHeading}>Recommended Allocations</h1>
-          <p className={styles.resultsSubtext}>
-            {blendEnabled
-              ? 'Your worldviews are blended with RP\u2019s expert views to produce a combined allocation.'
-              : hasSaved
-                ? 'Your worldviews are combined using credence-weighted allocation.'
-                : 'Based on your preferences, here\u2019s how your budget would be allocated across funds.'}
-          </p>
 
           <div className={styles.backRow}>
             <button className={styles.navBack} onClick={goBack}>
