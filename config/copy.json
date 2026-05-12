@@ -111,6 +111,18 @@
   "simpleQuiz": {
     "moreOptionsToggle": "More options (show underlying values)"
   },
+  "emailCapture": {
+    "title": "Stay in the loop",
+    "body": "Want to hear from Rethink Priorities when we release new tools and research? Drop your email and we'll keep you posted.",
+    "placeholder": "you@example.com",
+    "submitLabel": "Sign me up",
+    "skipLabel": "No thanks",
+    "errorEmail": "Please enter a valid email address.",
+    "errorGeneric": "Something went wrong — please try again.",
+    "successTitle": "Thanks!",
+    "successBody": "We'll be in touch.",
+    "continueAfterSuccess": "See your results →"
+  },
   "editPanel": {
     "modifiedBadge": "modified",
     "sliderNote": "Sliders auto-balance to 100%",

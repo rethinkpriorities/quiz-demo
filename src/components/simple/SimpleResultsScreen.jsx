@@ -5,6 +5,8 @@ import ResultCard from '../ui/ResultCard';
 import CompactSlider from '../ui/CompactSlider';
 import InfoTooltip from '../ui/InfoTooltip';
 import EditAnswersPanel from './EditAnswersPanel';
+import EmailCaptureModal from './EmailCaptureModal';
+import { isEmailNagDismissed } from '../../utils/emailSignup';
 import { useSimpleQuiz } from '../../context/useSimpleQuiz';
 import { useDataset } from '../../context/DatasetContext';
 import { adjustCredences } from '../../utils/calculations';
@@ -79,6 +81,14 @@ function SimpleResultsScreen() {
   const [editingName, setEditingName] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const editInputRef = useRef(null);
+
+  // Email capture popup. Initial value decided once on mount — feature flag on
+  // and the don't-nag flag (localStorage) not set. Dismissal updates state via
+  // onClose so the modal won't reappear in this session even before storage
+  // round-trips.
+  const [showEmailCapture, setShowEmailCapture] = useState(
+    () => Boolean(features.ui?.emailCapture) && !isEmailNagDismissed()
+  );
 
   const [budgetInput, setBudgetInput] = useState(
     Math.round(budget * 1_000_000).toLocaleString('en-US')
@@ -679,6 +689,18 @@ function SimpleResultsScreen() {
       </main>
 
       {networkBlocked && <NetworkBlockedModal onDismiss={dismissNetworkBlocked} context="share" />}
+      {showEmailCapture && (
+        <EmailCaptureModal
+          quizState={{
+            selections,
+            manualOverrides,
+            credences,
+            selectedPresets,
+            budget,
+          }}
+          onClose={() => setShowEmailCapture(false)}
+        />
+      )}
     </div>
   );
 }
