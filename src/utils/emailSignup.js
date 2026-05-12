@@ -1,24 +1,6 @@
 import { endpoints, apiUrlsConfigured } from '../config/api';
 import { getOrCreateSessionId } from './session';
 
-const DISMISSED_KEY = 'donor_compass_email_nag_dismissed';
-
-export function isEmailNagDismissed() {
-  try {
-    return localStorage.getItem(DISMISSED_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-export function setEmailNagDismissed() {
-  try {
-    localStorage.setItem(DISMISSED_KEY, '1');
-  } catch {
-    // localStorage unavailable (private mode, quota) — fail silently
-  }
-}
-
 export function isValidEmail(email) {
   if (typeof email !== 'string') return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

@@ -443,9 +443,9 @@ aws lambda update-function-configuration \
 A modal popup on the simple results screen that prompts users for their email after they finish the quiz. Strongly worded but skippable. Saves to the `email_signups` Turso table along with a JSON snapshot of the user's quiz state (`selections`, `manualOverrides`, `credences`, `selectedPresets`, `budget`). Carmen / RP team consumes the data via the `#export` page; another RP team handles email outreach via Mailchimp.
 
 **Behavior:**
-- Renders as an overlay on `SimpleResultsScreen` if `ui.emailCapture` is true AND `localStorage.donor_compass_email_nag_dismissed` is not set.
-- "Skip" button or successful submit sets the localStorage flag → no future re-nag in this browser.
-- localStorage flag survives quiz reset, page reload, back-nav to Q4. Share link rehydration does not touch it (different browsers won't have the flag set anyway).
+- Renders as an overlay on `SimpleResultsScreen` if `ui.emailCapture` is true AND `state.emailNagDismissed` (in `SimpleQuizContext`) is false.
+- "Skip" or successful submit dispatches `DISMISS_EMAIL_NAG`, which persists in `sessionStorage` like the rest of the quiz state — same lifecycle: survives reload + back-nav, clears on tab close / new tab / Start Over.
+- `RESTORE_FROM_URL` does not carry the flag, so share-link recipients see the popup on their first visit. Share-link revisits in the same tab preserve any existing dismissal (the `...state` spread in the reducer keeps it).
 - Only `^[^\s@]+@[^\s@]+\.[^\s@]+$` regex validation on the client and Lambda. Real validation is downstream in Mailchimp.
 
 **Copy:** All strings in `config/copy.json` → `emailCapture` block. Carmen/RP edit copy without touching React code.
