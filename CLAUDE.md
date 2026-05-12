@@ -177,6 +177,8 @@ Two copies of each function (kept in sync):
 - `netlify/functions/share.js` / `lambda/share/index.mjs` — Share URL API
 - `netlify/functions/explain.js` / `lambda/explain/index.mjs` — AI Explanation API
 - `netlify/functions/donate.js` / `lambda/donate/index.mjs` — Donation Intent API
+- `netlify/functions/export.js` / `lambda/export/index.mjs` — Data Export API
+- `netlify/functions/email-signup.js` / `lambda/email-signup/index.mjs` — Email Signup API
 
 ### Deploying the Lambdas
 
@@ -226,6 +228,8 @@ Migrations are idempotent SQL files in `migrations/`. Uses `CREATE TABLE IF NOT 
 
 **Current migrations:**
 - `001_initial_schema.sql` - Creates `shares` table
+- `002_donations.sql` - Creates `donations` table
+- `003_email_signups.sql` - Creates `email_signups` table
 
 ---
 
@@ -273,6 +277,8 @@ Summary of implemented features. See `docs/CLAUDE-ARCHIVE.md` for detailed imple
 | Simple Quiz | `ui.simpleQuiz` | Simplified 4-question quiz with direct worldview mapping and bar chart results. **Defaults to ON.** See below. |
 | Support RP Footer | `ui.supportFooter` | Fixed footer on all screens with RP donation link. |
 | Donation Page | N/A (hash route) | Donation intent form at `#donate`. Config-driven copy, Lambda backend. See below. |
+| Data Export | `ui.exportPage` | Admin page at `#export` to download donations + shares + email signups as a zipped CSV bundle, filtered by date range. API key auth. See below. |
+| Email Capture | `ui.emailCapture` | Modal popup on results screen prompting for email; saves to DB, exposed via export. See below. |
 
 ### Simple Quiz
 
@@ -376,6 +382,113 @@ aws lambda update-function-code \
 | `netlify/functions/donate.js` | Local dev mirror (DB write, email logged to console) |
 | `migrations/002_donations.sql` | Creates `donations` table + indexes |
 | `donation_intent_form.html` | Original standalone HTML reference |
+
+### Data Export
+
+**Route:** `#export` (hash-based, like `#donate`)
+**Flag:** `ui.exportPage` (default: `false`)
+
+Admin-only page for downloading raw rows from the `donations` and `shares` tables as a zipped pair of CSVs (`donations.csv` + `shares.csv`), filtered by `created_at` date range. Authenticated by a shared API key the user pastes into the form.
+
+**Flow:** User enters API key + From/To dates → GET `/export?from=YYYY-MM-DD&to=YYYY-MM-DD` with `x-api-key` header → Lambda queries both tables, builds CSVs, zips with JSZip, returns base64 zip with `Content-Disposition: attachment` → browser downloads `export-{from}_{to}.zip`.
+
+**Failure modes (all return JSON with an `error` field):**
+- `401` — missing or wrong API key
+- `400` — missing dates, malformed dates, or `from > to`
+- `413` — either table returned more than 10,000 rows; user must narrow the range
+- `500` — server misconfigured (no `EXPORT_API_KEY`) or DB error
+
+**Rows are returned raw.** `donations.form_data` stays as a JSON string in a single CSV cell — consumers parse it themselves. Date filter uses inclusive bounds in UTC: `from 00:00:00` to `to 23:59:59`.
+
+**Local dev:** Set `EXPORT_API_KEY=<anything>` in `.env`, then `netlify dev`. Visit `http://localhost:8888/#export` (toggle `ui.exportPage` to `true` first).
+
+**Production deployment status:** Deployed manually 2026-04-29. Function URL: `https://yvts3kg5ge66i7gincdplnmory0lqljf.lambda-url.us-east-1.on.aws/`. API key stored in 1Password as "Donor Compass — Export API Key". The Lambda was created with `aws lambda create-function` (the SAM stack only tracks `ShareFunction` — donate/explain/export are managed manually, same pattern as the others).
+
+**Redeploying code changes** (function already exists, same as share/donate):
+```bash
+cd lambda/export && npm ci && cd ..
+sam build
+cd .aws-sam/build/ExportFunction
+zip -r /tmp/lambda-export.zip .
+aws lambda update-function-code \
+  --function-name quiz-demo-export \
+  --zip-file fileb:///tmp/lambda-export.zip
+```
+
+**Rotating the API key:**
+```bash
+NEW_KEY=$(openssl rand -hex 32)
+op item edit "Donor Compass — Export API Key" "credential[concealed]=$NEW_KEY"
+aws lambda update-function-configuration \
+  --function-name quiz-demo-export \
+  --environment "Variables={TURSO_DATABASE_URL=$(op item get w66obijiatjkw5omgun2wjqnym --fields label=url --reveal | tr -d '[:space:]'),TURSO_AUTH_TOKEN=$(op item get w66obijiatjkw5omgun2wjqnym --fields label=api-token --reveal | tr -d '[:space:]'),EXPORT_API_KEY=$NEW_KEY}"
+```
+
+**Frontend wiring:** `VITE_EXPORT_API_URL` GitHub secret must be set to the Function URL above. `ui.exportPage` flag in `config/features.json` controls visibility.
+
+**Files:**
+
+| File | Purpose |
+|------|---------|
+| `lambda/export/index.mjs` | AWS Lambda handler (auth, validate, query, zip, base64 response) |
+| `lambda/export/package.json` | Lambda package manifest (`@libsql/client`, `jszip`) |
+| `netlify/functions/export.js` | Local dev mirror against `dev.db` |
+| `src/components/export/ExportPage.jsx` | Form UI (API key, date pickers, download button) |
+| `src/styles/components/ExportPage.module.css` | Styling (matches dark teal theme) |
+
+### Email Capture
+
+**Flag:** `ui.emailCapture` (default: `false`)
+
+A modal popup on the simple results screen that prompts users for their email after they finish the quiz. Strongly worded but skippable. Saves to the `email_signups` Turso table along with a JSON snapshot of the user's quiz state (`selections`, `manualOverrides`, `credences`, `selectedPresets`, `budget`). Carmen / RP team consumes the data via the `#export` page; another RP team handles email outreach via Mailchimp.
+
+**Behavior:**
+- Renders as an overlay on `SimpleResultsScreen` if `ui.emailCapture` is true AND `localStorage.donor_compass_email_nag_dismissed` is not set.
+- "Skip" button or successful submit sets the localStorage flag → no future re-nag in this browser.
+- localStorage flag survives quiz reset, page reload, back-nav to Q4. Share link rehydration does not touch it (different browsers won't have the flag set anyway).
+- Only `^[^\s@]+@[^\s@]+\.[^\s@]+$` regex validation on the client and Lambda. Real validation is downstream in Mailchimp.
+
+**Copy:** All strings in `config/copy.json` → `emailCapture` block. Carmen/RP edit copy without touching React code.
+
+**Local dev path:** Frontend calls `submitEmailSignup` (`src/utils/emailSignup.js`); if `VITE_EMAIL_SIGNUP_API_URL` is unset, the call logs to console and resolves as a no-op success so the UI flow can be tested via `npm run dev` without `netlify dev`.
+
+**Production deployment status:** Lambda code written + template entry added, **not yet deployed**. To enable:
+1. Run migration on prod: `turso db shell donor-compass < migrations/003_email_signups.sql`
+2. Build + deploy Lambda manually (same pattern as other Lambdas — `aws lambda create-function` since SAM stack additions fail on EarlyValidation):
+   ```bash
+   cd lambda/email-signup && npm ci && cd ..
+   sam build
+   cd .aws-sam/build/EmailSignupFunction
+   zip -r /tmp/lambda-email-signup.zip .
+   aws lambda create-function \
+     --function-name quiz-demo-email-signup \
+     --runtime nodejs22.x \
+     --role arn:aws:iam::258685012653:role/quiz-demo-share-ShareFunctionRole-R6GZTIa7VT1j \
+     --handler index.handler \
+     --zip-file fileb:///tmp/lambda-email-signup.zip \
+     --environment "Variables={TURSO_DATABASE_URL=...,TURSO_AUTH_TOKEN=...}"
+   aws lambda add-permission --function-name quiz-demo-email-signup --statement-id public-url-invoke \
+     --action lambda:InvokeFunctionUrl --principal '*' --function-url-auth-type NONE
+   aws lambda add-permission --function-name quiz-demo-email-signup --statement-id public-invoke \
+     --action lambda:InvokeFunction --principal '*'
+   aws lambda create-function-url-config --function-name quiz-demo-email-signup --auth-type NONE \
+     --cors AllowOrigins=https://donorcompass.rethinkpriorities.org,https://donorcompass.netlify.app,https://rethinkpriorities.github.io,AllowMethods=POST,AllowHeaders=Content-Type
+   ```
+3. Set `VITE_EMAIL_SIGNUP_API_URL` in GitHub repo secrets to the returned Function URL.
+4. Set `ui.emailCapture` to `true` in `config/features.json` (in staging first).
+
+**Files:**
+
+| File | Purpose |
+|------|---------|
+| `config/copy.json` → `emailCapture` | All popup copy (title, body, labels, validation messages, success state) |
+| `migrations/003_email_signups.sql` | Creates `email_signups` table + indexes |
+| `lambda/email-signup/index.mjs` | AWS Lambda handler (validate, INSERT) |
+| `lambda/email-signup/package.json` | Lambda package manifest (`@libsql/client`) |
+| `netlify/functions/email-signup.js` | Local dev mirror against `dev.db` |
+| `src/components/simple/EmailCaptureModal.jsx` | Modal component |
+| `src/styles/components/EmailCaptureModal.module.css` | Styling |
+| `src/utils/emailSignup.js` | localStorage helpers + submit function (no-op in local dev) |
 
 ### Key Architecture Notes
 - **State management**: React Context in `src/context/QuizContext.jsx`
@@ -496,3 +609,6 @@ Computes recommended donation allocation by aggregating across multiple worldvie
 | `src/components/simple/` | Simple quiz UI components (welcome, questions, more options, results) |
 | `config/donationPage.json` | Donation page copy, fund list with project slugs, validation messages |
 | `src/components/donate/` | Donation page UI components (form, split editor) |
+| `lambda/export/` | Data export Lambda (auth, query, zip CSVs) |
+| `netlify/functions/export.js` | Data export local dev mirror |
+| `src/components/export/ExportPage.jsx` | Data export admin page UI |

@@ -27,6 +27,18 @@
   letter-spacing: var(--tracking-tight);
 }
 
+.questionHeadingTight {
+  margin-bottom: var(--spacing-8);
+}
+
+.questionSubheading {
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  color: var(--text-gray);
+  margin-bottom: var(--spacing-12);
+  font-family: var(--font-body);
+}
+
 .optionsGrid {
   display: grid;
   gap: var(--spacing-6);
@@ -476,14 +488,6 @@
   margin-bottom: var(--spacing-8);
   letter-spacing: var(--tracking-tight);
   text-align: center;
-}
-
-.resultsSubtext {
-  font-size: var(--text-base);
-  opacity: 0.7;
-  text-align: center;
-  margin-bottom: var(--spacing-16);
-  font-family: var(--font-body);
 }
 
 /* === Results Row (chart + explanation side by side) === */
