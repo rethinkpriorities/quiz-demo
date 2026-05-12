@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { isValidEmail, setEmailNagDismissed, submitEmailSignup } from '../../utils/emailSignup';
+import { isValidEmail, submitEmailSignup } from '../../utils/emailSignup';
 import copy from '../../../config/copy.json';
 import styles from '../../styles/components/EmailCaptureModal.module.css';
 
@@ -9,11 +9,6 @@ function EmailCaptureModal({ quizState, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-
-  const handleSkip = () => {
-    setEmailNagDismissed();
-    onClose();
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +23,6 @@ function EmailCaptureModal({ quizState, onClose }) {
     setSubmitting(true);
     try {
       await submitEmailSignup({ email, quizState });
-      setEmailNagDismissed();
       setSuccess(true);
     } catch (err) {
       console.error('Email signup failed:', err);
@@ -70,7 +64,7 @@ function EmailCaptureModal({ quizState, onClose }) {
                 <button
                   type="button"
                   className={`btn btn-sm ${styles.skipButton}`}
-                  onClick={handleSkip}
+                  onClick={onClose}
                   disabled={submitting}
                 >
                   {c.skipLabel || 'No thanks'}
