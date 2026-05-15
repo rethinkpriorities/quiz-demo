@@ -452,30 +452,18 @@ A modal popup on the simple results screen that prompts users for their email af
 
 **Local dev path:** Frontend calls `submitEmailSignup` (`src/utils/emailSignup.js`); if `VITE_EMAIL_SIGNUP_API_URL` is unset, the call logs to console and resolves as a no-op success so the UI flow can be tested via `npm run dev` without `netlify dev`.
 
-**Production deployment status:** Lambda code written + template entry added, **not yet deployed**. To enable:
-1. Run migration on prod: `turso db shell donor-compass < migrations/003_email_signups.sql`
-2. Build + deploy Lambda manually (same pattern as other Lambdas — `aws lambda create-function` since SAM stack additions fail on EarlyValidation):
-   ```bash
-   cd lambda/email-signup && npm ci && cd ..
-   sam build
-   cd .aws-sam/build/EmailSignupFunction
-   zip -r /tmp/lambda-email-signup.zip .
-   aws lambda create-function \
-     --function-name quiz-demo-email-signup \
-     --runtime nodejs22.x \
-     --role arn:aws:iam::258685012653:role/quiz-demo-share-ShareFunctionRole-R6GZTIa7VT1j \
-     --handler index.handler \
-     --zip-file fileb:///tmp/lambda-email-signup.zip \
-     --environment "Variables={TURSO_DATABASE_URL=...,TURSO_AUTH_TOKEN=...}"
-   aws lambda add-permission --function-name quiz-demo-email-signup --statement-id public-url-invoke \
-     --action lambda:InvokeFunctionUrl --principal '*' --function-url-auth-type NONE
-   aws lambda add-permission --function-name quiz-demo-email-signup --statement-id public-invoke \
-     --action lambda:InvokeFunction --principal '*'
-   aws lambda create-function-url-config --function-name quiz-demo-email-signup --auth-type NONE \
-     --cors AllowOrigins=https://donorcompass.rethinkpriorities.org,https://donorcompass.netlify.app,https://rethinkpriorities.github.io,AllowMethods=POST,AllowHeaders=Content-Type
-   ```
-3. Set `VITE_EMAIL_SIGNUP_API_URL` in GitHub repo secrets to the returned Function URL.
-4. Set `ui.emailCapture` to `true` in `config/features.json` (in staging first).
+**Production deployment status:** Deployed. Function URL: `https://vwiiaqw66ive3eehxjdg7bz35m0isawr.lambda-url.us-east-1.on.aws/`. Created manually via `aws lambda create-function` (same pattern as donate/export — SAM stack additions fail on EarlyValidation). Migration 003 has been applied to Turso prod. `VITE_EMAIL_SIGNUP_API_URL` is set in GitHub repo secrets. Toggle `ui.emailCapture` in `config/features.json` to control visibility per environment.
+
+**Redeploying code changes** (function already exists):
+```bash
+cd lambda/email-signup && npm ci && cd ..
+sam build
+cd .aws-sam/build/EmailSignupFunction
+zip -r /tmp/lambda-email-signup.zip .
+aws lambda update-function-code \
+  --function-name quiz-demo-email-signup \
+  --zip-file fileb:///tmp/lambda-email-signup.zip
+```
 
 **Files:**
 
