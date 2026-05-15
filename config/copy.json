@@ -112,16 +112,13 @@
     "moreOptionsToggle": "More options (show underlying values)"
   },
   "emailCapture": {
-    "title": "Stay in the loop",
-    "body": "Want to hear from Rethink Priorities when we release new tools and research? Drop your email and we'll keep you posted.",
+    "title": "Help us reach out",
+    "body": "Join our newsletter and Substacks to stay in the loop with our latest tools and research.",
     "placeholder": "you@example.com",
-    "submitLabel": "Sign me up",
-    "skipLabel": "No thanks",
-    "errorEmail": "Please enter a valid email address.",
-    "errorGeneric": "Something went wrong — please try again.",
-    "successTitle": "Thanks!",
-    "successBody": "We'll be in touch.",
-    "continueAfterSuccess": "See your results →"
+    "submitLabel": "Sign up",
+    "skipLabel": "No thanks.",
+    "consentLabel": "I agree to receive Rethink Priorities newsletters and to have my personal data stored and processed in accordance with the [Privacy Policy](https://rethinkpriorities.org/privacy-policy). I can unsubscribe at any time.",
+    "errorEmail": "Please enter a valid email address."
   },
   "editPanel": {
     "modifiedBadge": "modified",

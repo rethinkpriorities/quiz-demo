@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { isValidEmail, submitEmailSignup } from '../../utils/emailSignup';
+import { renderMarkdownLink } from '../../utils/renderMarkdownLink';
 import copy from '../../../config/copy.json';
 import styles from '../../styles/components/EmailCaptureModal.module.css';
 
 function EmailCaptureModal({ quizState, onClose }) {
   const c = copy.emailCapture || {};
   const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (!agreed) return;
     setError(null);
 
     if (!isValidEmail(email)) {
@@ -20,62 +20,49 @@ function EmailCaptureModal({ quizState, onClose }) {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      await submitEmailSignup({ email, quizState });
-      setSuccess(true);
-    } catch (err) {
+    // Fire-and-forget: don't block the user on Lambda cold-start latency.
+    // Failures are logged but not surfaced — the user has already moved on.
+    submitEmailSignup({ email, quizState }).catch((err) => {
       console.error('Email signup failed:', err);
-      setError(c.errorGeneric || 'Something went wrong — please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    });
+    onClose();
   };
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.modal}>
-        {success ? (
-          <>
-            <h2 className={styles.successTitle}>{c.successTitle || 'Thanks!'}</h2>
-            <p className={styles.successBody}>{c.successBody || "We'll be in touch."}</p>
-            <div className={styles.actions}>
-              <button type="button" className="btn btn-primary btn-sm" onClick={onClose}>
-                {c.continueAfterSuccess || 'See your results →'}
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className={styles.title}>{c.title || 'Stay in the loop'}</h2>
-            <p className={styles.body}>{c.body || ''}</p>
-            <form className={styles.form} onSubmit={handleSubmit}>
+        <h2 className={styles.title}>{c.title || 'Stay in the loop'}</h2>
+        <p className={styles.body}>{c.body || ''}</p>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <input
+            type="email"
+            className={styles.input}
+            placeholder={c.placeholder || 'you@example.com'}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoFocus
+          />
+          {c.consentLabel && (
+            <label className={styles.consent}>
               <input
-                type="email"
-                className={styles.input}
-                placeholder={c.placeholder || 'you@example.com'}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={submitting}
-                autoFocus
+                type="checkbox"
+                className={styles.consentCheckbox}
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
               />
-              {error && <p className={styles.error}>{error}</p>}
-              <div className={styles.actions}>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${styles.skipButton}`}
-                  onClick={onClose}
-                  disabled={submitting}
-                >
-                  {c.skipLabel || 'No thanks'}
-                </button>
-                <button type="submit" className="btn btn-primary btn-sm" disabled={submitting}>
-                  {c.submitLabel || 'Sign me up'}
-                </button>
-              </div>
-            </form>
-          </>
-        )}
+              <span className={styles.consentText}>{renderMarkdownLink(c.consentLabel)}</span>
+            </label>
+          )}
+          {error && <p className={styles.error}>{error}</p>}
+          <div className={styles.actions}>
+            <button type="button" className={`btn btn-sm ${styles.skipButton}`} onClick={onClose}>
+              {c.skipLabel || 'No thanks'}
+            </button>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={!agreed}>
+              {c.submitLabel || 'Sign up'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
