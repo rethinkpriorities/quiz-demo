@@ -43,6 +43,7 @@ function SimpleQuizScreen() {
   if (!currentQuestion) return null;
 
   const isCredence = currentQuestion.type === 'credence';
+  const hasPresets = currentQuestion.presets?.length > 0;
   const isSliderOnly = currentQuestion.presentation === 'slider-only';
   const questionIndex = currentStep;
   const selectedId = selections[currentQuestion.id];
@@ -95,9 +96,9 @@ function SimpleQuizScreen() {
       <Header subtitle={`Question ${questionIndex + 1} of ${totalQuestions}`} />
       <ProgressBar percentage={progressPercentage} />
 
-      <main className="screen-main">
+      <main className={styles.questionMain}>
         <div
-          className={`${styles.questionContainer} ${isCredence ? styles.questionContainerWide : ''}`}
+          className={`${styles.questionContainer} ${isCredence && hasPresets ? styles.questionContainerWide : ''}`}
         >
           <div className={styles.questionNumber}>Question {questionIndex + 1}</div>
 
@@ -116,76 +117,86 @@ function SimpleQuizScreen() {
             <p className={styles.questionSubheading}>{currentQuestion.subheading}</p>
           )}
 
-          {isSliderOnly ? (
-            <ManualInput
-              type={currentQuestion.manualInputType}
-              question={currentQuestion}
-              selectedValue={sliderDefaultValue}
-              override={manualOverrides[currentQuestion.id]}
-              onSet={(value) => setManualOverride(currentQuestion.id, value)}
-              dataset={dataset}
-            />
-          ) : isCredence ? (
-            <div className={styles.credenceTwoColumn}>
-              {currentQuestion.presets?.length > 0 && (
-                <div>
-                  <div className={styles.credenceColumnHeading}>Presets</div>
-                  <CredencePresetsRow
-                    presets={currentQuestion.presets}
-                    selectedId={selectedPresetId}
-                    onSelect={handleSelectPreset}
-                  />
-                </div>
-              )}
-              <div>
-                <div className={styles.credenceColumnHeading}>Credences</div>
-                <div className={styles.credenceList}>
-                  {currentQuestion.options.map((option) => (
-                    <div key={option.id} className={styles.credenceRow}>
-                      <div className={styles.credenceRowText}>
-                        <span className={styles.credenceRowLabel}>{option.label}</span>
-                        <span className={styles.credenceRowDescription}>{option.description}</span>
+          <div className={styles.questionBody}>
+            {isSliderOnly ? (
+              <ManualInput
+                type={currentQuestion.manualInputType}
+                question={currentQuestion}
+                selectedValue={sliderDefaultValue}
+                override={manualOverrides[currentQuestion.id]}
+                onSet={(value) => setManualOverride(currentQuestion.id, value)}
+                dataset={dataset}
+              />
+            ) : isCredence ? (
+              (() => {
+                const credenceList = (
+                  <div className={styles.credenceList}>
+                    {currentQuestion.options.map((option) => (
+                      <div key={option.id} className={styles.credenceRow}>
+                        <div className={styles.credenceRowText}>
+                          <span className={styles.credenceRowLabel}>{option.label}</span>
+                          <span className={styles.credenceRowDescription}>
+                            {option.description}
+                          </span>
+                        </div>
+                        <div className={styles.credenceRowSlider}>
+                          <CompactSlider
+                            label=""
+                            value={questionCredences[option.id] || 0}
+                            thumbValue={thumbValues ? (thumbValues[option.id] ?? 0) : undefined}
+                            onChange={(val, base, round) =>
+                              handleCredenceChange(option.id, val, base, round)
+                            }
+                            color="#2a9ab5"
+                            credences={questionCredences}
+                            sliderKey={option.id}
+                            lockedKeys={lockedKeys}
+                            setLockedKeys={handleSetLockedKeys}
+                            inlineValue
+                          />
+                        </div>
                       </div>
-                      <div className={styles.credenceRowSlider}>
-                        <CompactSlider
-                          label=""
-                          value={questionCredences[option.id] || 0}
-                          thumbValue={thumbValues ? (thumbValues[option.id] ?? 0) : undefined}
-                          onChange={(val, base, round) =>
-                            handleCredenceChange(option.id, val, base, round)
-                          }
-                          color="#2a9ab5"
-                          credences={questionCredences}
-                          sliderKey={option.id}
-                          lockedKeys={lockedKeys}
-                          setLockedKeys={handleSetLockedKeys}
-                          inlineValue
-                        />
-                      </div>
+                    ))}
+                  </div>
+                );
+                if (!hasPresets) return credenceList;
+                return (
+                  <div className={styles.credenceTwoColumn}>
+                    <div>
+                      <div className={styles.credenceColumnHeading}>Presets</div>
+                      <CredencePresetsRow
+                        presets={currentQuestion.presets}
+                        selectedId={selectedPresetId}
+                        onSelect={handleSelectPreset}
+                      />
                     </div>
-                  ))}
-                </div>
+                    <div>
+                      <div className={styles.credenceColumnHeading}>Credences</div>
+                      {credenceList}
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className={styles.optionsGrid}>
+                {currentQuestion.options.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`${styles.optionButton} ${selectedId === option.id && !hasManualOverride ? styles.optionSelected : ''}`}
+                    onClick={() => handleSelect(option.id)}
+                  >
+                    <span className={styles.optionLabel}>{option.label}</span>
+                    <span className={styles.optionDescription}>{option.description}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className={styles.optionsGrid}>
-              {currentQuestion.options.map((option) => (
-                <button
-                  key={option.id}
-                  className={`${styles.optionButton} ${selectedId === option.id && !hasManualOverride ? styles.optionSelected : ''}`}
-                  onClick={() => handleSelect(option.id)}
-                >
-                  <span className={styles.optionLabel}>{option.label}</span>
-                  <span className={styles.optionDescription}>{option.description}</span>
-                </button>
-              ))}
-            </div>
-          )}
+            )}
 
-          {/* More options + manual input */}
-          {!isSliderOnly && (
-            <SimpleMoreOptions key={currentQuestion.id} question={currentQuestion} />
-          )}
+            {/* More options + manual input */}
+            {!isSliderOnly && (
+              <SimpleMoreOptions key={currentQuestion.id} question={currentQuestion} />
+            )}
+          </div>
 
           {/* Navigation */}
           <div className={styles.navRow}>
